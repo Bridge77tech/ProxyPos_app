@@ -2,7 +2,14 @@
 class Assets {
   Assets._();
 
-  static const String iconsDashboardIcon = 'assets/icons/dashboard-icon.png';
+  static const String fontsFontspringDEMOIntegralcfDemibold = 'assets/fonts/Fontspring-DEMO-integralcf-demibold.otf';
+  static const String fontsFontspringDEMOIntegralcfRegular = 'assets/fonts/Fontspring-DEMO-integralcf-regular.otf';
+  static const String fontsSatoshiBold = 'assets/fonts/Satoshi-Bold.otf';
+  static const String fontsSatoshiItalic = 'assets/fonts/Satoshi-Italic.otf';
+  static const String fontsSatoshiLight = 'assets/fonts/Satoshi-Light.otf';
+  static const String fontsSatoshiMedium = 'assets/fonts/Satoshi-Medium.otf';
+  static const String fontsSatoshiRegular = 'assets/fonts/Satoshi-Regular.otf';
+  static const String iconsDashbordIcon = 'assets/icons/dashbord-icon.png';
   static const String iconsDeleteIcon = 'assets/icons/delete-icon.png';
   static const String iconsHistoryIcon = 'assets/icons/history-icon.png';
   static const String iconsLoginSmallIcon = 'assets/icons/login-small-icon.png';
@@ -10,6 +17,7 @@ class Assets {
   static const String iconsMyAccountIcon = 'assets/icons/my-account-icon.png';
   static const String iconsNotificationIcon = 'assets/icons/notification-icon.png';
   static const String iconsProfileIcon = 'assets/icons/profile-icon.png';
+  static const String iconsSearchIcon = 'assets/icons/search-icon.png';
   static const String iconsVisibilityOn = 'assets/icons/visibility_on.png';
   static const String iconsWarningIcon = 'assets/icons/warning-icon.png';
   static const String imagesLoginLeftImage1 = 'assets/images/login-left-image-1.png';
