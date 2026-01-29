@@ -13,5 +13,5 @@ class InvAppConstants {
   static final String kVAT = "VAT";
   static final String kDiscount = "Discount";
   static final String kSubTotal = "Subtotal";
-  static final String kTotal = "TOTAL";
+  static final String kTotal = "Total";
 }

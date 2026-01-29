@@ -99,6 +99,9 @@ class APLoginPage extends StatelessWidget {
                         Gap(20.h),
                         ApButton(
                           btnText: InvAppConstants.kLogin,
+                          width: 1.sw,
+                          height: 40,
+                          fontSize: 10.sp,
                           onPressed: () => NavigationHelper.goNamed(InvRouteConstants.apHomeRoute.routeName),
                         )
                       ],
