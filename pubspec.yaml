@@ -29,6 +29,10 @@ dependencies:
   hive_ce: ^2.19.1
   fasaha_utils:
     path: ../fasaha_utils
+  pretty_dio_logger: ^1.4.0
+  json_annotation: ^4.10.0
+  internet_connection_checker_plus: ^2.9.1+2
+  logger: ^2.6.2
 #    git:
 #      url: https://github.com/fasaha-tech/fasaha_utils.git
 #      ref: main
@@ -39,9 +43,10 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
   retrofit_generator: ^10.0.6
-  build_runner: ^2.10.0
+  build_runner: ^2.10.5
   hive_ce_generator: ^1.10.0
   freezed: ^3.2.3
+  json_serializable: ^6.12.0
 
 flutter:
 

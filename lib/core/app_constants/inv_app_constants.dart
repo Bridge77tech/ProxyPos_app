@@ -5,7 +5,6 @@ class InvAppConstants {
   static final String kEnterAccountCredentials = "Please enter your account credentials to continue";
   static final String kUsername = "Username";
   static final String kPassword = "Password";
-  static final String kForgotPassword = "Forgot Password?";
   static final String kLogin = "Login";
   static final String kPoweredByFasaha = "powered by Fasaha Haus";
   static final String kCart = 'Cart';

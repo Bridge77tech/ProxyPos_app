@@ -12,6 +12,6 @@ class APPasswordField extends StatelessWidget {
             hintStyle: Theme.of(context).textTheme.bodyMedium,
             enabledBorder: UnderlineInputBorder()
         )
-    );;
+    );
   }
 }
