@@ -1,4 +1,4 @@
-import '../../domain/token_entity.dart';
+import '../../domain/entity/token_entity.dart';
 
 class Token extends TokenEntity {
   Token({super.expiresAt, super.token});

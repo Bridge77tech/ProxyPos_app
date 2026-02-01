@@ -1,6 +1,6 @@
 
 import 'package:inventory_app_pos/features/auth/data/model/token_model.dart';
-import 'package:inventory_app_pos/features/auth/domain/user_token.dart';
+import 'package:inventory_app_pos/features/auth/domain/entity/user_token.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'user_token_model.g.dart';

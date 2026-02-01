@@ -1,9 +1,10 @@
 import 'dart:convert';
 
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:inventory_app_pos/data/local_storage_service.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:inventory_app_pos/data/local_storage_service.dart';
 import 'package:inventory_app_pos/data/storage_box.dart';
 
 import '../core/exceptions/local_storage_exception.dart';
@@ -19,8 +20,8 @@ class LocalStorageServiceImpl implements ILocalStorageService {
   LocalStorageServiceImpl._({
     FlutterSecureStorage? secureStorage,
     HiveInterface? hive,
-  })  : _secureStorage = secureStorage ?? const FlutterSecureStorage(),
-        _hive = hive ?? Hive;
+  }) : _secureStorage = secureStorage ?? const FlutterSecureStorage(),
+       _hive = hive ?? Hive;
 
   // factory constructor for testing
   factory LocalStorageServiceImpl.forTesting({
@@ -109,50 +110,61 @@ class LocalStorageServiceImpl implements ILocalStorageService {
     return box;
   }
 
-  Future<List<int>> _getOrGenerateEncryptionKey() async {
+  Future<List<int>?> _getOrGenerateEncryptionKey() async {
     const keyName = 'hive_encryption_key';
 
-    final base64Key = await _secureStorage.read(
-      key: keyName,
-      aOptions: _androidOptions,
-      iOptions: _iOSOptions,
-    );
+    try {
+      final base64Key = await _secureStorage.read(
+        key: keyName,
+        aOptions: _androidOptions,
+        iOptions: _iOSOptions,
+      );
 
-    if (base64Key != null) {
-      try {
-        final keyBytes = base64Decode(base64Key);
+      if (base64Key != null) {
+        try {
+          final keyBytes = base64Decode(base64Key);
 
-        const secureKeySize = 32;
-        if (keyBytes.length == secureKeySize) {
-          return keyBytes;
-        } else {
+          const secureKeySize = 32;
+          if (keyBytes.length == secureKeySize) {
+            return keyBytes;
+          } else {
+            await _secureStorage.delete(
+              key: keyName,
+              aOptions: _androidOptions,
+              iOptions: _iOSOptions,
+            );
+          }
+        } catch (e) {
+          _log.e(e.toString());
           await _secureStorage.delete(
             key: keyName,
             aOptions: _androidOptions,
             iOptions: _iOSOptions,
           );
         }
-      } catch (e) {
-        _log.e(e.toString());
-        await _secureStorage.delete(
-          key: keyName,
-          aOptions: _androidOptions,
-          iOptions: _iOSOptions,
-        );
       }
+
+      final newKeyBytes = Hive.generateSecureKey();
+      final newBase64Key = base64Encode(newKeyBytes);
+
+      await _secureStorage.write(
+        key: keyName,
+        value: newBase64Key,
+        aOptions: _androidOptions,
+        iOptions: _iOSOptions,
+      );
+
+      return newKeyBytes;
+    } on PlatformException catch (e) {
+      // macOS requires keychain-access-groups entitlement which needs signing
+      // Fall back to no encryption if secure storage is not available
+      _log.w(
+        'Secure storage not available (${e.code}): ${e.message}. '
+        'Proceeding without encryption key. '
+        'To enable encryption, add keychain entitlements and enable signing.',
+      );
+      return null;
     }
-
-    final newKeyBytes = Hive.generateSecureKey();
-    final newBase64Key = base64Encode(newKeyBytes);
-
-    await _secureStorage.write(
-      key: keyName,
-      value: newBase64Key,
-      aOptions: _androidOptions,
-      iOptions: _iOSOptions,
-    );
-
-    return newKeyBytes;
   }
 
   /// Cleanup method for app shutdown

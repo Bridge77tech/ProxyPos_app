@@ -3,6 +3,7 @@ import 'package:inventory_app_pos/network/exceptions/unauthorized_exception.dart
 
 import 'bad_getway_exception.dart';
 import 'bad_request_exception.dart';
+import 'network_exception.dart';
 
 class ApiExceptions implements Exception {
   dynamic message;
@@ -10,13 +11,17 @@ class ApiExceptions implements Exception {
 
   ApiExceptions({this.message, this.statusCode});
 
-  static ApiExceptions fromDio(Object error) {
+  static fromDio(Object error) {
     if (error is DioException) {
+      if (error.type == DioExceptionType.connectionError) {
+        return NetworkException();
+      }
       final res = error.response;
       final message = error.message;
       final status = res?.statusCode;
 
-      switch(status) {
+
+      switch (status) {
         case 401:
           return UnauthorizedException(message: message);
         case 400:

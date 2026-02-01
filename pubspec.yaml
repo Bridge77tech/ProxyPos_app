@@ -33,6 +33,7 @@ dependencies:
   json_annotation: ^4.10.0
   internet_connection_checker_plus: ^2.9.1+2
   logger: ^2.6.2
+  dio_smart_retry: ^7.0.1
 #    git:
 #      url: https://github.com/fasaha-tech/fasaha_utils.git
 #      ref: main

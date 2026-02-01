@@ -1,6 +1,6 @@
 import 'package:hive/hive.dart';
 
-import '../data/model/token_model.dart';
+import '../../data/model/token_model.dart';
 
 class UserTokenEntity extends HiveObject {
   Token? access;

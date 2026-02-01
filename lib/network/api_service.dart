@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:inventory_app_pos/network/constants/api_string_const.dart';
+import 'package:inventory_app_pos/network/interceptors/auth_interceptors.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
@@ -14,6 +16,7 @@ import '../features/auth/domain/repositories/auth_repository.dart';
 import '../features/auth/domain/usecases/attempt_token_refresh_usecase.dart';
 import '../features/auth/domain/usecases/clear_session_usecase.dart';
 import '../features/auth/domain/usecases/get_access_token_usecase.dart';
+import 'interceptors/api_error_interceptors.dart';
 
 class APIService {
   late Dio _dio;

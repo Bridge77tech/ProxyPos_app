@@ -2,7 +2,7 @@ class APIStringConst {
   APIStringConst._();
 
   // Base Url
-  static const String apAPIBaseURL = "";
+  static const String apAPIBaseURL = "https://inventoryappbackend-development.up.railway.app/api-docs";
 
   // Exception Messages
   static const String apUnAuthorizedMsg = "You are not authorized to make this request";

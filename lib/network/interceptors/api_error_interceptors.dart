@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:inventory_app_pos/network/exceptions/api_exceptions.dart';
 
-class ApiErrorInterceptors extends Interceptor {
+class APIErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     handler.reject(
