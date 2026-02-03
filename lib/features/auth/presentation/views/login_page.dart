@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:inventory_app_pos/core/app_constants/inv_app_constants.dart';
@@ -8,11 +9,16 @@ import 'package:inventory_app_pos/core/routing/route_constants.dart';
 import 'package:inventory_app_pos/shared/app_buttons/ap_button.dart';
 import 'package:inventory_app_pos/shared/input_fileds/ap_username_field.dart';
 import 'package:inventory_app_pos/shared/input_fileds/app_password_field.dart';
+import 'package:loader_overlay/loader_overlay.dart';
+import 'package:toastification/toastification.dart';
 
 import '../../../../core/app_constants/ap_colors.dart';
 import '../../../../core/routing/navigation_helper.dart';
 import '../../../../core/services/connectivity_service.dart';
 import '../../../../generated/assets.dart';
+import '../../presentation/bloc/auth_bloc.dart';
+import '../../presentation/bloc/auth_event.dart';
+import '../../presentation/bloc/auth_state.dart';
 
 class APLoginPage extends StatefulWidget {
   const APLoginPage({super.key});
@@ -25,10 +31,14 @@ class _APLoginPageState extends State<APLoginPage> {
   StreamSubscription<bool>? _connectivitySub;
   OverlayEntry? _noInternetOverlay;
   Timer? _autoDismissTimer;
+  late final TextEditingController _usernameController;
+  late final TextEditingController _passwordController;
 
   @override
   void initState() {
     super.initState();
+    _usernameController = TextEditingController();
+    _passwordController = TextEditingController();
 
     // Show initial state
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -49,6 +59,8 @@ class _APLoginPageState extends State<APLoginPage> {
 
   @override
   void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
     _autoDismissTimer?.cancel();
     _autoDismissTimer = null;
     _hideNoInternetOverlay();
@@ -77,7 +89,7 @@ class _APLoginPageState extends State<APLoginPage> {
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withAlpha(25),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   ),
@@ -180,35 +192,85 @@ class _APLoginPageState extends State<APLoginPage> {
                   ],
                 ),
                 Gap(50.h),
-                Form(
+                BlocListener<AuthBloc, AuthState>(
+                  listenWhen: (prev, curr) =>
+                      prev.apiError != curr.apiError ||
+                      prev.isSuccess != curr.isSuccess ||
+                      prev.isSubmitting != curr.isSubmitting,
+                  listener: (context, state) {
+                    // Toggle global loader overlay
+                    if (state.isSubmitting) {
+                      context.loaderOverlay.show();
+                    } else {
+                      context.loaderOverlay.hide();
+                    }
+                    if (state.apiError != null) {
+                      toastification.show(
+                        context: context,
+                        type: ToastificationType.error,
+                        title: Text(state.apiError!),
+                        alignment: Alignment.topRight,
+                        autoCloseDuration: const Duration(seconds: 4),
+                      );
+                    }
+                    if (state.isSuccess) {
+                      // Clear inputs on success
+                      _usernameController.clear();
+                      _passwordController.clear();
+                      context.read<AuthBloc>().add(const UsernameChanged(''));
+                      context.read<AuthBloc>().add(const PasswordChanged(''));
+
+                      NavigationHelper.goNamed(
+                        InvRouteConstants.apHomeRoute.routeName,
+                      );
+                    }
+                  },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 100.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      spacing: 5.h,
-                      children: [
-                        Text(
-                          InvAppConstants.kUsername,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        const APUsernameField(),
-                        Gap(10.h),
-                        Text(
-                          InvAppConstants.kPassword,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        const APPasswordField(),
-                        Gap(20.h),
-                        ApButton(
-                          btnText: InvAppConstants.kLogin,
-                          width: 1.sw,
-                          height: 40,
-                          fontSize: 10.sp,
-                          onPressed: () => NavigationHelper.goNamed(
-                            InvRouteConstants.apHomeRoute.routeName,
-                          ),
-                        ),
-                      ],
+                    child: BlocBuilder<AuthBloc, AuthState>(
+                      builder: (context, state) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 5.h,
+                          children: [
+                            Text(
+                              InvAppConstants.kUsername,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            APUsernameField(
+                              errorText: state.usernameError,
+                              onChanged: (v) => context.read<AuthBloc>().add(
+                                UsernameChanged(v),
+                              ),
+                              controller: _usernameController,
+                            ),
+                            Gap(10.h),
+                            Text(
+                              InvAppConstants.kPassword,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            APPasswordField(
+                              errorText: state.passwordError,
+                              onChanged: (v) => context.read<AuthBloc>().add(
+                                PasswordChanged(v),
+                              ),
+                              controller: _passwordController,
+                            ),
+                            Gap(20.h),
+                            ApButton(
+                              btnText: InvAppConstants.kLogin,
+                              width: 1.sw,
+                              height: 40,
+                              fontSize: 10.sp,
+                              onPressed: state.isSubmitting
+                                  ? null
+                                  : () => context.read<AuthBloc>().add(
+                                      const LoginSubmitted(),
+                                    ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),

@@ -6,5 +6,5 @@ abstract class AuthRepository {
   /// Should return a [UserToken] on success or throw on failure.
   Future<UserToken> refreshToken(String refreshToken);
 
-  /// Optional: expose login/register methods if needed by your app.
+  Future<UserToken> login({required String username, required String password});
 }

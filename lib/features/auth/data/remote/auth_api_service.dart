@@ -1,13 +1,17 @@
 import 'package:dio/dio.dart';
+import 'package:retrofit/retrofit.dart';
+
 import '../model/user_token_model.dart';
 
-class AuthAPIService {
-  AuthAPIService(this._dio);
-  final Dio _dio;
+part 'auth_api_service.g.dart';
 
-  /// Sample refresh endpoint call. Replace path/body with your API contract.
-  Future<UserToken> refresh(String refreshToken) async {
-    final res = await _dio.post('/auth/refresh', data: {'refresh': refreshToken});
-    return UserToken.fromJson(res.data as Map<String, dynamic>);
-  }
+@RestApi()
+abstract class AuthAPIService {
+  factory AuthAPIService(Dio dio, {String baseUrl}) = _AuthAPIService;
+
+  @POST('/auth/refresh')
+  Future<UserToken> refresh(@Body() Map<String, dynamic> body);
+
+  @POST('/auth/login')
+  Future<HttpResponse<dynamic>> login(@Body() Map<String, dynamic> body);
 }

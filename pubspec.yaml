@@ -1,12 +1,11 @@
 name: inventory_app_pos
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
   sdk: ^3.10.4
-
 
 dependencies:
   flutter:
@@ -19,6 +18,7 @@ dependencies:
   go_router: ^17.0.1
   flutter_secure_storage: ^10.0.0
   dio: ^5.9.1
+  retrofit: ^4.4.1
   toastification: ^3.0.3
   hive_ce_flutter: ^2.3.4
   equatable: ^2.0.8
@@ -50,7 +50,6 @@ dev_dependencies:
   json_serializable: ^6.12.0
 
 flutter:
-
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

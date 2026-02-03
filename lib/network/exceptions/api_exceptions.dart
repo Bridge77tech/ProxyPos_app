@@ -11,7 +11,7 @@ class ApiExceptions implements Exception {
 
   ApiExceptions({this.message, this.statusCode});
 
-  static fromDio(Object error) {
+  static ApiExceptions? fromDio(Object error) {
     if (error is DioException) {
       if (error.type == DioExceptionType.connectionError) {
         return NetworkException();
@@ -19,7 +19,6 @@ class ApiExceptions implements Exception {
       final res = error.response;
       final message = error.message;
       final status = res?.statusCode;
-
 
       switch (status) {
         case 401:
@@ -34,6 +33,7 @@ class ApiExceptions implements Exception {
           return ApiExceptions(message: message, statusCode: status);
       }
     }
+    return null;
   }
 
   @override
