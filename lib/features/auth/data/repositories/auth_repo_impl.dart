@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 
 import '../../../../network/exceptions/api_exceptions.dart';
@@ -17,7 +18,13 @@ class AuthRepoImpl implements AuthRepository {
 
   @override
   Future<UserToken> refreshToken(String refreshToken) {
-    return _service.refresh({'refresh': refreshToken});
+    return _service.refresh({'refresh': refreshToken}).catchError((error) {
+      if (error is DioException) {
+        final mapped = ApiExceptions.fromDio(error);
+        if (mapped != null) throw mapped;
+      }
+      throw error;
+    });
   }
 
   @override
@@ -25,62 +32,82 @@ class AuthRepoImpl implements AuthRepository {
     required String username,
     required String password,
   }) {
-    return _service.login({'username': username, 'password': password}).then((
-      httpRes,
-    ) {
-      final status = httpRes.response.statusCode;
-      final parsed = _toJsonMap(httpRes.data);
+    return _service
+        .login({'username': username, 'password': password})
+        .then((httpRes) {
+          final status = httpRes.response.statusCode;
+          final parsed = _toJsonMap(httpRes.data);
 
-      if (status == 200 ||
-          (parsed?['statusCode'] == 200) ||
-          (parsed?['status_code'] == 200)) {
-        final tokenStr = parsed?['token'] as String?;
-        if (tokenStr == null || tokenStr.isEmpty) {
-          _log.e('Missing token in response');
-          throw ApiExceptions(
-            message: 'Missing token in response',
-            statusCode: status,
+          if (status == 200 ||
+              (parsed?['statusCode'] == 200) ||
+              (parsed?['status_code'] == 200)) {
+            final tokenStr = parsed?['token'] as String?;
+            if (tokenStr == null || tokenStr.isEmpty) {
+              _log.e('Missing token in response');
+              throw ApiExceptions(
+                message: 'Missing token in response',
+                statusCode: status,
+              );
+            }
+            final expiresAt = _parseJwtExpiry(tokenStr);
+            final access = Token(token: tokenStr, expiresAt: expiresAt);
+            return UserToken(access: access);
+          }
+
+          final msg = parsed?['error']?.toString() ?? 'Login failed';
+          _log.e(
+            'Login failed: $msg (status: ${httpRes.response.statusMessage})',
           );
-        }
-        final expiresAt = _parseJwtExpiry(tokenStr);
-        final access = Token(token: tokenStr, expiresAt: expiresAt);
-        return UserToken(access: access);
-      }
-
-      final msg = parsed?['message']?.toString() ?? 'Login failed';
-      _log.e('Login failed: $msg (status: $status)');
-      throw ApiExceptions(message: msg, statusCode: status);
-    });
+          throw ApiExceptions(message: msg, statusCode: status);
+        })
+        .catchError((error) {
+          if (error is DioException) {
+            final mapped = ApiExceptions.fromDio(error);
+            if (mapped != null) throw mapped;
+          }
+          throw error;
+        });
   }
 
   @override
   Future<ApUserEntity> getCurrentUser({required String accessToken}) async {
-    final res = await _service.profile('Bearer $accessToken');
-    final status = res.response.statusCode;
-    final parsed = _toJsonMap(res.data);
+    try {
+      final res = await _service.profile('Bearer $accessToken');
+      final status = res.response.statusCode;
+      final parsed = _toJsonMap(res.data);
 
-    if (status == 200 ||
-        (parsed?['statusCode'] == 200) ||
-        (parsed?['status_code'] == 200)) {
-      // Try common shapes: { user: {...} } or { data: {...} } or raw {...}
-      final Map<String, dynamic>? userMap = (() {
-        final u = parsed?['user'];
-        if (u is Map<String, dynamic>) return u;
-        final d = parsed?['data'];
-        if (d is Map<String, dynamic>) return d;
-        if (parsed is Map<String, dynamic>) return parsed;
-        return null;
-      })();
-      if (userMap != null) {
-        return ApUser.fromJson(userMap);
+      if (status == 200 ||
+          (parsed?['statusCode'] == 200) ||
+          (parsed?['status_code'] == 200)) {
+        // Try common shapes: { user: {...} } or { data: {...} } or raw {...}
+        final Map<String, dynamic>? userMap = (() {
+          final u = parsed?['user'];
+          if (u is Map<String, dynamic>) return u;
+          final d = parsed?['data'];
+          if (d is Map<String, dynamic>) return d;
+          if (parsed is Map<String, dynamic>) return parsed;
+          return null;
+        })();
+        if (userMap != null) {
+          return ApUser.fromJson(userMap);
+        }
+        _log.e('User payload missing or invalid');
+        throw ApiExceptions(
+          message: 'Invalid user payload',
+          statusCode: status,
+        );
       }
-      _log.e('User payload missing or invalid');
-      throw ApiExceptions(message: 'Invalid user payload', statusCode: status);
-    }
 
-    final msg = parsed?['message']?.toString() ?? 'Failed to fetch user';
-    _log.e('Fetch user failed: $msg (status: $status)');
-    throw ApiExceptions(message: msg, statusCode: status);
+      final msg = parsed?['message']?.toString() ?? 'Failed to fetch user';
+      _log.e('Fetch user failed: $msg (status: $status)');
+      throw ApiExceptions(message: msg, statusCode: status);
+    } catch (error) {
+      if (error is DioException) {
+        final mapped = ApiExceptions.fromDio(error);
+        if (mapped != null) throw mapped;
+      }
+      rethrow;
+    }
   }
 
   Map<String, dynamic>? _toJsonMap(dynamic data) {

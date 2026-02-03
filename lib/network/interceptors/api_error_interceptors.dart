@@ -6,9 +6,11 @@ class APIErrorInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     handler.reject(
       DioException(
-          requestOptions: err.requestOptions,
+        requestOptions: err.requestOptions,
+        response: err.response,
         type: err.type,
-        error: ApiExceptions.fromDio(err),
+        error: ApiExceptions.fromDio(err) ?? err.error,
+        message: err.message,
       ),
     );
   }

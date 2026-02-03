@@ -1,7 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../../network/api_service.dart';
+import '../../../../../network/exceptions/api_exceptions.dart';
 import '../../data/session/auth_session_storage.dart';
 import '../../data/session/auth_session_storage_hive.dart';
 import '../../data/session/user_profile_storage_hive.dart';
@@ -77,6 +79,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       try {
         final accessToken = token.access?.token;
         if (accessToken != null && accessToken.isNotEmpty) {
+          debugPrint('Fetching user profile after login');
           final user = await _repo.getCurrentUser(accessToken: accessToken);
           await _profileStorage.write(user);
         }
@@ -87,7 +90,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(state.copyWith(isSubmitting: false, isSuccess: true));
     } catch (e) {
       _log.e('Login error: $e');
-      emit(state.copyWith(isSubmitting: false, apiError: e.toString()));
+      final msg =
+          (e is ApiExceptions &&
+              e.message != null &&
+              e.message.toString().isNotEmpty)
+          ? e.message.toString()
+          : e.toString();
+      emit(state.copyWith(isSubmitting: false, apiError: msg));
     }
   }
 }

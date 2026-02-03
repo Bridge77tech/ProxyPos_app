@@ -70,7 +70,7 @@ class _APLoginPageState extends State<APLoginPage> {
   }
 
   void _showNoInternetOverlay() {
-    if (_noInternetOverlay != null) return; // already shown
+    if (_noInternetOverlay != null) return;
 
     final overlay = Overlay.of(context);
 

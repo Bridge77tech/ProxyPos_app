@@ -6,7 +6,7 @@ class APIStringConst {
       "https://inventoryappbackend-development.up.railway.app";
 
   // Optional API prefix (e.g., '/api' or '/api/v1')
-  static const String apAPIPrefix = "/api";
+  static const String apAPIPrefix = "api/v1";
 
   // Exception Messages
   static const String apUnAuthorizedMsg =
