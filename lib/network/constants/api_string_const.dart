@@ -5,6 +5,9 @@ class APIStringConst {
   static const String apAPIBaseURL =
       "https://inventoryappbackend-development.up.railway.app";
 
+  // Optional API prefix (e.g., '/api' or '/api/v1')
+  static const String apAPIPrefix = "/api";
+
   // Exception Messages
   static const String apUnAuthorizedMsg =
       "You are not authorized to make this request";

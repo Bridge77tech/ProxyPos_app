@@ -4,6 +4,7 @@ import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 import '../../../../../network/api_service.dart';
 import '../../data/session/auth_session_storage.dart';
 import '../../data/session/auth_session_storage_hive.dart';
+import '../../data/session/user_profile_storage_hive.dart';
 import '../../domain/repositories/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
@@ -20,6 +21,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   final AuthRepository _repo;
   final AuthSessionStorage? _session;
+  final UserProfileStorage _profileStorage = UserProfileStorageHive.instance;
   final _log = getLogger('AuthBloc');
 
   void _onUsernameChanged(UsernameChanged event, Emitter<AuthState> emit) {
@@ -71,6 +73,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         password: state.password,
       );
       await _session?.write(token);
+      // Fetch and persist user profile (non-blocking for navigation errors)
+      try {
+        final accessToken = token.access?.token;
+        if (accessToken != null && accessToken.isNotEmpty) {
+          final user = await _repo.getCurrentUser(accessToken: accessToken);
+          await _profileStorage.write(user);
+        }
+      } catch (e) {
+        _log.e('User fetch error: $e');
+        // Do not fail login if user fetch fails; UI can retry later.
+      }
       emit(state.copyWith(isSubmitting: false, isSuccess: true));
     } catch (e) {
       _log.e('Login error: $e');

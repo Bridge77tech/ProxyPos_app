@@ -1,8 +1,11 @@
 import 'package:hive_ce/hive.dart';
-import 'package:inventory_app_pos/features/auth/data/model/user_token_model.dart';
 
 class ApUserEntity extends HiveObject {
-  UserToken? token;
+  final String? id;
+  final String? username;
+  final String? email;
+  final String? role;
+  final DateTime? lastSync;
 
-  ApUserEntity({this.token});
+  ApUserEntity({this.id, this.username, this.email, this.role, this.lastSync});
 }

@@ -58,7 +58,8 @@ class APIService {
     // Ensure local storage is initialized (Hive + secure storage)
     LocalStorageServiceImpl.instance.init();
     _clearSession = ClearSessionUseCase(authSessionStorage);
-    _authAPIService = AuthAPIService(_dio);
+    // Pass baseUrl override to include API prefix if needed
+    _authAPIService = AuthAPIService(_dio, baseUrl: APIStringConst.apAPIPrefix);
     _authRepo = AuthRepoImpl(_authAPIService);
     _attemptTokenRefresh = AttemptTokenRefreshUseCase(
       authSessionStorage,

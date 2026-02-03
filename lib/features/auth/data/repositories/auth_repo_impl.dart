@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 
 import '../../../../network/exceptions/api_exceptions.dart';
+import '../../domain/entity/ap_user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../model/ap_user_model.dart';
 import '../model/token_model.dart';
 import '../model/user_token_model.dart';
 import '../remote/auth_api_service.dart';
@@ -29,7 +31,9 @@ class AuthRepoImpl implements AuthRepository {
       final status = httpRes.response.statusCode;
       final parsed = _toJsonMap(httpRes.data);
 
-      if (status == 200 || (parsed?['statusCode'] == 200)) {
+      if (status == 200 ||
+          (parsed?['statusCode'] == 200) ||
+          (parsed?['status_code'] == 200)) {
         final tokenStr = parsed?['token'] as String?;
         if (tokenStr == null || tokenStr.isEmpty) {
           _log.e('Missing token in response');
@@ -47,6 +51,36 @@ class AuthRepoImpl implements AuthRepository {
       _log.e('Login failed: $msg (status: $status)');
       throw ApiExceptions(message: msg, statusCode: status);
     });
+  }
+
+  @override
+  Future<ApUserEntity> getCurrentUser({required String accessToken}) async {
+    final res = await _service.profile('Bearer $accessToken');
+    final status = res.response.statusCode;
+    final parsed = _toJsonMap(res.data);
+
+    if (status == 200 ||
+        (parsed?['statusCode'] == 200) ||
+        (parsed?['status_code'] == 200)) {
+      // Try common shapes: { user: {...} } or { data: {...} } or raw {...}
+      final Map<String, dynamic>? userMap = (() {
+        final u = parsed?['user'];
+        if (u is Map<String, dynamic>) return u;
+        final d = parsed?['data'];
+        if (d is Map<String, dynamic>) return d;
+        if (parsed is Map<String, dynamic>) return parsed;
+        return null;
+      })();
+      if (userMap != null) {
+        return ApUser.fromJson(userMap);
+      }
+      _log.e('User payload missing or invalid');
+      throw ApiExceptions(message: 'Invalid user payload', statusCode: status);
+    }
+
+    final msg = parsed?['message']?.toString() ?? 'Failed to fetch user';
+    _log.e('Fetch user failed: $msg (status: $status)');
+    throw ApiExceptions(message: msg, statusCode: status);
   }
 
   Map<String, dynamic>? _toJsonMap(dynamic data) {

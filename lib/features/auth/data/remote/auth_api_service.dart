@@ -14,4 +14,10 @@ abstract class AuthAPIService {
 
   @POST('/auth/login')
   Future<HttpResponse<dynamic>> login(@Body() Map<String, dynamic> body);
+
+  // Fetch the currently authenticated user's profile
+  @GET('/auth/profile')
+  Future<HttpResponse<dynamic>> profile(
+    @Header('Authorization') String authorization,
+  );
 }
