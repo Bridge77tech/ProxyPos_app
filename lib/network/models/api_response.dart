@@ -11,15 +11,18 @@ class ApiResponse<T> {
     this.error,
     this.responseDesc,
     this.responseCode,
+    this.token,
     this.data,
-  });
+    });
 
   bool? error;
-  @JsonKey(name: 'resp_dec')
+  @JsonKey(name: 'message')
   String? responseDesc;
 
-  @JsonKey(name: 'resp_code')
+  @JsonKey(name: 'status_code')
   String? responseCode;
+
+  String? token;
 
   T? data;
 
@@ -28,5 +31,6 @@ class ApiResponse<T> {
     T Function(Object? json) fromJsonT,
   ) => _$ApiResponseFromJson(json, fromJsonT);
 
-  Map<String, dynamic> toJson(Function(T value) toJsonT) => _$ApiResponseToJson(this, toJsonT);
+  Map<String, dynamic> toJson(Function(T value) toJsonT) =>
+      _$ApiResponseToJson(this, toJsonT);
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:fasaha_utils/utils_export/fasaha_haus_state_status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -10,7 +11,6 @@ import 'package:inventory_app_pos/shared/app_buttons/ap_button.dart';
 import 'package:inventory_app_pos/shared/input_fileds/ap_username_field.dart';
 import 'package:inventory_app_pos/shared/input_fileds/app_password_field.dart';
 import 'package:loader_overlay/loader_overlay.dart';
-import 'package:toastification/toastification.dart';
 
 import '../../../../core/app_constants/ap_colors.dart';
 import '../../../../core/routing/navigation_helper.dart';
@@ -33,6 +33,8 @@ class _APLoginPageState extends State<APLoginPage> {
   Timer? _autoDismissTimer;
   late final TextEditingController _usernameController;
   late final TextEditingController _passwordController;
+  OverlayEntry? _errorOverlay;
+  Timer? _errorDismissTimer;
 
   @override
   void initState() {
@@ -59,13 +61,10 @@ class _APLoginPageState extends State<APLoginPage> {
 
   @override
   void dispose() {
+    _connectivitySub?.cancel();
     _usernameController.dispose();
     _passwordController.dispose();
     _autoDismissTimer?.cancel();
-    _autoDismissTimer = null;
-    _hideNoInternetOverlay();
-    _connectivitySub?.cancel();
-    _connectivitySub = null;
     super.dispose();
   }
 
@@ -134,6 +133,58 @@ class _APLoginPageState extends State<APLoginPage> {
     _noInternetOverlay = null;
   }
 
+  void _showTopRightSnack(String message) {
+    _hideTopRightSnack();
+    final overlay = Overlay.of(context);
+    final paddingTop = MediaQuery.of(context).padding.top;
+
+    _errorOverlay = OverlayEntry(
+      builder: (ctx) => Positioned(
+        top: paddingTop + 12,
+        right: 12,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            width: 200.w,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Text(
+              message,
+              style:
+                  Theme.of(
+                    ctx,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.white) ??
+                  const TextStyle(color: Colors.white),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(_errorOverlay!);
+    _errorDismissTimer?.cancel();
+    _errorDismissTimer = Timer(const Duration(seconds: 4), _hideTopRightSnack);
+  }
+
+  void _hideTopRightSnack() {
+    _errorDismissTimer?.cancel();
+    _errorDismissTimer = null;
+    _errorOverlay?.remove();
+    _errorOverlay = null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -192,33 +243,38 @@ class _APLoginPageState extends State<APLoginPage> {
                   ],
                 ),
                 Gap(50.h),
-                BlocListener<AuthBloc, AuthState>(
+                BlocListener<AuthBloc<Map<String, dynamic>>, AuthState>(
                   listenWhen: (prev, curr) =>
-                      prev.apiError != curr.apiError ||
-                      prev.isSuccess != curr.isSuccess ||
-                      prev.isSubmitting != curr.isSubmitting,
+                      prev.errorMessage != curr.errorMessage ||
+                      prev.stateStatus != curr.stateStatus,
                   listener: (context, state) {
                     // Toggle global loader overlay
-                    if (state.isSubmitting) {
+                    final isLoading = state.stateStatus is LoggingInUser;
+                    if (isLoading) {
                       context.loaderOverlay.show();
                     } else {
                       context.loaderOverlay.hide();
                     }
-                    if (state.apiError != null) {
-                      toastification.show(
-                        context: context,
-                        type: ToastificationType.error,
-                        title: Text(state.apiError!),
-                        alignment: Alignment.topRight,
-                        autoCloseDuration: const Duration(seconds: 4),
-                      );
+                    // Show error as SnackBar when state indicates an error
+                    // Prefer explicit error message if present; fallback to status message
+                    final status = state.stateStatus;
+                    final msg = state.errorMessage.isNotEmpty
+                        ? state.errorMessage
+                        : (status is ErrorStatus ? (status.error) : '');
+                    if (msg.isNotEmpty) {
+                      _showTopRightSnack(msg);
                     }
-                    if (state.isSuccess) {
+                    // Navigate on success
+                    if (state.stateStatus is LoginSuccess) {
                       // Clear inputs on success
                       _usernameController.clear();
                       _passwordController.clear();
-                      context.read<AuthBloc>().add(const UsernameChanged(''));
-                      context.read<AuthBloc>().add(const PasswordChanged(''));
+                      context.read<AuthBloc<Map<String, dynamic>>>().add(
+                        const UsernameChanged(''),
+                      );
+                      context.read<AuthBloc<Map<String, dynamic>>>().add(
+                        const PasswordChanged(''),
+                      );
 
                       NavigationHelper.goNamed(
                         InvRouteConstants.apHomeRoute.routeName,
@@ -227,7 +283,7 @@ class _APLoginPageState extends State<APLoginPage> {
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 100.0),
-                    child: BlocBuilder<AuthBloc, AuthState>(
+                    child: BlocBuilder<AuthBloc<Map<String, dynamic>>, AuthState>(
                       builder: (context, state) {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -238,10 +294,11 @@ class _APLoginPageState extends State<APLoginPage> {
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                             APUsernameField(
-                              errorText: state.usernameError,
-                              onChanged: (v) => context.read<AuthBloc>().add(
-                                UsernameChanged(v),
-                              ),
+                              // No field-level error in AuthState; rely on overall errorMessage
+                              errorText: null,
+                              onChanged: (v) => context
+                                  .read<AuthBloc<Map<String, dynamic>>>()
+                                  .add(UsernameChanged(v)),
                               controller: _usernameController,
                             ),
                             Gap(10.h),
@@ -250,10 +307,10 @@ class _APLoginPageState extends State<APLoginPage> {
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                             APPasswordField(
-                              errorText: state.passwordError,
-                              onChanged: (v) => context.read<AuthBloc>().add(
-                                PasswordChanged(v),
-                              ),
+                              errorText: null,
+                              onChanged: (v) => context
+                                  .read<AuthBloc<Map<String, dynamic>>>()
+                                  .add(PasswordChanged(v)),
                               controller: _passwordController,
                             ),
                             Gap(20.h),
@@ -262,11 +319,11 @@ class _APLoginPageState extends State<APLoginPage> {
                               width: 1.sw,
                               height: 40,
                               fontSize: 10.sp,
-                              onPressed: state.isSubmitting
+                              onPressed: (state.stateStatus is LoggingInUser)
                                   ? null
-                                  : () => context.read<AuthBloc>().add(
-                                      const LoginSubmitted(),
-                                    ),
+                                  : () => context
+                                        .read<AuthBloc<Map<String, dynamic>>>()
+                                        .add(const LoginFormSubmitted()),
                             ),
                           ],
                         );

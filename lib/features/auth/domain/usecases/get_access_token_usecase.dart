@@ -17,16 +17,25 @@ class GetAccessTokenUseCase {
     final stored = await _session.read();
     if (stored == null) return null;
 
+    // If access token is valid, return it
     if (!stored.isAccessTokenExpOrExpiringSoon) return stored.access?.token;
 
-    // Try refresh
-    final refreshed = await _attemptRefresh.call();
-    if (refreshed) {
-      final updated = await _session.read();
-      return updated?.access?.token;
+    // Try refresh if we have a refresh token
+    final hasRefresh = stored.refresh?.token?.isNotEmpty ?? false;
+    if (hasRefresh) {
+      final refreshed = await _attemptRefresh.call();
+      if (refreshed) {
+        final updated = await _session.read();
+        return updated?.access?.token;
+      }
     }
 
-    // Refresh failed -> clear session and return null
+    // No refresh token or refresh failed: fall back to current access token if present
+    if (stored.access?.token?.isNotEmpty ?? false) {
+      return stored.access!.token;
+    }
+
+    // Otherwise clear session and return null
     await _clear.call();
     return null;
   }

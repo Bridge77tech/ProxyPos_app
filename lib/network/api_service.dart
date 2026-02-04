@@ -3,14 +3,13 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
-import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:inventory_app_pos/network/constants/api_string_const.dart';
 import 'package:inventory_app_pos/network/interceptors/auth_interceptors.dart';
+import 'package:inventory_app_pos/network/interceptors/connectivity_interceptors.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
-import '../data/local_storage_service_impl.dart';
 import '../features/auth/data/remote/auth_api_service.dart';
 import '../features/auth/data/repositories/auth_repo_impl.dart';
 import '../features/auth/data/session/auth_session_storage.dart';
@@ -19,11 +18,11 @@ import '../features/auth/domain/repositories/auth_repository.dart';
 import '../features/auth/domain/usecases/attempt_token_refresh_usecase.dart';
 import '../features/auth/domain/usecases/clear_session_usecase.dart';
 import '../features/auth/domain/usecases/get_access_token_usecase.dart';
+import '../features/home/data/remote/home_api_service.dart';
 import 'interceptors/api_error_interceptors.dart';
 
 class APIService {
   late Dio _dio;
-  final _log = getLogger('APIService');
 
   Dio get dioInstance => _dio;
 
@@ -49,18 +48,19 @@ class APIService {
   late final AttemptTokenRefreshUseCase _attemptTokenRefresh;
   late final AuthRepository _authRepo;
   late final AuthAPIService _authAPIService;
+  // ignore: unused_field
+  late final HomeAPIService _homeAPIService;
 
   APIService._internal({
     required AuthSessionStorage authSessionStorage,
     Dio? dio,
   }) {
     _dio = dio ?? Dio();
-    // Ensure local storage is initialized (Hive + secure storage)
-    LocalStorageServiceImpl.instance.init();
     _clearSession = ClearSessionUseCase(authSessionStorage);
     // Pass baseUrl override to include API prefix if needed
     _authAPIService = AuthAPIService(_dio, baseUrl: APIStringConst.apAPIPrefix);
     _authRepo = AuthRepoImpl(_authAPIService);
+    _homeAPIService = HomeAPIService(_dio, baseUrl: APIStringConst.apAPIPrefix);
     _attemptTokenRefresh = AttemptTokenRefreshUseCase(
       authSessionStorage,
       _authRepo,
@@ -74,13 +74,11 @@ class APIService {
     _configureDio();
   }
 
-  AuthRepository get authRepository => _authRepo;
-
   void _configureDio() {
     _dio.options
       ..receiveDataWhenStatusError = true
       ..validateStatus = (status) {
-        return status != null && status < 500;
+        return status != null && status >= 200 && status < 300;
       }
       ..baseUrl = APIStringConst.apAPIBaseURL
       ..contentType = Headers.jsonContentType
@@ -93,6 +91,7 @@ class APIService {
     };
 
     _dio.interceptors.addAll([
+      ConnectivityInterceptor(),
       AuthInterceptor(
         _getAccessToken,
         _clearSession,
@@ -102,7 +101,7 @@ class APIService {
       APIErrorInterceptor(),
       RetryInterceptor(
         dio: _dio,
-        logPrint: (obj) => _log.e(obj),
+        logPrint: print,
         retries: 2,
         retryDelays: [1.seconds, 2.seconds],
       ),

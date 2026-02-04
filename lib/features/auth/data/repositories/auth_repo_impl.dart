@@ -4,61 +4,20 @@ import 'package:dio/dio.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 
 import '../../../../network/exceptions/api_exceptions.dart';
-import '../../domain/entity/ap_user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../model/ap_user_model.dart';
-import '../model/token_model.dart';
-import '../model/user_token_model.dart';
 import '../remote/auth_api_service.dart';
 
-class AuthRepoImpl implements AuthRepository {
+class AuthRepoImpl implements AuthRepository<Map<String, dynamic>> {
   AuthRepoImpl(this._service);
   final AuthAPIService _service;
   final _log = getLogger('AuthRepoImpl');
 
   @override
-  Future<UserToken> refreshToken(String refreshToken) {
-    return _service.refresh({'refresh': refreshToken}).catchError((error) {
-      if (error is DioException) {
-        final mapped = ApiExceptions.fromDio(error);
-        if (mapped != null) throw mapped;
-      }
-      throw error;
-    });
-  }
-
-  @override
-  Future<UserToken> login({
-    required String username,
-    required String password,
-  }) {
+  Future<Map<String, dynamic>> refreshToken(String refreshToken) {
     return _service
-        .login({'username': username, 'password': password})
-        .then((httpRes) {
-          final status = httpRes.response.statusCode;
-          final parsed = _toJsonMap(httpRes.data);
-
-          if (status == 200 ||
-              (parsed?['statusCode'] == 200) ||
-              (parsed?['status_code'] == 200)) {
-            final tokenStr = parsed?['token'] as String?;
-            if (tokenStr == null || tokenStr.isEmpty) {
-              _log.e('Missing token in response');
-              throw ApiExceptions(
-                message: 'Missing token in response',
-                statusCode: status,
-              );
-            }
-            final expiresAt = _parseJwtExpiry(tokenStr);
-            final access = Token(token: tokenStr, expiresAt: expiresAt);
-            return UserToken(access: access);
-          }
-
-          final msg = parsed?['error']?.toString() ?? 'Login failed';
-          _log.e(
-            'Login failed: $msg (status: ${httpRes.response.statusMessage})',
-          );
-          throw ApiExceptions(message: msg, statusCode: status);
+        .refresh({'refresh': refreshToken})
+        .then((token) {
+          return token.toJson();
         })
         .catchError((error) {
           if (error is DioException) {
@@ -70,37 +29,40 @@ class AuthRepoImpl implements AuthRepository {
   }
 
   @override
-  Future<ApUserEntity> getCurrentUser({required String accessToken}) async {
+  Future<Map<String, dynamic>> login(Map<String, dynamic> payload) {
+    return _service
+        .login(payload)
+        .then((httpRes) {
+          final parsed = _toJsonMap(httpRes.data);
+          if (parsed != null) return parsed;
+          _log.e('Unexpected login response format');
+          throw ApiExceptions(
+            message: 'Unexpected login response',
+            statusCode: httpRes.response.statusCode,
+          );
+        })
+        .catchError((error) {
+          if (error is DioException) {
+            final mapped = ApiExceptions.fromDio(error);
+            if (mapped != null) throw mapped;
+          }
+          throw error;
+        });
+  }
+
+  @override
+  Future<Map<String, dynamic>> getCurrentUser({
+    required String accessToken,
+  }) async {
     try {
       final res = await _service.profile('Bearer $accessToken');
-      final status = res.response.statusCode;
       final parsed = _toJsonMap(res.data);
-
-      if (status == 200 ||
-          (parsed?['statusCode'] == 200) ||
-          (parsed?['status_code'] == 200)) {
-        // Try common shapes: { user: {...} } or { data: {...} } or raw {...}
-        final Map<String, dynamic>? userMap = (() {
-          final u = parsed?['user'];
-          if (u is Map<String, dynamic>) return u;
-          final d = parsed?['data'];
-          if (d is Map<String, dynamic>) return d;
-          if (parsed is Map<String, dynamic>) return parsed;
-          return null;
-        })();
-        if (userMap != null) {
-          return ApUser.fromJson(userMap);
-        }
-        _log.e('User payload missing or invalid');
-        throw ApiExceptions(
-          message: 'Invalid user payload',
-          statusCode: status,
-        );
-      }
-
-      final msg = parsed?['message']?.toString() ?? 'Failed to fetch user';
-      _log.e('Fetch user failed: $msg (status: $status)');
-      throw ApiExceptions(message: msg, statusCode: status);
+      if (parsed != null) return parsed;
+      _log.e('Unexpected user profile response format');
+      throw ApiExceptions(
+        message: 'Unexpected user profile response',
+        statusCode: res.response.statusCode,
+      );
     } catch (error) {
       if (error is DioException) {
         final mapped = ApiExceptions.fromDio(error);
@@ -135,24 +97,24 @@ class AuthRepoImpl implements AuthRepository {
     return null;
   }
 
-  DateTime? _parseJwtExpiry(String jwt) {
-    try {
-      final parts = jwt.split('.');
-      if (parts.length != 3) return null;
-      final payload = base64Url.normalize(parts[1]);
-      final jsonStr = utf8.decode(base64Url.decode(payload));
-      final Map<String, dynamic> map =
-          json.decode(jsonStr) as Map<String, dynamic>;
-      final exp = map['exp'];
-      if (exp is int) {
-        return DateTime.fromMillisecondsSinceEpoch(
-          exp * 1000,
-          isUtc: true,
-        ).toLocal();
-      }
-      return null;
-    } catch (_) {
-      return null;
-    }
-  }
+  // DateTime? _parseJwtExpiry(String jwt) {
+  //   try {
+  //     final parts = jwt.split('.');
+  //     if (parts.length != 3) return null;
+  //     final payload = base64Url.normalize(parts[1]);
+  //     final jsonStr = utf8.decode(base64Url.decode(payload));
+  //     final Map<String, dynamic> map =
+  //         json.decode(jsonStr) as Map<String, dynamic>;
+  //     final exp = map['exp'];
+  //     if (exp is int) {
+  //       return DateTime.fromMillisecondsSinceEpoch(
+  //         exp * 1000,
+  //         isUtc: true,
+  //       ).toLocal();
+  //     }
+  //     return null;
+  //   } catch (_) {
+  //     return null;
+  //   }
+  // }
 }

@@ -4,6 +4,7 @@ class APIEndpointConst {
   APIEndpointConst._();
 
   static const List<APIEndpoint> privateAPIEndpoint = [
-
+    APIEndpoint(route: '/pos/products', requiredAuth: true),
+    APIEndpoint(route: '/pos/products/top-products', requiredAuth: true),
   ];
 }

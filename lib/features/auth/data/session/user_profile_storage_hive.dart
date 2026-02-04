@@ -32,7 +32,7 @@ class UserProfileStorageHive implements UserProfileStorage {
     if (raw == null) return null;
     try {
       final map = jsonDecode(raw) as Map<String, dynamic>;
-      return ApUser.fromJson(map);
+      return ApUserModel.fromJson(map);
     } catch (_) {
       return null;
     }
@@ -42,9 +42,9 @@ class UserProfileStorageHive implements UserProfileStorage {
   Future<void> write(ApUserEntity user) async {
     final box = await _box();
     final raw = jsonEncode(
-      (user is ApUser)
+      (user is ApUserModel)
           ? user.toJson()
-          : ApUser(
+          : ApUserModel(
               id: user.id,
               username: user.username,
               email: user.email,

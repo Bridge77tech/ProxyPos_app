@@ -39,6 +39,7 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
             DioException(
               requestOptions: options,
               type: DioExceptionType.cancel,
+              error: 'Missing access token for ${options.path}',
             ),
           );
         }

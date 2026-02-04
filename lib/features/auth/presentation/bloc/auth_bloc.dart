@@ -1,102 +1,170 @@
 import 'package:bloc/bloc.dart';
+import 'package:fasaha_utils/utils_export/fasaha_haus_state_status.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:inventory_app_pos/core/exceptions/auth_exception.dart';
+import 'package:inventory_app_pos/core/exceptions/local_storage_exception.dart';
+import 'package:inventory_app_pos/core/routing/navigation_helper.dart';
+import 'package:inventory_app_pos/core/routing/route_constants.dart';
+import 'package:inventory_app_pos/data/local_storage_service.dart';
+import 'package:inventory_app_pos/data/storage_box.dart';
+import 'package:inventory_app_pos/features/auth/data/model/ap_user_model.dart';
+import 'package:inventory_app_pos/features/auth/data/model/user_token_model.dart';
+import 'package:inventory_app_pos/features/auth/data/session/auth_session_storage_hive.dart';
+import 'package:inventory_app_pos/features/auth/domain/usecases/login_use_case.dart';
+import 'package:inventory_app_pos/features/auth/domain/usecases/save_user_info_use_case.dart';
+import 'package:inventory_app_pos/features/home/data/model/product_model.dart';
+import 'package:inventory_app_pos/features/home/domain/usecases/get_top_product_use_case.dart';
+import 'package:inventory_app_pos/network/exceptions/api_exceptions.dart';
 
-import '../../../../../network/api_service.dart';
-import '../../../../../network/exceptions/api_exceptions.dart';
-import '../../data/session/auth_session_storage.dart';
-import '../../data/session/auth_session_storage_hive.dart';
-import '../../data/session/user_profile_storage_hive.dart';
-import '../../domain/repositories/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
-class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  AuthBloc({AuthRepository? repository, AuthSessionStorage? session})
-    : _repo = repository ?? APIService().authRepository,
-      _session = session ?? AuthSessionStorageHive.instance,
-      super(const AuthState()) {
-    on<UsernameChanged>(_onUsernameChanged);
-    on<PasswordChanged>(_onPasswordChanged);
-    on<LoginSubmitted>(_onLoginSubmitted);
-  }
-
-  final AuthRepository _repo;
-  final AuthSessionStorage? _session;
-  final UserProfileStorage _profileStorage = UserProfileStorageHive.instance;
+class AuthBloc<T> extends Bloc<AuthEvent, AuthState> {
+  final LoginUseCase<T> _authUseCase;
+  final SaveUserInfoUseCase _saveUserInfoUseCase;
+  final GetTopProductUseCase _getTopProductUseCase;
+  final ILocalStorageService _storage;
   final _log = getLogger('AuthBloc');
 
+  GlobalKey<FormState> loginFormKey = GlobalKey<FormState>();
+
+  AuthBloc(
+    this._authUseCase,
+    this._saveUserInfoUseCase,
+    this._getTopProductUseCase,
+    this._storage,
+  ) : super(const AuthState()) {
+    on<LoginFormSubmitted>(_onLoginButtonPressed);
+    on<UsernameChanged>(_onUsernameChanged);
+    on<PasswordChanged>(_onPasswordChanged);
+    on<SaveUserInfo>(_onSaveUserInfo);
+  }
+
   void _onUsernameChanged(UsernameChanged event, Emitter<AuthState> emit) {
-    final username = event.username.trim();
-    emit(
-      state.copyWith(
-        username: username,
-        usernameError: username.isEmpty ? 'Username is required' : null,
-      ),
-    );
+    emit(state.copyWith(username: event.username));
   }
 
   void _onPasswordChanged(PasswordChanged event, Emitter<AuthState> emit) {
-    final password = event.password;
-    emit(
-      state.copyWith(
-        password: password,
-        passwordError: password.isEmpty ? 'Password is required' : null,
-      ),
-    );
+    emit(state.copyWith(password: event.password));
   }
 
-  Future<void> _onLoginSubmitted(
-    LoginSubmitted event,
+  Future<void> _onLoginButtonPressed(
+    LoginFormSubmitted event,
     Emitter<AuthState> emit,
   ) async {
-    // Validate
-    final usernameError = state.username.isEmpty
-        ? 'Username is required'
-        : null;
-    final passwordError = state.password.isEmpty
-        ? 'Password is required'
-        : null;
+    ApUserModel? user;
+    final payload = {'username': state.username, 'password': state.password};
 
-    if (usernameError != null || passwordError != null) {
+    emit(state.copyWith(stateStatus: const LoggingInUser()));
+
+    try {
+      final T rawResult = await _authUseCase(payload);
+
+      if (rawResult is Map<String, dynamic>) {
+        final mapResult = rawResult;
+        // Persist tokens to session if present in login response
+        try {
+          if (mapResult.containsKey('access') ||
+              mapResult.containsKey('refresh')) {
+            final token = UserToken.fromJson(mapResult);
+            await AuthSessionStorageHive.instance.write(token);
+          }
+        } catch (_) {
+          // Ignore token persist errors; interceptor will handle refresh later
+        }
+        final dynamic userJson = mapResult['user'] ?? mapResult;
+        if (userJson is Map<String, dynamic>) {
+          user = ApUserModel.fromJson(userJson);
+        }
+        if (user != null) {
+          add(SaveUserInfo(user));
+          emit(state.copyWith(stateStatus: LoginSuccess()));
+          return;
+        }
+        // Fallback when response lacks expected structure
+        emit(
+          state.copyWith(stateStatus: ErrorStatus('Unexpected login response')),
+        );
+        return;
+      }
+      // Non-map response
       emit(
         state.copyWith(
-          usernameError: usernameError,
-          passwordError: passwordError,
+          stateStatus: ErrorStatus('Unexpected login response type'),
         ),
       );
-      return;
-    }
-
-    emit(state.copyWith(isSubmitting: true, apiError: null));
-    try {
-      final token = await _repo.login(
-        username: state.username,
-        password: state.password,
+    } on AuthException catch (e, st) {
+      _log.e('Login failed: ${e.message}');
+      _log.e(st.toString());
+      emit(
+        state.copyWith(
+          stateStatus: ErrorStatus(e.message),
+          errorMessage: e.message,
+        ),
       );
-      await _session?.write(token);
-      // Fetch and persist user profile (non-blocking for navigation errors)
-      try {
-        final accessToken = token.access?.token;
-        if (accessToken != null && accessToken.isNotEmpty) {
-          debugPrint('Fetching user profile after login');
-          final user = await _repo.getCurrentUser(accessToken: accessToken);
-          await _profileStorage.write(user);
-        }
-      } catch (e) {
-        _log.e('User fetch error: $e');
-        // Do not fail login if user fetch fails; UI can retry later.
-      }
-      emit(state.copyWith(isSubmitting: false, isSuccess: true));
-    } catch (e) {
-      _log.e('Login error: $e');
-      final msg =
-          (e is ApiExceptions &&
-              e.message != null &&
-              e.message.toString().isNotEmpty)
-          ? e.message.toString()
-          : e.toString();
-      emit(state.copyWith(isSubmitting: false, apiError: msg));
+    } on ApiExceptions catch (e, st) {
+      _log.e('Login failed: ${e.toString()}');
+      _log.e(st.toString());
+      emit(
+        state.copyWith(
+          stateStatus: ErrorStatus(e.toString()),
+          errorMessage: e.toString(),
+        ),
+      );
+    } catch (e, st) {
+      _log.e('Login failed: $e');
+      _log.e(st.toString());
+      emit(
+        state.copyWith(
+          stateStatus: const ErrorStatus('Request failed'),
+          errorMessage: 'Request failed',
+        ),
+      );
+    } finally {
+      emit(state.copyWith(stateStatus: const InitStatus()));
     }
+  }
+
+  Future<void> _onSaveUserInfo(
+    SaveUserInfo event,
+    Emitter<AuthState> emit,
+  ) async {
+    try {
+      await _saveUserInfoUseCase(event.userInfo);
+      // Prefetch top products and cache to Hive to speed up initial dashboard
+      try {
+        await _storage.init();
+        final raw = await _getTopProductUseCase.call(const {});
+        final products = raw
+            .whereType<Map<String, dynamic>>()
+            .map((json) => Products.fromJson(json))
+            .toList();
+        await _storage.openBox<List>(StorageBox.topProducts);
+        final box = _storage.getBox<List>(StorageBox.topProducts.name);
+        await box.put('top_products', products.map((p) => p.toJson()).toList());
+      } catch (_) {
+        // Ignore prefetch errors; dashboard will fetch on-demand
+      }
+      emit(state.copyWith(stateStatus: LoginSuccess()));
+      NavigationHelper.popAllAndPushNamed(
+        InvRouteConstants.apHomeRoute.routeName,
+      );
+    } on LocalStorageException catch (e) {
+      _log.e('Failed to save user info: ${e.message}');
+      emit(
+        state.copyWith(
+          stateStatus: ErrorStatus(
+            e.message ?? "Unable to login user at this time.",
+          ),
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<void> close() {
+    _log.i('AuthBloc closed');
+    return super.close();
   }
 }

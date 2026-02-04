@@ -1,41 +1,30 @@
 import 'package:equatable/equatable.dart';
+import 'package:fasaha_utils/utils_export/fasaha_haus_state_status.dart';
 
 class AuthState extends Equatable {
   const AuthState({
     this.username = '',
     this.password = '',
-    this.usernameError,
-    this.passwordError,
-    this.apiError,
-    this.isSubmitting = false,
-    this.isSuccess = false,
+    this.errorMessage = '',
+    this.stateStatus = const InitStatus(),
   });
 
   final String username;
   final String password;
-  final String? usernameError;
-  final String? passwordError;
-  final String? apiError;
-  final bool isSubmitting;
-  final bool isSuccess;
+  final String errorMessage;
+  final StateStatus stateStatus;
 
   AuthState copyWith({
     String? username,
     String? password,
-    String? usernameError,
-    String? passwordError,
-    String? apiError,
-    bool? isSubmitting,
-    bool? isSuccess,
+    String? errorMessage,
+    StateStatus? stateStatus,
   }) {
     return AuthState(
       username: username ?? this.username,
       password: password ?? this.password,
-      usernameError: usernameError,
-      passwordError: passwordError,
-      apiError: apiError,
-      isSubmitting: isSubmitting ?? this.isSubmitting,
-      isSuccess: isSuccess ?? this.isSuccess,
+      errorMessage: errorMessage ?? this.errorMessage,
+      stateStatus: stateStatus ?? this.stateStatus,
     );
   }
 
@@ -43,10 +32,7 @@ class AuthState extends Equatable {
   List<Object?> get props => [
     username,
     password,
-    usernameError,
-    passwordError,
-    apiError,
-    isSubmitting,
-    isSuccess,
+    errorMessage,
+    stateStatus,
   ];
 }
