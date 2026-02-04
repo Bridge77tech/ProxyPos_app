@@ -260,9 +260,11 @@ packages:
   fasaha_utils:
     dependency: "direct main"
     description:
-      path: "../fasaha_utils"
-      relative: true
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: "4d5214547d1b5a882f47fa7997c55d87e5a843c1"
+      url: "https://github.com/FasahaHaus/fasaha_huas_utils.git"
+    source: git
     version: "0.0.1"
   ffi:
     dependency: transitive
