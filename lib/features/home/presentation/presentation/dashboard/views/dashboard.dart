@@ -3,17 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:inventory_app_pos/core/app_constants/inv_app_constants.dart';
-import 'package:inventory_app_pos/data/local_storage_service_impl.dart';
-import 'package:inventory_app_pos/features/home/data/remote/home_api_service.dart';
-import 'package:inventory_app_pos/features/home/data/repositories/home_repo_impl.dart';
-import 'package:inventory_app_pos/features/home/domain/usecases/get_top_product_use_case.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/bloc/dashboard_bloc.dart';
-import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/bloc/dashboard_event.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/bloc/dashboard_state.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/widgets/product_container_card.dart';
 import 'package:inventory_app_pos/generated/assets.dart';
-import 'package:inventory_app_pos/network/api_service.dart';
-import 'package:inventory_app_pos/network/constants/api_string_const.dart';
 import 'package:inventory_app_pos/shared/app_buttons/ap_button.dart';
 
 import '../../../../../../core/app_constants/ap_colors.dart';

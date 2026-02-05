@@ -8,8 +8,6 @@ import 'package:inventory_app_pos/core/routing/navigation_helper.dart';
 import 'package:inventory_app_pos/core/routing/route_constants.dart';
 import 'package:inventory_app_pos/data/local_storage_service.dart';
 import 'package:inventory_app_pos/data/storage_box.dart';
-import 'package:inventory_app_pos/features/home/data/model/product_model.dart';
-import 'package:inventory_app_pos/features/home/domain/usecases/get_top_product_use_case.dart';
 
 import 'auth_event.dart';
 import 'auth_state.dart';

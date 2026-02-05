@@ -10,8 +10,6 @@ import 'package:inventory_app_pos/network/interceptors/connectivity_interceptors
 import 'package:nb_utils/nb_utils.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
-import '../features/auth/data/data_source/remote/auth_api_service.dart';
-import '../features/home/data/remote/home_api_service.dart';
 import 'interceptors/api_error_interceptors.dart';
 
 class APIService {

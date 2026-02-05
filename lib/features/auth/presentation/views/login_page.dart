@@ -19,7 +19,6 @@ import '../../../../generated/assets.dart';
 import '../../presentation/bloc/auth_bloc.dart';
 import '../../presentation/bloc/auth_event.dart';
 import '../../presentation/bloc/auth_state.dart';
-import 'package:inventory_app_pos/features/auth/data/model/ap_user_model.dart';
 
 class APLoginPage extends StatefulWidget {
   const APLoginPage({super.key});
