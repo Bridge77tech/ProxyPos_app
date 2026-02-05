@@ -1,23 +1,29 @@
-import '../../domain/entity/ap_user_entity.dart';
+import 'package:json_annotation/json_annotation.dart';
 
-class ApUserModel extends ApUserEntity {
-  ApUserModel({super.id, super.username, super.email, super.role, super.lastSync});
+part 'ap_user_model.g.dart';
 
-  factory ApUserModel.fromJson(Map<String, dynamic> json) {
-    return ApUserModel(
-      id: json['id'] as String?,
-      username: json['username'] as String?,
-      email: json['email'] as String?,
-      role: json['role'] as String?,
-      lastSync: json['lastSync'] == null ? null : DateTime.tryParse(json['lastSync'] as String)?.toLocal(),
-    );
-  }
+@JsonSerializable()
+class APUserModel {
+  final String? id;
 
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'username': username,
-        'email': email,
-        'role': role,
-        'lastSync': lastSync?.toIso8601String(),
-      };
+  final String username;
+
+  final String email;
+
+  final String? role;
+
+  final String lastSync;
+
+  APUserModel({
+    this.id,
+    required this.username,
+    required this.email,
+    this.role,
+    required this.lastSync,
+  });
+
+  factory APUserModel.fromJson(Map<String, dynamic> json) => _$APUserModelFromJson(json);
+
+  Map<String, dynamic> toJson() => _$APUserModelToJson(this);
 }
+

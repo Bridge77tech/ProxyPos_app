@@ -9,7 +9,7 @@ class APIErrorInterceptor extends Interceptor {
         requestOptions: err.requestOptions,
         response: err.response,
         type: err.type,
-        error: ApiExceptions.fromDio(err) ?? err.error,
+        error: APIExceptions.fromDio(err) ?? err.error,
         message: err.message,
       ),
     );

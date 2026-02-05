@@ -16,6 +16,7 @@ Products _$ProductsFromJson(Map<String, dynamic> json) => Products(
       .toList(),
   currentStock: (json['currentStock'] as num?)?.toInt(),
   piecesPerPack: (json['piecesPerPack'] as num?)?.toInt(),
+  imagePath: json['imagePath'] as String?,
 );
 
 Map<String, dynamic> _$ProductsToJson(Products instance) => <String, dynamic>{
@@ -26,4 +27,5 @@ Map<String, dynamic> _$ProductsToJson(Products instance) => <String, dynamic>{
   'variants': instance.variants?.map((e) => e.toJson()).toList(),
   'currentStock': instance.currentStock,
   'piecesPerPack': instance.piecesPerPack,
+  'imagePath': instance.imagePath,
 };

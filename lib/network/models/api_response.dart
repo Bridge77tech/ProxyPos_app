@@ -1,36 +1,22 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'api_response.g.dart';
-
-@JsonSerializable(
-  fieldRename: FieldRename.snake,
-  genericArgumentFactories: true,
-)
-class ApiResponse<T> {
-  ApiResponse({
-    this.error,
-    this.responseDesc,
-    this.responseCode,
+@JsonSerializable(createFactory: false, createToJson: false)
+abstract class APIResponse<T> {
+  APIResponse({
+    this.message,
+    this.statusCode,
     this.token,
-    this.data,
     });
 
-  bool? error;
-  @JsonKey(name: 'message')
-  String? responseDesc;
+  @JsonKey(name: 'message', includeFromJson: true)
+  String? message;
 
-  @JsonKey(name: 'status_code')
-  String? responseCode;
+  @JsonKey(name: 'statusCode', includeFromJson: true)
+  String? statusCode;
 
   String? token;
 
-  T? data;
+  T fromJson(Map<String, dynamic> json);
 
-  factory ApiResponse.fromJson(
-    Map<String, dynamic> json,
-    T Function(Object? json) fromJsonT,
-  ) => _$ApiResponseFromJson(json, fromJsonT);
-
-  Map<String, dynamic> toJson(Function(T value) toJsonT) =>
-      _$ApiResponseToJson(this, toJsonT);
+  Map<String, dynamic> toJson();
 }

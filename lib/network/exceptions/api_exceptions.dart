@@ -7,13 +7,13 @@ import 'bad_getway_exception.dart';
 import 'bad_request_exception.dart';
 import 'network_exception.dart';
 
-class ApiExceptions implements Exception {
+class APIExceptions implements Exception {
   dynamic message;
   final int? statusCode;
 
-  ApiExceptions({this.message, this.statusCode});
+  APIExceptions({this.message, this.statusCode});
 
-  static ApiExceptions? fromDio(Object error) {
+  static APIExceptions? fromDio(Object error) {
     if (error is DioException) {
       if (error.type == DioExceptionType.connectionError) {
         return NetworkException();
@@ -72,7 +72,7 @@ class ApiExceptions implements Exception {
         case 500:
           return BadGatewayException(message: message, statusCode: status);
         default:
-          return ApiExceptions(message: message, statusCode: status);
+          return APIExceptions(message: message, statusCode: status);
       }
     }
     return null;

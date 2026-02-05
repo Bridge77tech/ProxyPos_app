@@ -33,7 +33,7 @@ class LoginFormSubmitted extends AuthEvent {
 }
 
 class SaveUserInfo extends AuthEvent {
-  final ApUserModel userInfo;
+  final APUserModel userInfo;
 
   const SaveUserInfo(this.userInfo);
 

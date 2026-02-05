@@ -2,7 +2,7 @@ import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 import 'package:inventory_app_pos/features/home/domain/repositories/home_repository.dart';
 
 class GetTopProductUseCase {
-  HomeRepository _repo;
+  final HomeRepository _repo;
   final _log = getLogger('GetTopProductUseCase');
 
   GetTopProductUseCase(this._repo);

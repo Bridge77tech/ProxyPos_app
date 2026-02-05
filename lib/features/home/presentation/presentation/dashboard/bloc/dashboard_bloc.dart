@@ -1,7 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:inventory_app_pos/data/local_storage_service.dart';
 import 'package:inventory_app_pos/data/storage_box.dart';
-import 'package:inventory_app_pos/features/auth/data/session/auth_session_storage_hive.dart';
+// import 'package:inventory_app_pos/features/auth/data/session/auth_session_storage_hive.dart';
 import 'package:inventory_app_pos/features/home/data/model/product_model.dart';
 import 'package:inventory_app_pos/features/home/domain/usecases/get_top_product_use_case.dart';
 
@@ -28,12 +28,12 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       await _storage.init();
 
       // Ensure we have a valid access token before making an auth-required call
-      final session = await AuthSessionStorageHive.instance.read();
-      final hasToken = (session?.access?.token?.isNotEmpty ?? false);
-      if (!hasToken) {
-        emit(state.copyWith(loading: false, error: 'Not authenticated'));
-        return;
-      }
+      // final session = await AuthSessionStorageHive.instance.read();
+      // final hasToken = (session?.access?.token?.isNotEmpty ?? false);
+      // if (!hasToken) {
+      //   emit(state.copyWith(loading: false, error: 'Not authenticated'));
+      //   return;
+      // }
 
       // Fetch raw list from API
       final raw = await _getTopProductUseCase.call(event.params);

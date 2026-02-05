@@ -19,6 +19,7 @@ import '../../../../generated/assets.dart';
 import '../../presentation/bloc/auth_bloc.dart';
 import '../../presentation/bloc/auth_event.dart';
 import '../../presentation/bloc/auth_state.dart';
+import 'package:inventory_app_pos/features/auth/data/model/ap_user_model.dart';
 
 class APLoginPage extends StatefulWidget {
   const APLoginPage({super.key});
@@ -243,7 +244,7 @@ class _APLoginPageState extends State<APLoginPage> {
                   ],
                 ),
                 Gap(50.h),
-                BlocListener<AuthBloc<Map<String, dynamic>>, AuthState>(
+                BlocListener<AuthBloc, AuthState>(
                   listenWhen: (prev, curr) =>
                       prev.errorMessage != curr.errorMessage ||
                       prev.stateStatus != curr.stateStatus,
@@ -269,12 +270,8 @@ class _APLoginPageState extends State<APLoginPage> {
                       // Clear inputs on success
                       _usernameController.clear();
                       _passwordController.clear();
-                      context.read<AuthBloc<Map<String, dynamic>>>().add(
-                        const UsernameChanged(''),
-                      );
-                      context.read<AuthBloc<Map<String, dynamic>>>().add(
-                        const PasswordChanged(''),
-                      );
+                      context.read<AuthBloc>().add(const UsernameChanged(''));
+                      context.read<AuthBloc>().add(const PasswordChanged(''));
 
                       NavigationHelper.goNamed(
                         InvRouteConstants.apHomeRoute.routeName,
@@ -283,7 +280,7 @@ class _APLoginPageState extends State<APLoginPage> {
                   },
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 100.0),
-                    child: BlocBuilder<AuthBloc<Map<String, dynamic>>, AuthState>(
+                    child: BlocBuilder<AuthBloc, AuthState>(
                       builder: (context, state) {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,7 +294,7 @@ class _APLoginPageState extends State<APLoginPage> {
                               // No field-level error in AuthState; rely on overall errorMessage
                               errorText: null,
                               onChanged: (v) => context
-                                  .read<AuthBloc<Map<String, dynamic>>>()
+                                  .read<AuthBloc>()
                                   .add(UsernameChanged(v)),
                               controller: _usernameController,
                             ),
@@ -309,7 +306,7 @@ class _APLoginPageState extends State<APLoginPage> {
                             APPasswordField(
                               errorText: null,
                               onChanged: (v) => context
-                                  .read<AuthBloc<Map<String, dynamic>>>()
+                                  .read<AuthBloc>()
                                   .add(PasswordChanged(v)),
                               controller: _passwordController,
                             ),
@@ -322,7 +319,7 @@ class _APLoginPageState extends State<APLoginPage> {
                               onPressed: (state.stateStatus is LoggingInUser)
                                   ? null
                                   : () => context
-                                        .read<AuthBloc<Map<String, dynamic>>>()
+                                        .read<AuthBloc>()
                                         .add(const LoginFormSubmitted()),
                             ),
                           ],

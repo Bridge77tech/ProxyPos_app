@@ -9,7 +9,7 @@ class GetProductsInStockUseCase {
 
   GetProductsInStockUseCase(this._repo);
 
-  Future<ApiResponse<dynamic>> call(Map<String, dynamic> params) async {
+  Future<APIResponse<dynamic>> call(Map<String, dynamic> params) async {
     try {
       final res = await _repo.getProductsInStock(params);
       _log.i('Products fetched (raw), status=${res.response.statusCode}');

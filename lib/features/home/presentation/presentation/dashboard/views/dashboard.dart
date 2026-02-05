@@ -23,306 +23,293 @@ class APDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (ctx) {
-        final dio = APIService().dioInstance;
-        final homeApi = HomeAPIService(
-          dio,
-          baseUrl: APIStringConst.apAPIPrefix,
-        );
-        final repo = HomeRepoImpl<Map<String, dynamic>>(
-          homeApi,
-          (json) => json,
-        );
-        final usecase = GetTopProductUseCase(repo);
-        final storage = LocalStorageServiceImpl.instance;
-        return DashboardBloc(usecase, storage)..add(const LoadTopProducts());
-      },
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 20.w),
-        child: Row(
-          children: [
-            // Left column - flexible (approx 70%)
-            Expanded(
-              flex: 7,
-              child: Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    height: 0.2.sh,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 30.w,
-                      vertical: 12.h,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12.r),
-                      color: InvAPColors.kWhiteColor,
-                    ),
-                    child: Column(children: [
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20.w),
+      child: Row(
+        children: [
+          // Left column - flexible (approx 70%)
+          Expanded(
+            flex: 7,
+            child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 0.2.sh,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 30.w,
+                    vertical: 12.h,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12.r),
+                    color: InvAPColors.kWhiteColor,
+                  ),
+                  child: Column(children: [
 
+                  ],
+                ),
+                ),
+                Gap(10.h),
+                Expanded(
+                  child: Container(
+                    width: double.infinity,
+                    margin: EdgeInsets.only(bottom: 10.h),
+                    decoration: BoxDecoration(
+                      color: InvAPColors.kWhiteColor,
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 25.w,
+                            vertical: 12.h,
+                          ),
+                          child: Text(
+                            'Most Purchased',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                        Expanded(
+                          child: BlocBuilder<DashboardBloc, DashboardState>(
+                            builder: (context, state) {
+                              if (state.loading) {
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              }
+                              if (state.error != null &&
+                                  state.topProducts.isEmpty) {
+                                return Center(
+                                  child: Text(
+                                    'Failed to load top products',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                );
+                              }
+                              final items = state.topProducts;
+                              return GridView.builder(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12.w,
+                                ),
+                                shrinkWrap: true,
+                                primary: false,
+                                itemCount: items.length,
+                                gridDelegate:
+                                    SliverGridDelegateWithMaxCrossAxisExtent(
+                                      maxCrossAxisExtent: 150.w,
+                                      mainAxisSpacing: 25.h,
+                                      crossAxisSpacing: 25.w,
+                                      childAspectRatio: 1,
+                                    ),
+                                itemBuilder: (context, i) {
+                                  final p = items[i];
+                                  final v = (p.variants?.isNotEmpty ?? false)
+                                      ? p.variants!.first
+                                      : null;
+                                  return ProductContainerCard(
+                                    variants: v,
+                                    product: p,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Gap(10.w),
+
+          // Right column - flexible (approx 30%) using flex-based vertical sizing
+          Expanded(
+            flex: 3,
+            child: Column(
+              children: [
+                // Top small card
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 8.h,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5.r),
+                    color: InvAPColors.kWhiteColor,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        InvAppConstants.kCart,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      InkWell(
+                        onTap: () {},
+                        child: Image.asset(
+                          Assets.iconsDeleteIcon,
+                          scale: 4.5,
+                        ),
+                      ),
                     ],
                   ),
-                  ),
-                  Gap(10.h),
-                  Expanded(
-                    child: Container(
-                      width: double.infinity,
-                      margin: EdgeInsets.only(bottom: 10.h),
-                      decoration: BoxDecoration(
-                        color: InvAPColors.kWhiteColor,
-                        borderRadius: BorderRadius.circular(12.r),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 25.w,
-                              vertical: 12.h,
-                            ),
-                            child: Text(
-                              'Most Purchased',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                          ),
-                          Expanded(
-                            child: BlocBuilder<DashboardBloc, DashboardState>(
-                              builder: (context, state) {
-                                if (state.loading) {
-                                  return const Center(
-                                    child: CircularProgressIndicator(),
-                                  );
-                                }
-                                if (state.error != null &&
-                                    state.topProducts.isEmpty) {
-                                  return Center(
-                                    child: Text(
-                                      'Failed to load top products',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
-                                    ),
-                                  );
-                                }
-                                final items = state.topProducts;
-                                return GridView.builder(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 12.w,
-                                  ),
-                                  shrinkWrap: true,
-                                  primary: false,
-                                  itemCount: items.length,
-                                  gridDelegate:
-                                      SliverGridDelegateWithMaxCrossAxisExtent(
-                                        maxCrossAxisExtent: 150.w,
-                                        mainAxisSpacing: 25.h,
-                                        crossAxisSpacing: 25.w,
-                                        childAspectRatio: 1,
-                                      ),
-                                  itemBuilder: (context, i) {
-                                    final p = items[i];
-                                    final v = (p.variants?.isNotEmpty ?? false)
-                                        ? p.variants!.first
-                                        : null;
-                                    return ProductContainerCard(
-                                      variants: v,
-                                      product: p,
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
 
-            Gap(10.w),
+                Gap(10.h),
 
-            // Right column - flexible (approx 30%) using flex-based vertical sizing
-            Expanded(
-              flex: 3,
-              child: Column(
-                children: [
-                  // Top small card
-                  Container(
+                // Middle area: takes majority of remaining vertical space
+                Expanded(
+                  flex: 2,
+                  child: Container(
                     width: double.infinity,
                     padding: EdgeInsets.symmetric(
                       horizontal: 10.w,
                       vertical: 8.h,
                     ),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5.r),
+                      borderRadius: BorderRadius.circular(12.r),
                       color: InvAPColors.kWhiteColor,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          InvAppConstants.kCart,
-                          style: Theme.of(context).textTheme.bodyLarge,
+                    child: ListView.builder(
+                      itemCount: 10,
+                      itemBuilder: (context, item) => Container(
+                        margin: EdgeInsets.only(bottom: 10.h),
+                        width: 1.sw,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10.w,
+                          vertical: 8.h,
                         ),
-                        InkWell(
-                          onTap: () {},
-                          child: Image.asset(
-                            Assets.iconsDeleteIcon,
-                            scale: 4.5,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: InvAPColors.kBorderColor,
+                            width: 0.7.w,
                           ),
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
-                      ],
-                    ),
-                  ),
-
-                  Gap(10.h),
-
-                  // Middle area: takes majority of remaining vertical space
-                  Expanded(
-                    flex: 3,
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10.w,
-                        vertical: 8.h,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.r),
-                        color: InvAPColors.kWhiteColor,
-                      ),
-                      child: ListView.builder(
-                        itemCount: 10,
-                        itemBuilder: (context, item) => Container(
-                          margin: EdgeInsets.only(bottom: 10.h),
-                          width: 1.sw,
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 10.w,
-                            vertical: 8.h,
-                          ),
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: InvAPColors.kBorderColor,
-                              width: 0.7.w,
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("#1"),
+                                InkWell(
+                                  onTap: () {},
+                                  child: Image.asset(
+                                    Assets.iconsDeleteIcon,
+                                    scale: 4.5,
+                                  ),
+                                ),
+                              ],
                             ),
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("#1"),
-                                  InkWell(
-                                    onTap: () {},
-                                    child: Image.asset(
-                                      Assets.iconsDeleteIcon,
-                                      scale: 4.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Divider(
-                                endIndent: 0,
-                                indent: 0,
-                                color: InvAPColors.kBorderColor,
-                                thickness: 0.7.w,
-                              ),
-                              Gap(10.h),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      spacing: 5.h,
-                                      children: [
-                                        Text(
-                                          "Nestle Nido Essential",
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodyMedium,
-                                        ),
-                                        Text(
-                                          "Tin 150g",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium!
-                                              .copyWith(
-                                                color: InvAPColors
-                                                    .kSecondaryTextColor,
-                                              ),
-                                        ),
-                                        Text(
-                                          "${InvAppConstants.kGHC} 100.00",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium!
-                                              .copyWith(
-                                                color:
-                                                    InvAPColors.kPrimaryColor,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 12.w,
-                                      vertical: 8.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(8.r),
-                                      border: Border.all(
-                                        color: InvAPColors.kBorderColor,
-                                        width: 0.7.w,
+                            Divider(
+                              endIndent: 0,
+                              indent: 0,
+                              color: InvAPColors.kBorderColor,
+                              thickness: 0.7.w,
+                            ),
+                            Gap(10.h),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        "Nestle Nido Essential",
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium,
                                       ),
-                                    ),
-                                    child: Row(
-                                      spacing: 10.w,
-                                      children: [
-                                        InkWell(
-                                          onTap: () {},
-                                          child: Icon(Icons.minimize),
-                                        ),
-                                        Text("1"),
-                                        InkWell(
-                                          onTap: () {},
-                                          child: Icon(Icons.add),
-                                        ),
-                                      ],
+                                      Text(
+                                        "Tin 150g",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium!
+                                            .copyWith(
+                                              color: InvAPColors
+                                                  .kSecondaryTextColor,
+                                            ),
+                                      ),
+                                      Text(
+                                        "${InvAppConstants.kGHC} 100.00",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium!
+                                            .copyWith(
+                                              color:
+                                                  InvAPColors.kPrimaryColor,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12.w,
+                                    vertical: 8.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    border: Border.all(
+                                      color: InvAPColors.kBorderColor,
+                                      width: 0.7.w,
                                     ),
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
+                                  child: Row(
+                                    spacing: 10.w,
+                                    children: [
+                                      InkWell(
+                                        onTap: () {},
+                                        child: Icon(Icons.minimize),
+                                      ),
+                                      Text("1"),
+                                      InkWell(
+                                        onTap: () {},
+                                        child: Icon(Icons.add),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
+                ),
 
-                  Gap(10.h),
+                Gap(10.h),
 
-                  // Bottom area: smaller area that shares remaining space
-                  Expanded(
-                    flex: 1,
-                    child: Container(
-                      width: 1.sw,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10.w,
-                        vertical: 8.h,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12.r),
-                        color: InvAPColors.kWhiteColor,
-                      ),
+                // Bottom area: smaller area that shares remaining space
+                Expanded(
+                  flex: 1,
+                  child: Container(
+                    width: 1.sw,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 8.h,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12.r),
+                      color: InvAPColors.kWhiteColor,
+                    ),
+                    child: SingleChildScrollView(
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         spacing: 10.h,
                         children: [
                           _rowText(
@@ -357,13 +344,13 @@ class APDashboardPage extends StatelessWidget {
                       ),
                     ),
                   ),
+                ),
 
-                  Gap(10.h),
-                ],
-              ),
+                Gap(10.h),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
