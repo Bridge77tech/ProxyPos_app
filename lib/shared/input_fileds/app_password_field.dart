@@ -5,18 +5,18 @@ class APPasswordField extends StatelessWidget {
     super.key,
     this.errorText,
     this.onChanged,
-    this.controller,
+    this.focusNode,
   });
 
   final String? errorText;
   final ValueChanged<String>? onChanged;
-  final TextEditingController? controller;
+  final FocusNode? focusNode;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: controller,
       obscureText: true,
+      focusNode: focusNode,
       style: Theme.of(context).textTheme.bodyMedium,
       onChanged: onChanged,
       decoration: InputDecoration(

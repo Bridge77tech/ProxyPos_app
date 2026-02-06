@@ -6,20 +6,20 @@ part 'ap_user_model.g.dart';
 class APUserModel {
   final String? id;
 
-  final String username;
+  final String? username;
 
-  final String email;
+  final String? email;
 
   final String? role;
 
-  final String lastSync;
+  final String? lastSync;
 
   APUserModel({
     this.id,
-    required this.username,
-    required this.email,
+    this.username,
+    this.email,
     this.role,
-    required this.lastSync,
+    this.lastSync,
   });
 
   factory APUserModel.fromJson(Map<String, dynamic> json) => _$APUserModelFromJson(json);

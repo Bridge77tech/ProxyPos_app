@@ -8,10 +8,10 @@ part of 'ap_user_model.dart';
 
 APUserModel _$APUserModelFromJson(Map<String, dynamic> json) => APUserModel(
   id: json['id'] as String?,
-  username: json['username'] as String,
-  email: json['email'] as String,
+  username: json['username'] as String?,
+  email: json['email'] as String?,
   role: json['role'] as String?,
-  lastSync: json['lastSync'] as String,
+  lastSync: json['lastSync'] as String?,
 );
 
 Map<String, dynamic> _$APUserModelToJson(APUserModel instance) =>

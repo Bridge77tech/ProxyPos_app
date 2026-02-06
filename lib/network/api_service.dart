@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:inventory_app_pos/features/auth/data/data_source/local/auth_session_storage_impl.dart';
+import 'package:inventory_app_pos/features/auth/data/data_source/remote/login_api_service.dart';
 import 'package:inventory_app_pos/network/constants/api_string_const.dart';
 import 'package:inventory_app_pos/network/interceptors/auth_interceptors.dart';
 import 'package:inventory_app_pos/network/interceptors/connectivity_interceptors.dart';
@@ -18,37 +20,36 @@ class APIService {
   Dio get dioInstance => _dio;
 
   static final APIService _instance = APIService._internal(
-    // authSessionStorage: AuthSessionStorageHive.instance,
+    authSessionStorage: AuthSessionStorageImpl.instance,
   );
 
   factory APIService() => _instance;
 
   @visibleForTesting
   factory APIService.forTesting({
-    // required AuthSessionStorage authSessionStorage,
+    required AuthSessionStorageImpl authSessionStorage,
     Dio? dio,
   }) {
     return APIService._internal(
-      // authSessionStorage: authSessionStorage,
+      authSessionStorage: authSessionStorage,
       dio: dio,
     );
   }
 
   // late final GetAccessTokenUseCase _getAccessToken;
   // late final ClearSessionUseCase _clearSession;
-  // late final AuthAPIService _authAPIService;
+  late final LoginAPIService _loginAPIService;
   // ignore: unused_field
   // late final HomeAPIService _homeAPIService;
 
   APIService._internal({
-    // required AuthSessionStorage authSessionStorage,
+    required AuthSessionStorageImpl authSessionStorage,
     Dio? dio,
   }) {
     _dio = dio ?? Dio();
     // _clearSession = ClearSessionUseCase(authSessionStorage);
     // Pass baseUrl override to include API prefix if needed
-    // _authAPIService = AuthAPIService(_dio);
-    // _homeAPIService = HomeAPIService(_dio, baseUrl: APIStringConst.apAPIPrefix);
+    _loginAPIService = LoginAPIService(_dio);
     // _getAccessToken = GetAccessTokenUseCase(
     //   authSessionStorage,
     //   _clearSession,

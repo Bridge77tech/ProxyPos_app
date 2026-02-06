@@ -6,6 +6,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:inventory_app_pos/data/local_storage_service.dart';
 import 'package:inventory_app_pos/data/storage_box.dart';
+import 'package:inventory_app_pos/features/auth/data/model/ap_user_model.dart';
+import 'package:inventory_app_pos/features/auth/data/model/ap_user_model_hive_adapter.dart';
 
 import '../core/exceptions/local_storage_exception.dart';
 
@@ -44,7 +46,10 @@ class LocalStorageServiceImpl implements ILocalStorageService {
 
     if (isProductionHive) {
       await Hive.initFlutter();
-      // Note: registerAdapter should be called with specific adapters. Do this in app startup where adapters are known.
+      // Register adapters
+      if (!Hive.isAdapterRegistered(11)) {
+        Hive.registerAdapter(APUserModelAdapter());
+      }
     }
 
     _encryptionKey = await _getOrGenerateEncryptionKey();

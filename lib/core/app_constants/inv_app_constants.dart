@@ -13,4 +13,9 @@ class InvAppConstants {
   static final String kDiscount = "Discount";
   static final String kSubTotal = "Subtotal";
   static final String kTotal = "Total";
+
+
+//   Local storage String keys
+  static const String kAuthBoxKey = "authBox";
+  static const String kUserKey  = 'user';
 }

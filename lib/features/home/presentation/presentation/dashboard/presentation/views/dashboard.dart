@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:inventory_app_pos/core/app_constants/inv_app_constants.dart';
-import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/bloc/dashboard_bloc.dart';
-import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/bloc/dashboard_state.dart';
-import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/widgets/product_container_card.dart';
 import 'package:inventory_app_pos/generated/assets.dart';
 import 'package:inventory_app_pos/shared/app_buttons/ap_button.dart';
 
-import '../../../../../../core/app_constants/ap_colors.dart';
+import '../../../../../../../core/app_constants/ap_colors.dart';
+import '../widgets/product_container_card.dart';
 
 class APDashboardPage extends StatelessWidget {
   const APDashboardPage({super.key});
@@ -65,32 +62,13 @@ class APDashboardPage extends StatelessWidget {
                           ),
                         ),
                         Expanded(
-                          child: BlocBuilder<DashboardBloc, DashboardState>(
-                            builder: (context, state) {
-                              if (state.loading) {
-                                return const Center(
-                                  child: CircularProgressIndicator(),
-                                );
-                              }
-                              if (state.error != null &&
-                                  state.topProducts.isEmpty) {
-                                return Center(
-                                  child: Text(
-                                    'Failed to load top products',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                );
-                              }
-                              final items = state.topProducts;
-                              return GridView.builder(
+                          child: GridView.builder(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 12.w,
                                 ),
                                 shrinkWrap: true,
                                 primary: false,
-                                itemCount: items.length,
+                                itemCount: 10,
                                 gridDelegate:
                                     SliverGridDelegateWithMaxCrossAxisExtent(
                                       maxCrossAxisExtent: 150.w,
@@ -99,18 +77,12 @@ class APDashboardPage extends StatelessWidget {
                                       childAspectRatio: 1,
                                     ),
                                 itemBuilder: (context, i) {
-                                  final p = items[i];
-                                  final v = (p.variants?.isNotEmpty ?? false)
-                                      ? p.variants!.first
-                                      : null;
                                   return ProductContainerCard(
-                                    variants: v,
-                                    product: p,
+                                    variants: null,
+                                    product: null,
                                   );
                                 },
-                              );
-                            },
-                          ),
+                              ),
                         ),
                       ],
                     ),

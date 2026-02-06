@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory_app_pos/core/app_constants/ap_colors.dart';
-import 'package:inventory_app_pos/features/home/data/model/product_model.dart';
-import 'package:inventory_app_pos/features/home/data/model/variant.dart';
 import 'package:inventory_app_pos/generated/assets.dart';
 import 'package:inventory_app_pos/shared/app_buttons/ap_button.dart';
+
+import '../../data/model/product_model.dart';
+import '../../data/model/variant.dart';
+
+
 
 class ProductContainerCard extends StatefulWidget {
   const ProductContainerCard({

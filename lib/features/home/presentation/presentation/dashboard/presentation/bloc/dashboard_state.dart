@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
-import 'package:inventory_app_pos/features/home/data/model/product_model.dart';
+
+import '../../data/model/product_model.dart';
+
 
 class DashboardState extends Equatable {
   final bool loading;

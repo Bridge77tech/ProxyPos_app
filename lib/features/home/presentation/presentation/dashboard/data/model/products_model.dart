@@ -1,4 +1,4 @@
-import 'package:inventory_app_pos/features/home/data/model/product_model.dart';
+import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/model/product_model.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'products_model.g.dart';
