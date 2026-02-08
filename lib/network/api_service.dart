@@ -6,6 +6,7 @@ import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:inventory_app_pos/features/auth/data/data_source/local/auth_session_storage_impl.dart';
 import 'package:inventory_app_pos/features/auth/data/data_source/remote/login_api_service.dart';
+import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/data_source/remote/top_product_api_service.dart';
 import 'package:inventory_app_pos/network/constants/api_string_const.dart';
 import 'package:inventory_app_pos/network/interceptors/auth_interceptors.dart';
 import 'package:inventory_app_pos/network/interceptors/connectivity_interceptors.dart';
@@ -40,7 +41,7 @@ class APIService {
   // late final ClearSessionUseCase _clearSession;
   late final LoginAPIService _loginAPIService;
   // ignore: unused_field
-  // late final HomeAPIService _homeAPIService;
+  late final TopProductAPIService _topProductAPIService;
 
   APIService._internal({
     required AuthSessionStorageImpl authSessionStorage,
@@ -50,6 +51,7 @@ class APIService {
     // _clearSession = ClearSessionUseCase(authSessionStorage);
     // Pass baseUrl override to include API prefix if needed
     _loginAPIService = LoginAPIService(_dio);
+    _topProductAPIService = TopProductAPIService(_dio);
     // _getAccessToken = GetAccessTokenUseCase(
     //   authSessionStorage,
     //   _clearSession,
