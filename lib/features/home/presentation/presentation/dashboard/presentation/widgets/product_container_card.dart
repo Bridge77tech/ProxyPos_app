@@ -46,7 +46,7 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
             decoration: BoxDecoration(
               color: InvAPColors.kWhiteColor,
               border: Border.all(
-                color: InvAPColors.kBorderColor.withAlpha(75),
+                color: InvAPColors.kBorderColor,
                 width: 0.7.w,
               ),
               borderRadius: BorderRadius.circular(12.r),
@@ -63,21 +63,30 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
             ),
           ),
           Text(
-            widget.product?.name ?? 'Product Name',
+            widget.product?.name ?? '',
             style: theme.textTheme.bodySmall,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           Text(
-            widget.product?.category ?? 'Item Type, Size',
+            "${widget.variants?.type}, ${widget.variants?.size}",
             style: theme.textTheme.bodySmall?.copyWith(
               color: InvAPColors.kSecondaryTextColor,
+              fontSize: 10.sp
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'GH₵${widget.variants?.sellingPrice?.toStringAsFixed(2) ?? '0.00'}',
-                style: theme.textTheme.bodySmall,
+                style: theme.textTheme.bodySmall!.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               Row(
                 children: [
@@ -93,7 +102,7 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                   ),
                   SizedBox(width: 3.w),
                   Text(
-                    'Availability',
+                    '${widget.variants?.currentStock ?? 0}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: InvAPColors.kPrimaryColor,
                     ),
@@ -144,8 +153,8 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                 ),
               ),
               SizedBox(
-                width: 50.w,
-                height: 20.h,
+                width: 40.w,
+                height: 32.h,
                 child: ApButton(
                   height: 20.h,
                   width: 50.w,

@@ -21,13 +21,22 @@ class Products {
   final List<Variants>? variants;
 
   @JsonKey(name: 'currentStock')
-  final int? currentStock;
+  final String? currentStock;
 
-  @JsonKey(name: 'piecesPerPack')
-  final int? piecesPerPack;
+  @JsonKey(name: 'miniStockLevel')
+  final int? miniStockLevel;
 
   @JsonKey(name: 'imagePath')
   final String? imagePath;
+
+  @JsonKey(name: "isActive")
+  bool? isActive;
+
+  @JsonKey(name: "totalSold")
+  final String? totalSold;
+
+  @JsonKey(name: "salesCount")
+  final String? salesCount;
 
   Products({
     this.id,
@@ -36,8 +45,11 @@ class Products {
     this.category,
     this.variants,
     this.currentStock,
-    this.piecesPerPack,
+    this.miniStockLevel,
     this.imagePath,
+    this.isActive,
+    this.totalSold,
+    this.salesCount,
   });
 
   factory Products.fromJson(Map<String, dynamic> json) =>

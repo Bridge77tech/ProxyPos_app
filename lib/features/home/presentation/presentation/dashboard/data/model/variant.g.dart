@@ -9,7 +9,7 @@ part of 'variant.dart';
 Variants _$VariantsFromJson(Map<String, dynamic> json) => Variants(
   id: json['id'] as String?,
   size: json['size'] as String?,
-  type: (json['type'] as num?)?.toDouble(),
+  type: json['type'] as String?,
   unit: json['unit'] as String?,
   barcode: json['barcode'] as String?,
   costPrice: (json['costPrice'] as num?)?.toDouble(),

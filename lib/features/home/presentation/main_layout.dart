@@ -6,7 +6,6 @@ import 'package:inventory_app_pos/shared/inv_app_bar.dart';
 import '../../../core/app_constants/ap_colors.dart';
 import 'bloc/main_layout_bloc.dart';
 import 'bloc/main_layout_state.dart';
-import '../../../data/local_storage_service_impl.dart';
 
 class APMainLayoutPage extends StatelessWidget {
   const APMainLayoutPage({super.key});
@@ -20,26 +19,14 @@ class APMainLayoutPage extends StatelessWidget {
         builder: (context, state) {
           switch (state.selectedTab) {
             case MainLayoutTab.dashboard:
-              return _buildDashboard();
+              return dashboardOutlet;
             case MainLayoutTab.history:
-              return _buildHistory();
+              return const Center(child: Text('History'));
             case MainLayoutTab.myAccount:
-              return _buildMyAccount();
+              return const Center(child: Text('My Account'));
           }
         },
       ),
     );
-  }
-
-  Widget _buildDashboard() {
-    return dashboardOutlet;
-  }
-
-  Widget _buildHistory() {
-    return const Center(child: Text('History'));
-  }
-
-  Widget _buildMyAccount() {
-    return const Center(child: Text('My Account'));
   }
 }
