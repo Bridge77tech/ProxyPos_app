@@ -41,7 +41,7 @@ class APIService {
   // late final ClearSessionUseCase _clearSession;
   late final LoginAPIService _loginAPIService;
   // ignore: unused_field
-  late final TopProductAPIService _topProductAPIService;
+  late final ProductAPIService _productAPIService;
 
   APIService._internal({
     required AuthSessionStorageImpl authSessionStorage,
@@ -51,7 +51,7 @@ class APIService {
     // _clearSession = ClearSessionUseCase(authSessionStorage);
     // Pass baseUrl override to include API prefix if needed
     _loginAPIService = LoginAPIService(_dio);
-    _topProductAPIService = TopProductAPIService(_dio);
+    _productAPIService = ProductAPIService(_dio);
     // _getAccessToken = GetAccessTokenUseCase(
     //   authSessionStorage,
     //   _clearSession,

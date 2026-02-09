@@ -6,7 +6,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:inventory_app_pos/data/local_storage_service.dart';
 import 'package:inventory_app_pos/data/storage_box.dart';
-import 'package:inventory_app_pos/features/auth/data/model/ap_user_model.dart';
 import 'package:inventory_app_pos/features/auth/data/model/ap_user_model_hive_adapter.dart';
 
 import '../core/exceptions/local_storage_exception.dart';
@@ -40,7 +39,6 @@ class LocalStorageServiceImpl implements ILocalStorageService {
     accessibility: KeychainAccessibility.first_unlock,
   );
 
-  @override
   Future<void> init() async {
     final isProductionHive = _hive == Hive;
 
@@ -79,7 +77,6 @@ class LocalStorageServiceImpl implements ILocalStorageService {
   }
 
   // check if a box is already open
-  @override
   bool isBoxOpen(String boxName) {
     // Check Hive's state as the source of truth
     final isOpen = _hive.isBoxOpen(boxName);
@@ -98,7 +95,6 @@ class LocalStorageServiceImpl implements ILocalStorageService {
 
   // Get an already opened box
   // Throws an exception if the box is not open
-  @override
   Box<T> getBox<T>(String boxName) {
     final cached = _openBoxes[boxName];
     if (cached != null) {
@@ -174,7 +170,6 @@ class LocalStorageServiceImpl implements ILocalStorageService {
 
   /// Cleanup method for app shutdown
   /// Closes all open boxes and clears the cache
-  @override
   Future<void> dispose() async {
     for (final box in _openBoxes.values) {
       if (box.isOpen) {
@@ -186,7 +181,6 @@ class LocalStorageServiceImpl implements ILocalStorageService {
 
   /// Close a specific box
   /// Useful for testing or when you need to explicitly close a box
-  @override
   Future<void> closeBox(String boxName) async {
     if (_openBoxes.containsKey(boxName)) {
       final box = _openBoxes[boxName];

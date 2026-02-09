@@ -12,7 +12,7 @@ abstract class APIResponse<T> {
   String? message;
 
   @JsonKey(name: 'statusCode', includeFromJson: true)
-  String? statusCode;
+  int? statusCode;
 
   String? token;
 

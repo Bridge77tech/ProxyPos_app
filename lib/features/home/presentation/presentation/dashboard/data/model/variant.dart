@@ -11,7 +11,7 @@ class Variants {
   final String? size;
 
   @JsonKey(name: 'type')
-  final double? type;
+  final String? type;
 
   @JsonKey(name: 'unit')
   final String? unit;

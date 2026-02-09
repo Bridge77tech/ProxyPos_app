@@ -1,14 +1,10 @@
 import 'package:meta/meta.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/model/products_model.dart';
+import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/domain/repo/top_product_repo.dart';
 
 /// Contract for reading the current auth token (similar to how login flow retrieves it).
 abstract class AuthSessionReader {
   Future<String?> getToken();
-}
-
-/// Contract for fetching top products from a remote source.
-abstract class TopProductRepository {
-  Future<ProductModel> getTopProducts({required String token});
 }
 
 /// Contract for caching top products locally (Hive-backed in the data layer).
@@ -20,7 +16,7 @@ abstract class TopProductsCache {
 @immutable
 class GetAndCacheTopProductsUseCase {
   final AuthSessionReader _authSessionReader;
-  final TopProductRepository _repository;
+  final TopProductRepository<ProductModel> _repository;
   final TopProductsCache _cache;
 
   const GetAndCacheTopProductsUseCase(
@@ -37,7 +33,7 @@ class GetAndCacheTopProductsUseCase {
       throw StateError('Missing auth token');
     }
 
-    final productModel = await _repository.getTopProducts(token: 'Bearer $token');
+    final productModel = await _repository.getTopProducts('Bearer $token');
     await _cache.saveTopProducts(productModel);
     return productModel;
   }
