@@ -1,12 +1,11 @@
 name: inventory_app_pos
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
   sdk: ^3.10.4
-
 
 dependencies:
   flutter:
@@ -18,7 +17,8 @@ dependencies:
   nb_utils: ^7.2.0
   go_router: ^17.0.1
   flutter_secure_storage: ^10.0.0
-  dio: ^5.9.0
+  dio: ^5.9.1
+  retrofit: ^4.4.1
   toastification: ^3.0.3
   hive_ce_flutter: ^2.3.4
   equatable: ^2.0.8
@@ -28,7 +28,14 @@ dependencies:
   loader_overlay: ^5.0.0
   hive_ce: ^2.19.1
   fasaha_utils:
-    path: ../fasaha_utils
+    # path: ../fasaha_utils
+    git:
+      url: https://github.com/FasahaHaus/fasaha_huas_utils.git
+  pretty_dio_logger: ^1.4.0
+  json_annotation: ^4.10.0
+  internet_connection_checker_plus: ^2.9.1+2
+  logger: ^2.6.2
+  dio_smart_retry: ^7.0.1
 #    git:
 #      url: https://github.com/fasaha-tech/fasaha_utils.git
 #      ref: main
@@ -39,12 +46,12 @@ dev_dependencies:
 
   flutter_lints: ^6.0.0
   retrofit_generator: ^10.0.6
-  build_runner: ^2.10.0
+  build_runner: ^2.10.5
   hive_ce_generator: ^1.10.0
   freezed: ^3.2.3
+  json_serializable: ^6.12.0
 
 flutter:
-
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

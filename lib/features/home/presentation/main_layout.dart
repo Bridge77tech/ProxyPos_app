@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/views/dashboard.dart';
+import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_outlet.dart';
 import 'package:inventory_app_pos/shared/inv_app_bar.dart';
 
 import '../../../core/app_constants/ap_colors.dart';
 import 'bloc/main_layout_bloc.dart';
 import 'bloc/main_layout_state.dart';
+import '../../../data/local_storage_service_impl.dart';
 
 class APMainLayoutPage extends StatelessWidget {
   const APMainLayoutPage({super.key});
@@ -31,7 +32,7 @@ class APMainLayoutPage extends StatelessWidget {
   }
 
   Widget _buildDashboard() {
-    return const APDashboardPage();
+    return dashboardOutlet;
   }
 
   Widget _buildHistory() {

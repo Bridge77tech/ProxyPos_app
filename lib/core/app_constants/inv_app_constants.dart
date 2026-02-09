@@ -5,7 +5,6 @@ class InvAppConstants {
   static final String kEnterAccountCredentials = "Please enter your account credentials to continue";
   static final String kUsername = "Username";
   static final String kPassword = "Password";
-  static final String kForgotPassword = "Forgot Password?";
   static final String kLogin = "Login";
   static final String kPoweredByFasaha = "powered by Fasaha Haus";
   static final String kCart = 'Cart';
@@ -13,5 +12,10 @@ class InvAppConstants {
   static final String kVAT = "VAT";
   static final String kDiscount = "Discount";
   static final String kSubTotal = "Subtotal";
-  static final String kTotal = "TOTAL";
+  static final String kTotal = "Total";
+
+
+//   Local storage String keys
+  static const String kAuthBoxKey = "authBox";
+  static const String kUserKey  = 'user';
 }
