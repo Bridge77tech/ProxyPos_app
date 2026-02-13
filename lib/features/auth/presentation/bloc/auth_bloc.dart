@@ -8,6 +8,10 @@ import 'package:inventory_app_pos/features/auth/data/model/ap_user_model.dart';
 import 'package:inventory_app_pos/features/auth/data/model/user_model.dart';
 import 'package:inventory_app_pos/features/auth/domain/usecases/login_use_case.dart';
 import 'package:inventory_app_pos/features/auth/domain/usecases/save_user_use_case.dart';
+import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/data_source/local/all_product_storage.dart';
+import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/data_source/local/top_products_storage.dart';
+import 'package:inventory_app_pos/features/auth/data/data_source/local/auth_session_storage_impl.dart';
+import 'package:inventory_app_pos/features/auth/data/data_source/local/cashier_info_storage_impl.dart';
 
 import '../../../../core/routing/navigation_helper.dart';
 import '../../../../core/routing/route_constants.dart';
@@ -30,6 +34,7 @@ class AuthBloc<T> extends Bloc<AuthEvent, AuthState> {
     on<UsernameChanged>(_onUsernameChanged);
     on<PasswordChanged>(_onPasswordChanged);
     on<SaveUserInfo>(_onSaveUserInfo);
+    on<LogoutRequested>(_onLogoutRequested);
   }
 
   void _onUsernameChanged(UsernameChanged event, Emitter<AuthState> emit) {
@@ -98,6 +103,22 @@ class AuthBloc<T> extends Bloc<AuthEvent, AuthState> {
           ),
         ),
       );
+    }
+  }
+
+  Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthState> emit) async {
+    try {
+      _log.i('Clearing local storages on logout...');
+      await Future.wait([
+        AuthSessionStorageImpl.instance.clearStorage(),
+        CashierInfoStorageImpl.instance.clearStorage(),
+        TopProductsStorageImpl.instance.clearTopProducts(),
+        AllProductsStorageImpl.instance.clearAllProducts(),
+      ]);
+      _log.i('Local storages cleared');
+      emit(const AuthState());
+    } catch (e, st) {
+      _log.e('Failed to clear storages on logout', error: e, stackTrace: st);
     }
   }
 

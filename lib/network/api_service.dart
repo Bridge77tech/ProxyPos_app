@@ -13,6 +13,8 @@ import 'package:inventory_app_pos/network/interceptors/connectivity_interceptors
 import 'package:nb_utils/nb_utils.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
+import '../features/auth/domain/usecases/clear_session_usecase.dart';
+import '../features/auth/domain/usecases/get_access_token_use_case.dart';
 import 'interceptors/api_error_interceptors.dart';
 
 class APIService {
@@ -37,8 +39,8 @@ class APIService {
     );
   }
 
-  // late final GetAccessTokenUseCase _getAccessToken;
-  // late final ClearSessionUseCase _clearSession;
+  late final GetAccessTokenUseCase _getAccessToken;
+  late final ClearSessionUseCase _clearSession;
   late final LoginAPIService _loginAPIService;
   // ignore: unused_field
   late final ProductAPIService _productAPIService;
@@ -48,14 +50,14 @@ class APIService {
     Dio? dio,
   }) {
     _dio = dio ?? Dio();
-    // _clearSession = ClearSessionUseCase(authSessionStorage);
+    _clearSession = ClearSessionUseCase(authSessionStorage);
     // Pass baseUrl override to include API prefix if needed
     _loginAPIService = LoginAPIService(_dio);
     _productAPIService = ProductAPIService(_dio);
-    // _getAccessToken = GetAccessTokenUseCase(
-    //   authSessionStorage,
-    //   _clearSession,
-    // );
+    _getAccessToken = GetAccessTokenUseCase(
+      authSessionStorage,
+      _clearSession,
+    );
     _configureDio();
   }
 
@@ -78,8 +80,8 @@ class APIService {
     _dio.interceptors.addAll([
       ConnectivityInterceptor(),
       AuthInterceptor(
-        // _getAccessToken,
-        // _clearSession,
+        _getAccessToken,
+        _clearSession,
       ),
       APIErrorInterceptor(),
       RetryInterceptor(

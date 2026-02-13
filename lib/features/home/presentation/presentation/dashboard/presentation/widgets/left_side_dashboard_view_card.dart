@@ -61,17 +61,27 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                 ),
                 Expanded(
                   child: BlocConsumer<DashboardBloc, DashboardState>(
-                    listenWhen: (prev, curr) => !curr.requested,
-                    listener: (context, state) {
-                      if (!state.requested) {
-                        context.read<DashboardBloc>().add(const LoadTopProducts());
-                      }
+                    listenWhen: (previous, current) {
+                      // Keep listener minimal; initial dispatch handled in builder
+                      return false;
                     },
+                    listener: (context, state) {},
                     builder: (context, state) {
+                      // Initial one-time dispatch to load top products
+                      if (!state.requested) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          context.read<DashboardBloc>().add(const LoadTopProducts());
+                        });
+                      }
+
                       if (state.loading) {
                         return const Center(child: CircularProgressIndicator());
                       }
-                      if (state.topProducts.isEmpty) {
+
+                      // Always display topProducts here, ignore search.
+                      final List<Products> source = state.topProducts;
+
+                      if (source.isEmpty) {
                         return Center(
                           child: Text(
                             'No products found',
@@ -82,7 +92,7 @@ class LeftSideDashboardViewCard extends StatelessWidget {
 
                       // Build a flat list of (product, variant) entries so all variants are displayed
                       final List<({Products product, Variants variant})> items = [];
-                      for (final p in state.topProducts) {
+                      for (final p in source) {
                         final vars = p.variants ?? const [];
                         for (final v in vars) {
                           items.add((product: p, variant: v));

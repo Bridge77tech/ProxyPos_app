@@ -9,7 +9,7 @@ import 'package:logger/logger.dart';
 
 import '../../../../../../../network/exceptions/bad_request_exception.dart';
 
-class ProductRepoImpl implements TopProductRepository<ProductModel> {
+class ProductRepoImpl implements ProductRepository<ProductModel> {
   final Logger _log;
   final ProductAPIService _topProductAPIService;
 
@@ -36,7 +36,32 @@ class ProductRepoImpl implements TopProductRepository<ProductModel> {
       // fallback to Dio's message or a generic
       message ??= e.message ?? 'Request failed';
 
-      throw GetProductExpection(message);
+      throw GetProductException(message);
+    } catch (e) {
+      _log.e(e.toString());
+      rethrow;
+    }
+  }
+
+  @override
+  Future<ProductModel> getAllProducts(
+      String token, {
+        String? search,
+        String? category,
+      }) async {
+    try {
+      final res = await _topProductAPIService.getAllProducts(token, search, category);
+      _log.i("Polling All Products Success");
+      return res;
+    } on DioException catch (e) {
+      _log.e(e.toString());
+      if(e.error is BadRequestException) {
+        throw GetProductException(
+          (e.error as BadRequestException).message,
+        );
+      }
+
+      throw GetProductException(e.message ?? 'Request failed');
     } catch (e) {
       _log.e(e.toString());
       rethrow;

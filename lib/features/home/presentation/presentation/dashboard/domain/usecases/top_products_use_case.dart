@@ -16,7 +16,7 @@ abstract class TopProductsCache {
 @immutable
 class GetAndCacheTopProductsUseCase {
   final AuthSessionReader _authSessionReader;
-  final TopProductRepository<ProductModel> _repository;
+  final ProductRepository<ProductModel> _repository;
   final TopProductsCache _cache;
 
   const GetAndCacheTopProductsUseCase(

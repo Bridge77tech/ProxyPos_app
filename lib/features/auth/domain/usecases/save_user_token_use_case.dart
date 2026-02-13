@@ -3,6 +3,7 @@ import 'package:inventory_app_pos/features/auth/data/data_source/local/auth_sess
 
 class SaveUserTokenUseCase {
   final AuthSessionStorageImpl _authSessionStorage;
+
   final _log = getLogger('SaveUserTokenUseCase');
 
   SaveUserTokenUseCase(this._authSessionStorage);
