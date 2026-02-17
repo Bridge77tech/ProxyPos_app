@@ -9,6 +9,7 @@ import 'package:toastification/toastification.dart';
 
 import 'core/app_constants/ap_colors.dart';
 import 'core/routing/inv_routes.dart';
+import 'features/home/presentation/presentation/dashboard/presentation/bloc/cart_bloc.dart';
 
 class InventoryApp extends StatelessWidget {
   const InventoryApp({super.key});
@@ -38,6 +39,9 @@ class InventoryApp extends StatelessWidget {
             providers: [
               BlocProvider<ConnectivityBloc>(
                   create: (_) => ConnectivityBloc(),
+              ),
+              BlocProvider<CartBloc>(
+                  create: (_) => CartBloc(),
               ),
             ],
             child: MaterialApp.router(

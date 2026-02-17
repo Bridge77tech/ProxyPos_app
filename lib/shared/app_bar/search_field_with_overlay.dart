@@ -53,18 +53,21 @@ class _SearchFieldWithOverlayState extends State<SearchFieldWithOverlay> {
       listener: (context, state) {
         // Hide dropdown on explicit selection
         _overlayController.hide();
-        // Sync the field text with the selection if not already
-        if ((state.selectedName?.isNotEmpty ?? false) && _controller.text != state.selectedName) {
-          _controller.text = state.selectedName!;
-        }
-        // Show dialog modal only for explicit selection
+
+        // When a suggestion is selected, clear the field and remove focus
+        // so the overlay doesn't re-open and the UI resets cleanly
         if ((state.selectedName?.isNotEmpty ?? false)) {
+          // Clear text & dismiss keyboard
+          _controller.clear();
+          _focusNode.unfocus();
+
+          // Show dialog modal only for explicit selection
           final rootCtx = Navigator.of(context, rootNavigator: true).context;
           Utils.showOverlayDialog<void>(
             rootCtx,
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: Text('Selected: ${state.selectedName!}'),
+              child: Text('Selected: ${state.selectedName!}')
             ),
           );
         }
@@ -92,7 +95,7 @@ class _SearchFieldWithOverlayState extends State<SearchFieldWithOverlay> {
                     _overlayController.show(
                       context,
                       width: fieldWidth,
-                      child: const SearchSuggestionsDropdown(),
+                      child: SearchSuggestionsDropdown(searchController: _overlayController,),
                     );
                   }
                 } else {
