@@ -1,16 +1,10 @@
-import 'package:fasaha_utils/utils_export/fasaha_haus_state_status.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:inventory_app_pos/core/app_constants/ap_colors.dart';
 import 'package:inventory_app_pos/core/app_constants/inv_app_constants.dart';
-import 'package:inventory_app_pos/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:inventory_app_pos/features/auth/presentation/bloc/auth_event.dart';
-import 'package:inventory_app_pos/features/auth/presentation/bloc/auth_state.dart';
 import 'package:inventory_app_pos/features/auth/presentation/widgets/login_form.dart';
 import 'package:inventory_app_pos/generated/assets.dart';
-import 'package:loader_overlay/loader_overlay.dart';
 
 class LeftDisplayWidget extends StatelessWidget {
   const LeftDisplayWidget({super.key});

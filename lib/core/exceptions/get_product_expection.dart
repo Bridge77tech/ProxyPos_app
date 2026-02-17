@@ -1,7 +1,7 @@
-class GetProductExpection {
+class GetProductException {
   String? message;
 
-  GetProductExpection(this.message);
+  GetProductException(this.message);
 
   @override
   String toString() {

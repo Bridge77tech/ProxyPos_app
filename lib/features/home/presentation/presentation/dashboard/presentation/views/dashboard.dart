@@ -60,12 +60,10 @@ class APDashboardPage extends StatelessWidget {
                     ],
                   ),
                 ),
-
                 Gap(10.h),
-
                 // Middle area: takes majority of remaining vertical space
                 Expanded(
-                  flex: 2,
+                  flex: 3,
                   child: Container(
                     width: double.infinity,
                     padding: EdgeInsets.symmetric(
@@ -108,7 +106,7 @@ class APDashboardPage extends StatelessWidget {
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
-                        spacing: 10.h,
+                        spacing: 4.5.h,
                         children: [
                           _rowText(
                             context,
@@ -132,7 +130,9 @@ class APDashboardPage extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                           ),
                           ApButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              debugPrint('Selected suggestion &*************');
+                            },
                             btnText: 'Submit Order',
                             fontSize: 12,
                             height: 40,

@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:fasaha_utils/utils_export/fasaha_haus_state_status.dart';
-import 'package:inventory_app_pos/features/auth/data/model/ap_user_model.dart';
 import 'package:inventory_app_pos/features/auth/data/model/user_model.dart';
 
 abstract class AuthEvent extends Equatable {
@@ -47,3 +46,7 @@ class LoggingInUser extends StateStatus {
 }
 
 class LoginSuccess extends StateStatus {}
+
+class LogoutRequested extends AuthEvent {
+  const LogoutRequested();
+}

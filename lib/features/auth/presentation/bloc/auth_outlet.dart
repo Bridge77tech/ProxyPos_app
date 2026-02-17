@@ -5,6 +5,8 @@ import 'package:inventory_app_pos/features/auth/domain/usecases/save_cashier_inf
 import 'package:inventory_app_pos/features/auth/data/data_source/local/cashier_info_storage_impl.dart';
 import 'package:inventory_app_pos/network/api_service.dart';
 
+import '../../../home/presentation/presentation/dashboard/domain/usecases/all_product_use_case.dart';
+import '../../../home/presentation/presentation/dashboard/domain/services/all_products_sync_service.dart';
 import '../../data/data_source/remote/login_api_service.dart';
 import '../../data/repo/auth_repo_impl.dart';
 import '../../domain/usecases/login_use_case.dart';
@@ -16,6 +18,7 @@ import 'package:inventory_app_pos/features/home/presentation/presentation/dashbo
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/domain/usecases/top_products_use_case.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/data_source/local/top_products_storage.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/domain/repo/top_product_repo.dart';
+import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/data_source/local/all_product_storage.dart';
 
 BlocProvider get authOutlet {
   final LoginAPIService apiService = LoginAPIService(
@@ -31,19 +34,33 @@ BlocProvider get authOutlet {
   final loginUseCase = LoginUseCase(loginRepo);
 
   // Build GetAndCacheTopProductsUseCase (token reader -> repo -> cache)
-  final topProductRepo = ProductRepoImpl.instance as TopProductRepository<ProductModel>;
+  final productRepo = ProductRepoImpl.instance as ProductRepository<ProductModel>;
   final topCache = _TopProductsCacheAdapter();
   final tokenReader = _AuthSessionReaderAdapter(authSessionStorage);
   final getAndCacheTopProducts = GetAndCacheTopProductsUseCase(
     tokenReader,
-    topProductRepo,
+    productRepo,
     topCache,
   );
+
+  final allProductsCache = _AllProductsCacheAdapter();
+  final getAllProduct = GetAndCacheAllProductsUseCase(
+    tokenReader,
+    productRepo,
+    allProductsCache,
+  );
+
+  // Create a sync service that refreshes all products every 30 minutes
+  final allProductsSync = AllProductsSyncService(getAllProduct, interval: const Duration(minutes: 30));
+  if (!allProductsSync.isRunning) {
+    allProductsSync.start(runImmediately: true);
+  }
 
   final SaveUserInfoUseCase saveUserInfo = SaveUserInfoUseCase(
     saveUserToken,
     saveCashierInfo,
     getAndCacheTopProducts,
+    getAllProduct,
   );
 
   return BlocProvider<AuthBloc>(
@@ -70,3 +87,13 @@ class _TopProductsCacheAdapter implements TopProductsCache {
     await _storage.saveTopProducts(products);
   }
 }
+
+class _AllProductsCacheAdapter implements AllProductsCache {
+  final _storage = AllProductsStorageImpl.instance;
+  @override
+  Future<void> saveAllProducts(ProductModel products) async {
+    await _storage.saveAllProducts(products);
+  }
+}
+
+

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
-import 'package:nb_utils/nb_utils.dart';
 
 import '../../../../../../../core/app_constants/ap_colors.dart';
 import '../../../../../../../core/app_constants/inv_app_constants.dart';
