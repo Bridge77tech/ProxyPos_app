@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inventory_app_pos/core/app_constants/ap_colors.dart';
 import 'package:inventory_app_pos/generated/assets.dart';
 import 'package:inventory_app_pos/shared/app_buttons/ap_button.dart';
 
 import '../../data/model/product_model.dart';
 import '../../data/model/variant.dart';
+import '../bloc/cart_bloc.dart';
+import '../bloc/cart_event.dart';
 
 
 
@@ -158,7 +161,15 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                 child: ApButton(
                   height: 20.h,
                   width: 50.w,
-                  onPressed: qty == 0 ? null : () {},
+                  onPressed: qty == 0 || widget.product == null || widget.variants == null
+                      ? null
+                      : () {
+                          final cart = context.read<CartBloc>();
+                          final product = widget.product!;
+                          final variant = widget.variants!;
+                          cart.add(CartAddItem(product: product, variant: variant, quantity: qty));
+                          setState(() => qty = 0);
+                        },
                   btnText: 'Add',
                   paddingHorizontal: 8.0,
                   fontSize: 8,
