@@ -5,8 +5,6 @@ import 'package:dio/io.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:inventory_app_pos/features/auth/data/data_source/local/auth_session_storage_impl.dart';
-import 'package:inventory_app_pos/features/auth/data/data_source/remote/login_api_service.dart';
-import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/data_source/remote/create_new_sale_api.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/data_source/remote/top_product_api_service.dart';
 import 'package:inventory_app_pos/network/constants/api_string_const.dart';
 import 'package:inventory_app_pos/network/interceptors/auth_interceptors.dart';
