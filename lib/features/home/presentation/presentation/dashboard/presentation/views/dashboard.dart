@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
@@ -92,8 +94,9 @@ class APDashboardPage extends StatelessWidget {
                         }
                         return SingleChildScrollView(
                           child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
-                            spacing: 4.5.h,
+                            spacing: Platform.isWindows ? 4.5.h : 10.h,
                             children: [
                               _rowText(
                                 context,

@@ -21,7 +21,7 @@ class Products {
   final List<Variants>? variants;
 
   @JsonKey(name: 'currentStock')
-  final String? currentStock;
+  final int? currentStock;
 
   @JsonKey(name: 'miniStockLevel')
   final int? miniStockLevel;
