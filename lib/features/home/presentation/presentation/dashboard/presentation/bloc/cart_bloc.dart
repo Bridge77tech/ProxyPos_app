@@ -7,7 +7,7 @@ import '../../data/data_source/local/pending_sales_storage.dart';
 import '../../data/model/variant.dart';
 import '../../domain/usecases/create_sale_use_case.dart';
 import 'cart_event.dart';
-import 'cart_state.dart' show PaymentMethod, CartState, CartItem;
+import 'cart_state.dart' show CartState, CartItem;
 
 class CartBloc extends Bloc<CartEvent, CartState> {
   final _log = getLogger('CartBloc');

@@ -39,7 +39,7 @@ class PaymentMethodTile extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(8.w),
               decoration: BoxDecoration(
-                color: selected ? Colors.red.withOpacity(0.15) : InvAPColors.kWhiteColor,
+                color: selected ? Colors.red.withAlpha(25) : InvAPColors.kWhiteColor,
                 borderRadius: BorderRadius.circular(8.r),
               ),
               child: Image.asset(iconAsset, scale: 4.5),
