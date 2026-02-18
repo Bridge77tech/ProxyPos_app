@@ -13,6 +13,9 @@ class Utils {
         bool useRootNavigator = true,
         VoidCallback? onPressed,
         String title = 'Add to Cart',
+        double height = 0.8,
+        double roundCorner = 0,
+        String btnText = 'Add to Cart',
       }) {
     return showDialog<T>(
       context: context,
@@ -21,16 +24,20 @@ class Utils {
       builder: (ctx) {
         return SizedBox(
           width: 0.3.sw,
-          height: 0.8.sh,
+          height: height.sh,
           child: AlertDialog(
             contentPadding: EdgeInsets.symmetric(vertical: 0.sh, horizontal: 0.sw),
             backgroundColor: InvAPColors.kAppBackgroundColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0.r)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(roundCorner.r)),
             title: Container(
               width: 0.3.sw,
               padding: EdgeInsets.symmetric(vertical: 13.h, horizontal: 10.w),
               decoration: BoxDecoration(
                 color: InvAPColors.kBlackColor,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(roundCorner.r),
+                  topRight: Radius.circular(roundCorner.r),
+                )
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -67,18 +74,18 @@ class Utils {
               ),
             ),
             titlePadding: EdgeInsets.symmetric(vertical: 0.sh, horizontal: 0.sw),
-            // Constrain content to avoid intrinsic dimension computation of inner viewports
+            // Constrain content and allow scrolling to avoid overflow
             content: SizedBox(
               width: 0.3.sw,
-              height: 0.8.sw, // increased height per request
+              height: 0.8.sw,
               child: Column(
                 children: [
-                  Expanded(child: child),
+                  Expanded(child: SingleChildScrollView(child: child)),
                   ApButton(
-                    btnText: 'Add to Cart',
+                    btnText: btnText,
                     width: 0.3.sw,
-                    cornerRadius: 0,
-                    onPressed: onPressed,
+                    cornerRadius: roundCorner,
+                    onPressed: onPressed ?? () {},
                   )
                 ],
               ),

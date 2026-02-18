@@ -20,7 +20,7 @@ class _CreateNewSaleApi implements CreateNewSaleApi {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<Products> createNewSale(
+  Future<ProductSaleModel> createNewSale(
     String bearerToken,
     Map<String, dynamic> payload,
   ) async {
@@ -30,7 +30,7 @@ class _CreateNewSaleApi implements CreateNewSaleApi {
     _headers.removeWhere((k, v) => v == null);
     final _data = <String, dynamic>{};
     _data.addAll(payload);
-    final _options = _setStreamType<Products>(
+    final _options = _setStreamType<ProductSaleModel>(
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -41,9 +41,9 @@ class _CreateNewSaleApi implements CreateNewSaleApi {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late Products _value;
+    late ProductSaleModel _value;
     try {
-      _value = Products.fromJson(_result.data!);
+      _value = ProductSaleModel.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../data/model/product_model.dart';
 import '../../data/model/variant.dart';
+import 'cart_state.dart' show PaymentMethod;
 
 abstract class CartEvent extends Equatable {
   const CartEvent();
@@ -63,17 +64,26 @@ class CartResetSelection extends CartEvent {
   const CartResetSelection();
 }
 
-class SubmitOrder extends CartEvent {
-  final Products products;
-  final Variants variant;
-  final int quantity;
+// Submit the current cart as a new sale
+class CartSubmitOrder extends CartEvent {
+  const CartSubmitOrder();
+}
 
-  const SubmitOrder({
-    required this.products,
-    required this.variant,
-    required this.quantity,
-  });
+// Trigger syncing of any pending offline sales
+class CartSyncPending extends CartEvent {
+  const CartSyncPending();
+}
 
+class CartSelectPayment extends CartEvent {
+  final PaymentMethod method;
+  const CartSelectPayment(this.method);
   @override
-  List<Object?> get props => [products, variant, quantity];
+  List<Object?> get props => [method];
+}
+
+class CartSetAmountReceived extends CartEvent {
+  final double amount;
+  const CartSetAmountReceived(this.amount);
+  @override
+  List<Object?> get props => [amount];
 }

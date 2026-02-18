@@ -9,13 +9,16 @@ import 'package:toastification/toastification.dart';
 
 import 'core/app_constants/ap_colors.dart';
 import 'core/routing/inv_routes.dart';
-import 'features/home/presentation/presentation/dashboard/presentation/bloc/cart_bloc.dart';
+import 'features/home/presentation/presentation/dashboard/presentation/bloc/cart_outlet.dart';
+
+
 
 class InventoryApp extends StatelessWidget {
   const InventoryApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+
     return GlobalLoaderOverlay(
       overlayColor: InvAPColors.kBlackColor.withValues(alpha: 0.7),
       overlayWidgetBuilder: (value) => const FittedBox(
@@ -40,9 +43,7 @@ class InventoryApp extends StatelessWidget {
               BlocProvider<ConnectivityBloc>(
                   create: (_) => ConnectivityBloc(),
               ),
-              BlocProvider<CartBloc>(
-                  create: (_) => CartBloc(),
-              ),
+              cartOutlet,
             ],
             child: MaterialApp.router(
               debugShowCheckedModeBanner: false,

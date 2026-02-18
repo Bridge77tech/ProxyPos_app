@@ -26,19 +26,21 @@ class ProductRepoImpl implements ProductRepository<ProductModel> {
       _log.i("Polling Top Products Success");
       return res;
     } on DioException catch (e) {
-      _log.e(e.toString());
-
-      // Prefer specific error message if available
-      String? message;
-      if (e.error is BadRequestException) {
-        message = (e.error as BadRequestException).message;
+      final status = e.response?.statusCode;
+      final data = e.response?.data;
+      // Prefer server-provided message if present
+      String message;
+      if (data is Map && data['message'] != null) {
+        message = data['message'].toString();
+      } else if (e.message != null) {
+        message = e.message!;
+      } else {
+        message = 'Request failed';
       }
-      // fallback to Dio's message or a generic
-      message ??= e.message ?? 'Request failed';
-
+      _log.e('Top products failed (status: $status, body: $data) -> $message');
       throw GetProductException(message);
     } catch (e) {
-      _log.e(e.toString());
+      _log.e('Top products failed (unexpected): $e');
       rethrow;
     }
   }
@@ -54,16 +56,20 @@ class ProductRepoImpl implements ProductRepository<ProductModel> {
       _log.i("Polling All Products Success");
       return res;
     } on DioException catch (e) {
-      _log.e(e.toString());
-      if(e.error is BadRequestException) {
-        throw GetProductException(
-          (e.error as BadRequestException).message,
-        );
+      final status = e.response?.statusCode;
+      final data = e.response?.data;
+      String message;
+      if (data is Map && data['message'] != null) {
+        message = data['message'].toString();
+      } else if (e.error is BadRequestException) {
+        message = (e.error as BadRequestException).message;
+      } else {
+        message = e.message ?? 'Request failed';
       }
-
-      throw GetProductException(e.message ?? 'Request failed');
+      _log.e('All products failed (status: $status, body: $data) -> $message');
+      throw GetProductException(message);
     } catch (e) {
-      _log.e(e.toString());
+      _log.e('All products failed (unexpected): $e');
       rethrow;
     }
   }
