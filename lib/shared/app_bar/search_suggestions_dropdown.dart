@@ -198,13 +198,11 @@ class InsideOverlay extends StatelessWidget {
                               ),
                             ],
                           ),
-                          trailing: Radio<bool>(
-                            value: true,
-                            groupValue: selected ? true : false,
-                            onChanged: (_) {
-                              context.read<CartBloc>().add(CartSelectVariant(product: products, variant: v));
-                            },
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          // Replace deprecated Radio with a selection indicator icon
+                          trailing: Icon(
+                            selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                            size: 18,
+                            color: selected ? InvAPColors.kPrimaryColor : InvAPColors.kSecondaryTextColor,
                           ),
                           onTap: () {
                             context.read<CartBloc>().add(CartSelectVariant(product: products, variant: v));

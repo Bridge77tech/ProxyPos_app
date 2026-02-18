@@ -12,4 +12,6 @@ class InvAPColors {
   static const kDisableBtnColor = Color(0xFF7C7D7A);
   static const kAppBackgroundColor = Color(0xFFF3F5F2);
   static const kBlackColor = Color(0xFF000000);
+  static const kLightRedColor = Color.fromRGBO(252, 222, 219, 0.54);
+  static const kLightGreenColor = Color.fromRGBO(226, 252, 219, 0.45);
 }
