@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
@@ -7,6 +9,7 @@ import 'package:inventory_app_pos/generated/assets.dart';
 import 'package:inventory_app_pos/shared/app_buttons/ap_button.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:loader_overlay/loader_overlay.dart';
+import 'package:toastification/toastification.dart';
 import '../bloc/cart_bloc.dart';
 import '../bloc/cart_state.dart';
 import '../bloc/cart_event.dart';
@@ -21,80 +24,127 @@ class APDashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 20.w),
-      child: Row(
-        children: [
-          // Left column - flexible (approx 70%)
-          Expanded(flex: 7, child: LeftSideDashboardViewCard()),
+    return BlocListener<CartBloc, CartState>(
+      listener: (context, state) {
+        // Show success notification at top right
+        if (state.successMessage != null && state.successMessage!.isNotEmpty) {
+          toastification.show(
+            context: context,
+            type: ToastificationType.success,
+            style: ToastificationStyle.flat,
+            title: const Text('Success'),
+            description: Text(state.successMessage!),
+            alignment: Alignment.topRight,
+            autoCloseDuration: const Duration(seconds: 4),
+            showProgressBar: true,
+            primaryColor: InvAPColors.kPrimaryColor,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            icon: const Icon(Icons.check_circle, color: InvAPColors.kPrimaryColor),
+            borderSide: const BorderSide(color: InvAPColors.kPrimaryColor, width: 2),
+            boxShadow: lowModeShadow,
+            showIcon: true,
+            dragToClose: true,
+          );
+        }
 
-          Gap(10.w),
+        // Show error notification at top right
+        if (state.error != null && state.error!.isNotEmpty) {
+          toastification.show(
+            context: context,
+            type: ToastificationType.error,
+            style: ToastificationStyle.flat,
+            title: const Text('Error'),
+            description: Text(state.error!),
+            alignment: Alignment.topRight,
+            autoCloseDuration: const Duration(seconds: 5),
+            showProgressBar: true,
+            primaryColor: Colors.red,
+            backgroundColor: Colors.white,
+            foregroundColor: Colors.black,
+            icon: const Icon(Icons.error, color: Colors.red),
+            borderSide: const BorderSide(color: Colors.red, width: 2),
+            boxShadow: lowModeShadow,
+            showIcon: true,
+            dragToClose: true,
+          );
+        }
+      },
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 20.w),
+        child: Row(
+          children: [
+            // Left column - flexible (approx 70%)
+            Expanded(flex: 7, child: LeftSideDashboardViewCard()),
 
-          // Right column - flexible (approx 30%) using flex-based vertical sizing
-          Expanded(
-            flex: 3,
-            child: Column(
-              children: [
-                // Top small card
-                Container(
-                  width: double.infinity,
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 10.w,
-                    vertical: 8.h,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5.r),
-                    color: InvAPColors.kWhiteColor,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        InvAppConstants.kCart,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      InkWell(
-                        onTap: () =>
-                            context.read<CartBloc>().add(const CartClear()),
-                        child: Image.asset(Assets.iconsDeleteIcon, scale: 4.5),
-                      ),
-                    ],
-                  ),
-                ),
-                Gap(10.h),
-                // Middle area: cart items
-                CartItemsMiddleArea(),
+            Gap(10.w),
 
-                Gap(10.h),
-
-                // Bottom area: totals
-                Expanded(
-                  flex: 1,
-                  child: Container(
-                    width: 1.sw,
+            // Right column - flexible (approx 30%) using flex-based vertical sizing
+            Expanded(
+              flex: 3,
+              child: Column(
+                children: [
+                  // Top small card
+                  Container(
+                    width: double.infinity,
                     padding: EdgeInsets.symmetric(
                       horizontal: 10.w,
                       vertical: 8.h,
                     ),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12.r),
+                      borderRadius: BorderRadius.circular(5.r),
                       color: InvAPColors.kWhiteColor,
                     ),
-                    child: BlocBuilder<CartBloc, CartState>(
-                      builder: (context, cartState) {
-                        final ghc = InvAppConstants.kGHC;
-                        // Show overlay while submitting
-                        if (cartState.submitting) {
-                          context.loaderOverlay.show();
-                        } else {
-                          context.loaderOverlay.hide();
-                        }
-                        return SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: 4.5.h,
-                            children: [
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          InvAppConstants.kCart,
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        InkWell(
+                          onTap: () =>
+                              context.read<CartBloc>().add(const CartClear()),
+                          child: Image.asset(Assets.iconsDeleteIcon, scale: 4.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Gap(10.h),
+                  // Middle area: cart items
+                  CartItemsMiddleArea(),
+
+                  Gap(10.h),
+
+                  // Bottom area: totals
+                  Expanded(
+                    flex: 1,
+                    child: Container(
+                      width: 1.sw,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10.w,
+                        vertical: 8.h,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12.r),
+                        color: InvAPColors.kWhiteColor,
+                      ),
+                      child: BlocBuilder<CartBloc, CartState>(
+                        builder: (context, cartState) {
+                          final ghc = InvAppConstants.kGHC;
+                          // Show overlay while submitting
+                          if (cartState.submitting) {
+                            context.loaderOverlay.show();
+                          } else {
+                            context.loaderOverlay.hide();
+                          }
+                          return SingleChildScrollView(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: Platform.isWindows ? 4.5.h : 10.h,
+                              children: [
                               _rowText(
                                 context,
                                 label: InvAppConstants.kVAT,
@@ -158,7 +208,7 @@ class APDashboardPage extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _rowText(

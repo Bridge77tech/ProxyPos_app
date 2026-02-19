@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -156,8 +158,8 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                 ),
               ),
               SizedBox(
-                width: 40.w,
-                height: 32.h,
+                width: Platform.isWindows ? 40.w : 50.w,
+                height: Platform.isWindows ? 32.h : 20.h,
                 child: ApButton(
                   height: 20.h,
                   width: 50.w,

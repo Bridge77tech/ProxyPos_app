@@ -14,7 +14,7 @@ Products _$ProductsFromJson(Map<String, dynamic> json) => Products(
   variants: (json['variants'] as List<dynamic>?)
       ?.map((e) => Variants.fromJson(e as Map<String, dynamic>))
       .toList(),
-  currentStock: json['currentStock'] as String?,
+  currentStock: (json['currentStock'] as num?)?.toInt(),
   miniStockLevel: (json['miniStockLevel'] as num?)?.toInt(),
   imagePath: json['imagePath'] as String?,
   isActive: json['isActive'] as bool?,

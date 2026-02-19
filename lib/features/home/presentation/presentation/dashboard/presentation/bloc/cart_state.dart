@@ -20,6 +20,7 @@ class CartState extends Equatable {
   final Variants? selectedVariant;
   final int selectedQuantity;
   final String? error;
+  final String? successMessage;
   final PaymentMethod? paymentMethod;
   final double amountReceived;
   final bool submitting;
@@ -30,6 +31,7 @@ class CartState extends Equatable {
     this.selectedVariant,
     this.selectedQuantity = 1,
     this.error,
+    this.successMessage,
     this.paymentMethod,
     this.amountReceived = 0.0,
     this.submitting = false,
@@ -49,6 +51,7 @@ class CartState extends Equatable {
     Variants? selectedVariant,
     int? selectedQuantity,
     String? error,
+    String? successMessage,
     PaymentMethod? paymentMethod,
     double? amountReceived,
     bool? submitting,
@@ -59,6 +62,7 @@ class CartState extends Equatable {
       selectedVariant: selectedVariant ?? this.selectedVariant,
       selectedQuantity: selectedQuantity ?? this.selectedQuantity,
       error: error,
+      successMessage: successMessage,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       amountReceived: amountReceived ?? this.amountReceived,
       submitting: submitting ?? this.submitting,
@@ -66,5 +70,5 @@ class CartState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [items, currentProduct, selectedVariant, selectedQuantity, error, paymentMethod, amountReceived, submitting];
+  List<Object?> get props => [items, currentProduct, selectedVariant, selectedQuantity, error, successMessage, paymentMethod, amountReceived, submitting];
 }

@@ -102,11 +102,11 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         'productId': it.productId,
         'variantId': it.variant.id,
         'quantity': it.quantity,
-        'saleType': it.variant.type,
+        'saleType': it.variant.unit,
       }).toList(),
       'amountPaid': state.amountReceived,
       'paymentMethod': state.paymentMethod?.name,
-      'deviceId': state.paymentMethod,
+      "deviceId": "POS-TABLET-001"
     };
 
     if (state.paymentMethod == null) {
@@ -123,17 +123,25 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       try {
         await _createSale.call(payload);
         _log.i('Order submitted successfully');
-        emit(state.copyWith(items: [], selectedQuantity: 0, selectedVariant: null, currentProduct: null, error: null, submitting: false));
+        emit(state.copyWith(
+          items: [],
+          selectedQuantity: 0,
+          selectedVariant: null,
+          currentProduct: null,
+          error: null,
+          successMessage: 'Order submitted successfully',
+          submitting: false,
+        ));
       } on DioException catch (e, st) {
-        final status = e.response?.statusCode ?? 0;
-        final isNetworkOrServer = status >= 500 || e.type == DioExceptionType.connectionError || e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout;
+        final status = e.response?.statusCode;
+        final isNetworkOrServer = status == null || status == 0 || status >= 500 || e.type == DioExceptionType.connectionError || e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout;
         if (isNetworkOrServer) {
           _log.e('Immediate submit failed (server/network); queueing payload', error: e, stackTrace: st);
           await _pendingStorage.enqueue(payload);
           emit(state.copyWith(submitting: false, error: 'Server/network issue; queued for sync'));
         } else {
           final msg = e.response?.data is Map ? (e.response?.data['message']?.toString() ?? e.message) : e.message;
-          _log.e('Immediate submit failed (client error ${status}): $msg', error: e, stackTrace: st);
+          _log.e('Immediate submit failed (client error $status): $msg', error: e, stackTrace: st);
           // Surface error to UI; do NOT clear cart so user can adjust
           emit(state.copyWith(submitting: false, error: msg ?? 'Submit failed'));
         }
@@ -145,7 +153,14 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     } else {
       _log.w('Offline: queueing order payload for later sync');
       await _pendingStorage.enqueue(payload);
-      emit(state.copyWith(items: [], selectedQuantity: 0, selectedVariant: null, currentProduct: null, submitting: false));
+      emit(state.copyWith(
+        items: [],
+        selectedQuantity: 0,
+        selectedVariant: null,
+        currentProduct: null,
+        successMessage: 'Order queued for sync when online',
+        submitting: false,
+      ));
     }
   }
 

@@ -62,8 +62,7 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                 Expanded(
                   child: BlocConsumer<DashboardBloc, DashboardState>(
                     listenWhen: (previous, current) {
-                      // Keep listener minimal; initial dispatch handled in builder
-                      return false;
+                     return false;
                     },
                     listener: (context, state) {},
                     builder: (context, state) {
