@@ -8,26 +8,20 @@ part of 'variant.dart';
 
 Variants _$VariantsFromJson(Map<String, dynamic> json) => Variants(
   id: json['id'] as String?,
+  name: json['name'] as String?,
   size: json['size'] as String?,
   type: json['type'] as String?,
-  unit: json['unit'] as String?,
-  barcode: json['barcode'] as String?,
-  costPrice: (json['costPrice'] as num?)?.toDouble(),
-  packPrice: (json['packPrice'] as num?)?.toDouble(),
-  currentStock: (json['currentStock'] as num?)?.toInt(),
-  sellingPrice: (json['sellingPrice'] as num?)?.toDouble(),
-  piecesPerPack: (json['piecesPerPack'] as num?)?.toInt(),
+  units: (json['units'] as List<dynamic>?)
+      ?.map((e) => UnitModel.fromJson(e as Map<String, dynamic>))
+      .toList(),
+  currentStock: (json['currentStock'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$VariantsToJson(Variants instance) => <String, dynamic>{
   'id': instance.id,
+  'name': instance.name,
   'size': instance.size,
   'type': instance.type,
-  'unit': instance.unit,
-  'barcode': instance.barcode,
-  'costPrice': instance.costPrice,
-  'packPrice': instance.packPrice,
+  'units': instance.units?.map((e) => e.toJson()).toList(),
   'currentStock': instance.currentStock,
-  'sellingPrice': instance.sellingPrice,
-  'piecesPerPack': instance.piecesPerPack,
 };

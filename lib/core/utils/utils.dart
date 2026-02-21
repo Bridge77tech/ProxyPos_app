@@ -77,7 +77,7 @@ class Utils {
             // Constrain content and allow scrolling to avoid overflow
             content: SizedBox(
               width: 0.3.sw,
-              height: 0.8.sw,
+              height: height.sh,
               child: Column(
                 children: [
                   Expanded(child: SingleChildScrollView(child: child)),
@@ -85,7 +85,7 @@ class Utils {
                     btnText: btnText,
                     width: 0.3.sw,
                     cornerRadius: roundCorner,
-                    onPressed: onPressed ?? () {},
+                    onPressed: onPressed,
                   )
                 ],
               ),

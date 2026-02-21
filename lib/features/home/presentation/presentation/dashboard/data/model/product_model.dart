@@ -29,15 +29,6 @@ class Products {
   @JsonKey(name: 'imagePath')
   final String? imagePath;
 
-  @JsonKey(name: "isActive")
-  bool? isActive;
-
-  @JsonKey(name: "totalSold")
-  final String? totalSold;
-
-  @JsonKey(name: "salesCount")
-  final String? salesCount;
-
   Products({
     this.id,
     this.name,
@@ -47,9 +38,6 @@ class Products {
     this.currentStock,
     this.miniStockLevel,
     this.imagePath,
-    this.isActive,
-    this.totalSold,
-    this.salesCount,
   });
 
   factory Products.fromJson(Map<String, dynamic> json) =>

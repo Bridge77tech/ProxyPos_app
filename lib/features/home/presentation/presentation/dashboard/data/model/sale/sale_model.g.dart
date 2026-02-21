@@ -22,9 +22,9 @@ SaleModel _$SaleModelFromJson(Map<String, dynamic> json) => SaleModel(
   lastModified: json['lastModified'] as String?,
   createdAt: json['createdAt'] as String?,
   updatedAt: json['updatedAt'] as String?,
-  items: json['items'] == null
-      ? null
-      : SaleItemsModel.fromJson(json['items'] as Map<String, dynamic>),
+  items: (json['items'] as List<dynamic>?)
+      ?.map((e) => SaleItemsModel.fromJson(e as Map<String, dynamic>))
+      .toList(),
 );
 
 Map<String, dynamic> _$SaleModelToJson(SaleModel instance) => <String, dynamic>{

@@ -10,7 +10,16 @@ import '../bloc/cart_bloc.dart';
 import '../bloc/cart_event.dart';
 
 class CartItemCardRow extends StatelessWidget {
-  const CartItemCardRow({super.key, required this.index, required this.name, required this.variantLabel, required this.price, required this.quantity});
+  const CartItemCardRow({
+    super.key,
+    required this.index,
+    required this.name,
+    required this.variantLabel,
+    required this.price,
+    required this.quantity,
+  });
+
+
   final int index;
   final String name;
   final String variantLabel;
@@ -50,9 +59,24 @@ class CartItemCardRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(name, style: Theme.of(context).textTheme.bodySmall),
-                    Text(variantLabel, style: Theme.of(context).textTheme.bodySmall!.copyWith(color: InvAPColors.kSecondaryTextColor)),
-                    Text('$ghc ${price.toStringAsFixed(2)}', style: Theme.of(context).textTheme.bodySmall!.copyWith(color: InvAPColors.kPrimaryColor)),
+                    Text(
+                        name,
+                        style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    Text(
+                        variantLabel,
+                        style: Theme.of(context).textTheme.bodySmall!
+                            .copyWith(
+                            color: InvAPColors.kSecondaryTextColor,
+                        ),
+                    ),
+                    Text(
+                        '$ghc ${price.toStringAsFixed(2)}',
+                        style: Theme.of(context).textTheme.bodySmall!
+                            .copyWith(
+                            color: InvAPColors.kPrimaryColor,
+                        ),
+                    ),
                   ],
                 ),
               ),

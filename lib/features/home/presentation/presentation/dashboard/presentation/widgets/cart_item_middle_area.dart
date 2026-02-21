@@ -48,9 +48,8 @@ class CartItemsMiddleArea extends StatelessWidget {
                   return CartItemCardRow(
                     index: index,
                     name: it.productName,
-                    variantLabel:
-                    '${it.variant.type} ${it.variant.size}',
-                    price: it.variant.sellingPrice ?? 0,
+                    variantLabel: it.unit.type,
+                    price: it.unit.sellingPrice,
                     quantity: it.quantity,
                   );
                 },

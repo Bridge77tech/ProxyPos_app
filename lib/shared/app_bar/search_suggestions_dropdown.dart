@@ -9,6 +9,7 @@ import 'package:inventory_app_pos/shared/app_bar/search_overlay_controller.dart'
 import '../../core/app_constants/ap_colors.dart';
 import '../../core/utils/utils.dart';
 import '../../features/home/presentation/presentation/dashboard/data/model/variant.dart';
+import '../../features/home/presentation/presentation/dashboard/data/model/unit_model.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_bloc.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_state.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart_bloc.dart';
@@ -88,10 +89,11 @@ class SearchSuggestionsDropdown extends StatelessWidget {
     final cart = context.read<CartBloc>();
     final state = cart.state;
     final variant = state.selectedVariant;
+    final unit = state.selectedUnit;
     final qty = state.selectedQuantity;
 
-    if (variant == null) {
-      debugPrint('Cannot add to cart: no variant selected');
+    if (variant == null || unit == null) {
+      debugPrint('Cannot add to cart: no unit selected');
       return;
     }
     if (qty <= 0) {
@@ -99,7 +101,12 @@ class SearchSuggestionsDropdown extends StatelessWidget {
       return;
     }
 
-    cart.add(CartAddItem(product: product, variant: variant, quantity: qty));
+    cart.add(CartAddItem(
+      product: product,
+      variant: variant,
+      unit: unit,
+      quantity: qty,
+    ));
     // Reset selection after add so Quantity returns to default and variant clears
     cart.add(const CartResetSelection());
     Navigator.of(context).pop();
@@ -168,44 +175,53 @@ class InsideOverlay extends StatelessWidget {
                 child: BlocBuilder<CartBloc, CartState>(
                   builder: (context, cartState) {
                     final variants = products.variants ?? const <Variants>[];
+                    // Flatten units from all variants
+                    final units = <({Variants variant, UnitModel unit})>[];
+                    for (final v in variants) {
+                      final vUnits = v.units ?? const <UnitModel>[];
+                      for (final u in vUnits) {
+                        units.add((variant: v, unit: u));
+                      }
+                    }
                     return ListView.separated(
                       primary: false,
                       padding: EdgeInsets.zero,
-                      itemCount: variants.length,
+                      itemCount: units.length,
                       separatorBuilder: (_, _) => Divider(
-                          height: 1,
-                          color: InvAPColors.kBorderColor.withValues(alpha: 0.5),
+                        height: 1,
+                        color: InvAPColors.kBorderColor.withValues(alpha: 0.5),
                       ),
                       itemBuilder: (context, index) {
-                        final v = variants[index];
-                        final selected = cartState.selectedVariant == v;
+                        final entry = units[index];
+                        final v = entry.variant;
+                        final u = entry.unit;
+                        final selected = cartState.selectedUnit == u;
                         return ListTile(
                           dense: true,
                           contentPadding: EdgeInsets.zero,
-                          title: Text('${v.type}', style: Theme.of(context).textTheme.bodySmall),
+                          title: Text(u.type, style: Theme.of(context).textTheme.bodySmall),
                           subtitle: Row(
                             spacing: 20.w,
                             children: [
                               Text(
-                                  '${v.size}',
-                                  style: Theme.of(context).textTheme.bodySmall,
+                                '${v.size ?? ''}',
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
                               Text(
-                                  'GHS ${v.sellingPrice}',
-                                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                  ),
+                                'GHS ${u.sellingPrice}',
+                                style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
                           ),
-                          // Replace deprecated Radio with a selection indicator icon
                           trailing: Icon(
                             selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
                             size: 18,
                             color: selected ? InvAPColors.kPrimaryColor : InvAPColors.kSecondaryTextColor,
                           ),
                           onTap: () {
-                            context.read<CartBloc>().add(CartSelectVariant(product: products, variant: v));
+                            context.read<CartBloc>().add(CartSelectUnit(product: products, variant: v, unit: u));
                           },
                         );
                       },

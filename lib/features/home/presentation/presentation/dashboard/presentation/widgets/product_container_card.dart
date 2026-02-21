@@ -9,6 +9,7 @@ import 'package:inventory_app_pos/shared/app_buttons/ap_button.dart';
 
 import '../../data/model/product_model.dart';
 import '../../data/model/variant.dart';
+import '../../data/model/unit_model.dart';
 import '../bloc/cart_bloc.dart';
 import '../bloc/cart_event.dart';
 
@@ -19,10 +20,12 @@ class ProductContainerCard extends StatefulWidget {
     super.key,
     required this.variants,
     required this.product,
+    this.unit,
   });
 
   final Variants? variants;
   final Products? product;
+  final UnitModel? unit;
 
   @override
   State<ProductContainerCard> createState() => _ProductContainerCardState();
@@ -34,6 +37,9 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final displayName = widget.product?.name ?? '';
+    final unitType = widget.unit?.type;
+    final price = widget.unit?.sellingPrice ?? widget.variants?.sellingPrice ?? 0.0;
     return Container(
       padding: EdgeInsets.all(10.w),
       decoration: BoxDecoration(
@@ -68,16 +74,16 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
             ),
           ),
           Text(
-            widget.product?.name ?? '',
+            displayName,
             style: theme.textTheme.bodySmall,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           Text(
-            "${widget.variants?.type}, ${widget.variants?.size}",
+            unitType ?? "${widget.variants?.type}, ${widget.variants?.size}",
             style: theme.textTheme.bodySmall?.copyWith(
               color: InvAPColors.kSecondaryTextColor,
-              fontSize: 10.sp
+              fontSize: 10.sp,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -86,7 +92,7 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'GH₵${widget.variants?.sellingPrice?.toStringAsFixed(2) ?? '0.00'}',
+                'GH₵${price.toStringAsFixed(2)}',
                 style: theme.textTheme.bodySmall!.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -163,13 +169,14 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                 child: ApButton(
                   height: 20.h,
                   width: 50.w,
-                  onPressed: qty == 0 || widget.product == null || widget.variants == null
+                  onPressed: qty == 0 || widget.product == null || widget.variants == null || widget.unit == null
                       ? null
                       : () {
                           final cart = context.read<CartBloc>();
                           final product = widget.product!;
                           final variant = widget.variants!;
-                          cart.add(CartAddItem(product: product, variant: variant, quantity: qty));
+                          final unit = widget.unit!;
+                          cart.add(CartAddItem(product: product, variant: variant, unit: unit, quantity: qty));
                           setState(() => qty = 0);
                         },
                   btnText: 'Add',

@@ -21,7 +21,7 @@ class SaleModel {
   final String? lastModified;
   final String? createdAt;
   final String? updatedAt;
-  final SaleItemsModel? items;
+  final List<SaleItemsModel>? items;
 
   SaleModel({
     this.id,
