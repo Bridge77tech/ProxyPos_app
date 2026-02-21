@@ -4,7 +4,6 @@ import 'package:inventory_app_pos/core/exceptions/login_exception.dart';
 import 'package:inventory_app_pos/features/auth/data/data_source/local/auth_session_storage_impl.dart';
 import 'package:inventory_app_pos/features/auth/data/data_source/remote/login_api_service.dart';
 import 'package:inventory_app_pos/features/auth/data/model/user_model.dart';
-import 'package:inventory_app_pos/network/exceptions/bad_request_exception.dart';
 
 import '../../domain/repositories/auth_repository.dart';
 
