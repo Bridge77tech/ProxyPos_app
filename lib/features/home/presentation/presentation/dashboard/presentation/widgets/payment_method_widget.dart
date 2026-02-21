@@ -29,21 +29,14 @@ class PaymentMethodTile extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 8.w),
         decoration: BoxDecoration(
           border: Border.all(color: InvAPColors.kPrimaryColor, width: 1.5.w),
-          color: InvAPColors.kWhiteColor,
-          borderRadius: BorderRadius.circular(10.r),
+          color: selected ? Color.fromRGBO(72, 147, 109, 0.12) :  InvAPColors.kWhiteColor,
+         borderRadius: BorderRadius.circular(10.r),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: EdgeInsets.all(8.w),
-              decoration: BoxDecoration(
-                color: selected ? Colors.red.withAlpha(25) : InvAPColors.kWhiteColor,
-                borderRadius: BorderRadius.circular(8.r),
-              ),
-              child: Image.asset(iconAsset, scale: 4.5),
-            ),
+            Image.asset(iconAsset, scale: 4.5),
             Gap(6.h),
             Text(label),
           ],

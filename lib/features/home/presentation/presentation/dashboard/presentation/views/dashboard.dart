@@ -178,12 +178,16 @@ class APDashboardPage extends StatelessWidget {
                                           context,
                                           title: 'Checkout',
                                           roundCorner: 10,
-                                          height: 0.6,
+                                          height: 0.7,
                                           btnText: "Submit",
                                           child: CheckOutOverFlowContent(),
-                                          onPressed: () {
+                                          onPressed: cartState.amountReceived <= 0
+                                              || cartState.paymentMethod == null
+                                              ? null : () {
                                             // Trigger submit
-                                            context.read<CartBloc>().add(const CartSubmitOrder());
+                                            context.read<CartBloc>().add(
+                                                const CartSubmitOrder(),
+                                            );
                                             // Close the overlay dialog
                                             Navigator.of(context).pop();
                                           },

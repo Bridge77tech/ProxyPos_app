@@ -5,6 +5,7 @@ import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 
 import '../../data/data_source/local/pending_sales_storage.dart';
 import '../../data/model/variant.dart';
+import '../../data/model/unit_model.dart';
 import '../../domain/usecases/create_sale_use_case.dart';
 import 'cart_event.dart';
 import 'cart_state.dart' show CartState, CartItem;
@@ -24,6 +25,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         _connectivity = connectivity ?? Connectivity(),
         super(const CartState()) {
     on<CartSelectVariant>(_onSelectVariant);
+    on<CartSelectUnit>(_onSelectUnit);
     on<CartChangeQuantity>(_onChangeQuantity);
     on<CartSetQuantity>(_onSetQuantity);
     on<CartAddItem>(_onAddItem);
@@ -38,8 +40,24 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   void _onSelectVariant(CartSelectVariant event, Emitter<CartState> emit) {
-    emit(state.copyWith(currentProduct: event.product, selectedVariant: event.variant));
+    final defaultUnit = (event.variant.units != null && event.variant.units!.isNotEmpty)
+        ? event.variant.units!.first
+        : null;
+    emit(state.copyWith(
+      currentProduct: event.product,
+      selectedVariant: event.variant,
+      selectedUnit: defaultUnit,
+    ));
     _log.i('Selected variant: ${event.variant.type} (${event.variant.size}) of ${event.product.name}');
+  }
+
+  void _onSelectUnit(CartSelectUnit event, Emitter<CartState> emit) {
+    emit(state.copyWith(
+      currentProduct: event.product,
+      selectedVariant: event.variant,
+      selectedUnit: event.unit,
+    ));
+    _log.i('Selected unit: ${event.unit.type} for ${event.product.name}');
   }
 
   void _onChangeQuantity(CartChangeQuantity event, Emitter<CartState> emit) {
@@ -59,16 +77,19 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       final productId = event.product.id?.toString() ?? '';
       final productName = event.product.name ?? '';
       final v = event.variant;
+      final u = event.unit;
 
-      // Merge with existing if same productId + variant signature
+      // Merge with existing if same productId + variant + unit
       final items = List<CartItem>.from(state.items);
-      final idx = items.indexWhere((it) => it.productId == productId && _sameVariant(it.variant, v));
+      final idx = items.indexWhere((it) =>
+          it.productId == productId && _sameVariantUnit(it.variant, it.unit, v, u));
       if (idx >= 0) {
         final existing = items[idx];
         items[idx] = CartItem(
           productId: existing.productId,
           productName: existing.productName,
           variant: existing.variant,
+          unit: existing.unit,
           quantity: (existing.quantity + event.quantity).clamp(1, 999),
         );
       } else {
@@ -76,11 +97,12 @@ class CartBloc extends Bloc<CartEvent, CartState> {
           productId: productId,
           productName: productName,
           variant: v,
+          unit: u,
           quantity: event.quantity,
         ));
       }
       emit(state.copyWith(items: items, selectedQuantity: 0, selectedVariant: null, currentProduct: null));
-      _log.i('Added to cart: $productName (${v.type} ${v.size}) x${event.quantity}');
+      _log.i('Added to cart: $productName (${u.type}) x${event.quantity}');
     } catch (e, st) {
       _log.e('Add to cart failed', error: e, stackTrace: st);
       emit(state.copyWith(error: e.toString()));
@@ -94,7 +116,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     }
 
     // Mark submitting true for UI overlay
-    emit(state.copyWith(submitting: true, error: null));
+    emit(state.copyWith(submitting: true, error: null, successMessage: null));
 
     // Minimal payload expected by backend
     final payload = <String, dynamic>{
@@ -102,7 +124,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         'productId': it.productId,
         'variantId': it.variant.id,
         'quantity': it.quantity,
-        'saleType': it.variant.unit,
+        'saleType': it.unit.type,
       }).toList(),
       'amountPaid': state.amountReceived,
       'paymentMethod': state.paymentMethod?.name,
@@ -123,32 +145,39 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       try {
         await _createSale.call(payload);
         _log.i('Order submitted successfully');
+        // Success - clear cart, amount received, and show success message
         emit(state.copyWith(
           items: [],
           selectedQuantity: 0,
           selectedVariant: null,
+          selectedUnit: null,
           currentProduct: null,
+          amountReceived: 0.0,
+          paymentMethod: null,
           error: null,
           successMessage: 'Order submitted successfully',
           submitting: false,
         ));
       } on DioException catch (e, st) {
         final status = e.response?.statusCode;
-        final isNetworkOrServer = status == null || status == 0 || status >= 500 || e.type == DioExceptionType.connectionError || e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.receiveTimeout;
-        if (isNetworkOrServer) {
-          _log.e('Immediate submit failed (server/network); queueing payload', error: e, stackTrace: st);
-          await _pendingStorage.enqueue(payload);
-          emit(state.copyWith(submitting: false, error: 'Server/network issue; queued for sync'));
-        } else {
-          final msg = e.response?.data is Map ? (e.response?.data['message']?.toString() ?? e.message) : e.message;
-          _log.e('Immediate submit failed (client error $status): $msg', error: e, stackTrace: st);
-          // Surface error to UI; do NOT clear cart so user can adjust
-          emit(state.copyWith(submitting: false, error: msg ?? 'Submit failed'));
-        }
+        final msg = e.response?.data is Map
+            ? (e.response?.data['message']?.toString() ?? e.message)
+            : e.message;
+        _log.e('Immediate submit failed (online error $status): $msg', error: e, stackTrace: st);
+        // Do NOT queue on online failures per requirement
+        emit(state.copyWith(
+          submitting: false,
+          error: msg ?? 'Submit failed',
+          successMessage: null,
+        ));
       } catch (e, st) {
-        _log.e('Immediate submit failed (unexpected); queueing payload', error: e, stackTrace: st);
-        await _pendingStorage.enqueue(payload);
-        emit(state.copyWith(submitting: false, error: e.toString()));
+        // Unexpected error - do not queue
+        _log.e('Immediate submit failed (unexpected error): ${e.toString()}', error: e, stackTrace: st);
+        emit(state.copyWith(
+          submitting: false,
+          error: 'Unexpected error: ${e.toString()}',
+          successMessage: null,
+        ));
       }
     } else {
       _log.w('Offline: queueing order payload for later sync');
@@ -157,8 +186,12 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         items: [],
         selectedQuantity: 0,
         selectedVariant: null,
+        selectedUnit: null,
         currentProduct: null,
+        amountReceived: 0.0,
+        paymentMethod: null,
         successMessage: 'Order queued for sync when online',
+        error: null,
         submitting: false,
       ));
     }
@@ -211,6 +244,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         productId: existing.productId,
         productName: existing.productName,
         variant: existing.variant,
+        unit: existing.unit,
         quantity: nextQty,
       );
       emit(state.copyWith(items: items));
@@ -218,12 +252,11 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   void _onClear(CartClear event, Emitter<CartState> emit) {
-    emit(state.copyWith(items: []));
+    emit(state.copyWith(items: [], selectedVariant: null, selectedUnit: null));
   }
 
   void _onResetSelection(CartResetSelection event, Emitter<CartState> emit) {
-    // Reset selected quantity and variant back to initial
-    emit(state.copyWith(selectedQuantity: 0, selectedVariant: null, currentProduct: null));
+    emit(state.copyWith(selectedQuantity: 0, selectedVariant: null, selectedUnit: null, currentProduct: null));
     _log.i('Selection reset after add-to-cart');
   }
 
@@ -238,7 +271,10 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     _log.i('Amount received set: $amt');
   }
 
-  bool _sameVariant(Variants a, Variants b) {
-    return a.type == b.type && a.size == b.size && a.sellingPrice == b.sellingPrice;
+  bool _sameVariantUnit(Variants aVar, UnitModel aUnit, Variants bVar, UnitModel bUnit) {
+    return aVar.type == bVar.type &&
+        aVar.size == bVar.size &&
+        aUnit.type == bUnit.type &&
+        aUnit.sellingPrice == bUnit.sellingPrice;
   }
 }

@@ -26,37 +26,22 @@ class CreateSaleRepoImpl implements CreateSaleRepository {
   }) async {
     _log.i('Creating new sale with payload keys: ${payload.keys.toList()}');
     try {
-      final dynamic result = await _api.createNewSale(token, payload);
+      // Retrofit will return ProductSaleModel directly on success (201)
+      final result = await _api.createNewSale(token, payload);
 
-      // Parse result into ProductSaleModel robustly
-      late final ProductSaleModel model;
-      if (result is ProductSaleModel) {
-        model = result;
-      } else if (result is Map<String, dynamic>) {
-        model = ProductSaleModel.fromJson(result);
-      } else if (result is Response) {
-        final data = result.data;
-        if (data is Map<String, dynamic>) {
-          model = ProductSaleModel.fromJson(data);
-        } else {
-          throw Exception('Unexpected response body for create sale');
-        }
-      } else {
-        // Fallback: construct minimal model
-        model = ProductSaleModel(sale: null);
-      }
+      _log.i('Create sale success: ${result.message}');
 
-      _log.i('Create sale success; caching locally');
-      await _storage.saveSale(model);
-      return model;
+      // Skipping local cache per requirement.
+      return result;
     } on DioException catch (e, st) {
       final status = e.response?.statusCode;
       final data = e.response?.data;
       _log.e('Create sale failed (status: $status, body: $data)', error: e, stackTrace: st);
-      // Rethrow so upper layers can make routing decisions (queue vs surface)
+      // Rethrow DioException so upper layers can distinguish network vs client errors
       rethrow;
     } catch (e, st) {
-      _log.e('Create sale failed (unexpected)', error: e, stackTrace: st);
+      // Catch parsing errors or other unexpected exceptions
+      _log.e('Create sale failed (unexpected): ${e.toString()}', error: e, stackTrace: st);
       rethrow;
     }
   }

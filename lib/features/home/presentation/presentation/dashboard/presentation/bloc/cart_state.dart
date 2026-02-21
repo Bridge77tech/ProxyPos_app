@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../data/model/product_model.dart';
 import '../../data/model/variant.dart';
+import '../../data/model/unit_model.dart';
 
 enum PaymentMethod { mobileMoney, cash }
 
@@ -8,16 +9,24 @@ class CartItem extends Equatable {
   final String productId;
   final String productName;
   final Variants variant;
+  final UnitModel unit;
   final int quantity;
-  const CartItem({required this.productId, required this.productName, required this.variant, required this.quantity});
+  const CartItem({
+    required this.productId,
+    required this.productName,
+    required this.variant,
+    required this.unit,
+    required this.quantity,
+  });
   @override
-  List<Object?> get props => [productId, productName, variant, quantity];
+  List<Object?> get props => [productId, productName, variant, unit, quantity];
 }
 
 class CartState extends Equatable {
   final List<CartItem> items;
   final Products? currentProduct;
   final Variants? selectedVariant;
+  final UnitModel? selectedUnit;
   final int selectedQuantity;
   final String? error;
   final String? successMessage;
@@ -29,6 +38,7 @@ class CartState extends Equatable {
     this.items = const [],
     this.currentProduct,
     this.selectedVariant,
+    this.selectedUnit,
     this.selectedQuantity = 1,
     this.error,
     this.successMessage,
@@ -37,9 +47,9 @@ class CartState extends Equatable {
     this.submitting = false,
   });
 
-  double get subTotal => items.fold(0.0, (sum, it) => sum + ((it.variant.sellingPrice ?? 0) * it.quantity));
-  double get vat => 0.0; // hook up if needed
-  double get discount => 0.0; // hook up if needed
+  double get subTotal => items.fold(0.0, (sum, it) => sum + (it.unit.sellingPrice * it.quantity));
+  double get vat => 0.0;
+  double get discount => 0.0;
   double get total => subTotal + vat - discount;
 
   double get remaining => (total - amountReceived).clamp(0.0, double.infinity);
@@ -49,6 +59,7 @@ class CartState extends Equatable {
     List<CartItem>? items,
     Products? currentProduct,
     Variants? selectedVariant,
+    UnitModel? selectedUnit,
     int? selectedQuantity,
     String? error,
     String? successMessage,
@@ -60,6 +71,7 @@ class CartState extends Equatable {
       items: items ?? this.items,
       currentProduct: currentProduct ?? this.currentProduct,
       selectedVariant: selectedVariant ?? this.selectedVariant,
+      selectedUnit: selectedUnit ?? this.selectedUnit,
       selectedQuantity: selectedQuantity ?? this.selectedQuantity,
       error: error,
       successMessage: successMessage,
@@ -70,5 +82,5 @@ class CartState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [items, currentProduct, selectedVariant, selectedQuantity, error, successMessage, paymentMethod, amountReceived, submitting];
+  List<Object?> get props => [items, currentProduct, selectedVariant, selectedUnit, selectedQuantity, error, successMessage, paymentMethod, amountReceived, submitting];
 }

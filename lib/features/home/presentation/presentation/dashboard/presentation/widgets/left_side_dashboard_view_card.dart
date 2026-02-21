@@ -7,6 +7,7 @@ import 'package:inventory_app_pos/features/home/presentation/presentation/dashbo
 import '../../../../../../../core/app_constants/ap_colors.dart';
 import '../../data/model/product_model.dart';
 import '../../data/model/variant.dart';
+import '../../data/model/unit_model.dart';
 import '../../presentation/bloc/dashboard_bloc.dart';
 import '../../presentation/bloc/dashboard_event.dart';
 import '../../presentation/bloc/dashboard_state.dart';
@@ -89,19 +90,22 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                         );
                       }
 
-                      // Build a flat list of (product, variant) entries so all variants are displayed
-                      final List<({Products product, Variants variant})> items = [];
+                      // Build a flat list of (product, variant, unit) entries so all units are displayed
+                      final List<({Products product, Variants variant, UnitModel unit})> items = [];
                       for (final p in source) {
                         final vars = p.variants ?? const [];
                         for (final v in vars) {
-                          items.add((product: p, variant: v));
+                          final units = v.units ?? const [];
+                          for (final u in units) {
+                            items.add((product: p, variant: v, unit: u));
+                          }
                         }
                       }
 
                       if (items.isEmpty) {
                         return Center(
                           child: Text(
-                            'No variants available',
+                            'No units available',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         );
@@ -123,6 +127,7 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                           return ProductContainerCard(
                             product: entry.product,
                             variants: entry.variant,
+                            unit: entry.unit,
                           );
                         },
                       );

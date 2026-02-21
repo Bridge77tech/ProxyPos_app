@@ -50,10 +50,30 @@ class LoginForm extends StatelessWidget {
             listener: (context, state) {
               switch (state.stateStatus.runtimeType) {
                 case (const (ErrorStatus)):
+                  context.loaderOverlay.hide();
                   final message = (state.stateStatus as ErrorStatus).error;
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(message)));
+                  // Show snackbar at the top-right with 0.4.sw width
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        message,
+                        style: const TextStyle(color: Colors.white),
+                        textAlign: TextAlign.center,
+                      ),
+                      backgroundColor: Colors.red,
+                      behavior: SnackBarBehavior.floating,
+                      margin: EdgeInsets.only(
+                        top: 20.h,
+                        bottom: MediaQuery.of(context).size.height - 100.h,
+                        left: 0.55.sw,
+                        right: 0.05.sw,
+                      ),
+                      duration: const Duration(seconds: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  );
                   break;
                 case (const (LoggingInUser)):
                   context.loaderOverlay.show();

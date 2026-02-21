@@ -84,14 +84,17 @@ class CheckOutOverFlowContent extends StatelessWidget {
                       ),
                       Expanded(
                         child: TextFormField(
-                          initialValue: cartState.amountReceived.toStringAsFixed(2),
+                          // initialValue: cartState.amountReceived.toStringAsFixed(2),sd\
+
                           onChanged: (val) {
                             final v = double.tryParse(val) ?? 0.0;
                             context.read<CartBloc>().add(CartSetAmountReceived(v));
                           },
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             isDense: true,
                             border: OutlineInputBorder(),
+                            hintText: '0.00',
+                            hintStyle: Theme.of(context).textTheme.bodyMedium,
                           ),
                         ),
                       ),

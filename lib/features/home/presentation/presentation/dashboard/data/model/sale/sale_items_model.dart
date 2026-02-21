@@ -12,7 +12,7 @@ class SaleItemsModel {
   final String? variantId;
   final String? productName;
   final int? quantity;
-  final String? saleType;
+  final String? unit;
   final String? unitPrice;
   final String? costPrice;
   final String? subtotal;
@@ -27,7 +27,7 @@ class SaleItemsModel {
     this.variantId,
     this.productName,
     this.quantity,
-    this.saleType,
+    this.unit,
     this.unitPrice,
     this.costPrice,
     this.subtotal,

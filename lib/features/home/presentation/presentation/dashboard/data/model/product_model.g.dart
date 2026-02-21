@@ -17,9 +17,6 @@ Products _$ProductsFromJson(Map<String, dynamic> json) => Products(
   currentStock: (json['currentStock'] as num?)?.toInt(),
   miniStockLevel: (json['miniStockLevel'] as num?)?.toInt(),
   imagePath: json['imagePath'] as String?,
-  isActive: json['isActive'] as bool?,
-  totalSold: json['totalSold'] as String?,
-  salesCount: json['salesCount'] as String?,
 );
 
 Map<String, dynamic> _$ProductsToJson(Products instance) => <String, dynamic>{
@@ -31,7 +28,4 @@ Map<String, dynamic> _$ProductsToJson(Products instance) => <String, dynamic>{
   'currentStock': instance.currentStock,
   'miniStockLevel': instance.miniStockLevel,
   'imagePath': instance.imagePath,
-  'isActive': instance.isActive,
-  'totalSold': instance.totalSold,
-  'salesCount': instance.salesCount,
 };

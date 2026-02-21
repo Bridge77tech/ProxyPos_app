@@ -24,10 +24,11 @@ BlocProvider get authOutlet {
   final LoginAPIService apiService = LoginAPIService(
     APIService().dioInstance,
   );
-  final loginRepo = LoginRepositoryImpl(
-      apiService
-  );
   final authSessionStorage = AuthSessionStorageImpl.instance;
+  final loginRepo = LoginRepositoryImpl(
+    apiService,
+    authStorage: authSessionStorage,
+  );
   final saveUserToken = SaveUserTokenUseCase(authSessionStorage);
   final cashierInfoStorage = CashierInfoStorageImpl.instance;
   final saveCashierInfo = SaveCashierInfoUseCase(cashierInfoStorage);

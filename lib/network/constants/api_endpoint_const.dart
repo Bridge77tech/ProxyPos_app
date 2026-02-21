@@ -3,13 +3,18 @@ import 'package:inventory_app_pos/network/models/api_endpoint.dart';
 class APIEndpointConst {
   APIEndpointConst._();
 
-  static const APIEndpoint apLoginEndpoint = APIEndpoint(route: 'auth/login');
-  static const APIEndpoint apTopProductEndpoint = APIEndpoint(route: 'pos/products/top-products');
-  static const APIEndpoint apAllProductEndpoint = APIEndpoint(route: 'pos/products');
-  static const APIEndpoint apCreateNewSaleEndPoint = APIEndpoint(route: 'pos/sales');
+  static const APIEndpoint apLoginEndpoint = APIEndpoint(route: 'auth/login', requiredAuth: false);
+  static const APIEndpoint apTopProductEndpoint = APIEndpoint(route: 'pos/products/top-products', requiredAuth: true);
+  static const APIEndpoint apAllProductEndpoint = APIEndpoint(route: 'pos/products', requiredAuth: true);
+  static const APIEndpoint apCreateNewSaleEndPoint = APIEndpoint(route: 'pos/sales', requiredAuth: true);
 
-  static const List<APIEndpoint> privateAPIEndpoint = [
+  /// Public endpoints that DO NOT require authentication
+  static const List<APIEndpoint> publicAPIEndpoint = [
     apLoginEndpoint,
+  ];
+
+  /// Private endpoints that REQUIRE authentication
+  static const List<APIEndpoint> privateAPIEndpoint = [
     apTopProductEndpoint,
     apAllProductEndpoint,
     apCreateNewSaleEndPoint,

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import '../../data/model/product_model.dart';
 import '../../data/model/variant.dart';
+import '../../data/model/unit_model.dart';
 import 'cart_state.dart' show PaymentMethod;
 
 abstract class CartEvent extends Equatable {
@@ -34,10 +35,16 @@ class CartSetQuantity extends CartEvent {
 class CartAddItem extends CartEvent {
   final Products product;
   final Variants variant;
+  final UnitModel unit;
   final int quantity;
-  const CartAddItem({required this.product, required this.variant, required this.quantity});
+  const CartAddItem({
+    required this.product,
+    required this.variant,
+    required this.unit,
+    required this.quantity,
+  });
   @override
-  List<Object?> get props => [product, variant, quantity];
+  List<Object?> get props => [product, variant, unit, quantity];
 }
 
 class CartRemoveItem extends CartEvent {
@@ -86,4 +93,13 @@ class CartSetAmountReceived extends CartEvent {
   const CartSetAmountReceived(this.amount);
   @override
   List<Object?> get props => [amount];
+}
+
+class CartSelectUnit extends CartEvent {
+  final Products product;
+  final Variants variant;
+  final UnitModel unit;
+  const CartSelectUnit({required this.product, required this.variant, required this.unit});
+  @override
+  List<Object?> get props => [product, variant, unit];
 }
