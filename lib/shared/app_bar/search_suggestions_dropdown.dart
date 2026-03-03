@@ -1,20 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:gap/gap.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/model/product_model.dart';
-import 'package:inventory_app_pos/generated/assets.dart';
 import 'package:inventory_app_pos/shared/app_bar/search_overlay_controller.dart';
 
 import '../../core/app_constants/ap_colors.dart';
 import '../../core/utils/utils.dart';
-import '../../features/home/presentation/presentation/dashboard/data/model/variant.dart';
-import '../../features/home/presentation/presentation/dashboard/data/model/unit_model.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_bloc.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_state.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart_bloc.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart_event.dart';
-import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart_state.dart';
 import 'inside_overlay_dialog.dart';
 
 /// Renders the dropdown list of product suggestions using DashboardBloc state.
