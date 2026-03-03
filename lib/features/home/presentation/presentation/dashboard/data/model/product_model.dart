@@ -26,7 +26,7 @@ class Products {
   @JsonKey(name: 'miniStockLevel')
   final int? miniStockLevel;
 
-  @JsonKey(name: 'imagePath')
+  @JsonKey(name: 'image')
   final String? imagePath;
 
   Products({

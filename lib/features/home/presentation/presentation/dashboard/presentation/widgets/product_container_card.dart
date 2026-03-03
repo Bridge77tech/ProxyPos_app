@@ -65,7 +65,7 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
             alignment: Alignment.center,
             child: SizedBox(
               height: 43.h,
-              child: Image.asset(
+              child: Image.network(
                 widget.product?.imagePath ?? Assets.imagesItem,
                 fit: BoxFit.contain,
                 width: 43.w,
