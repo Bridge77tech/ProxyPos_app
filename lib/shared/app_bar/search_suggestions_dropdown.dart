@@ -7,7 +7,9 @@ import 'package:inventory_app_pos/shared/app_bar/search_overlay_controller.dart'
 import '../../core/app_constants/ap_colors.dart';
 import '../../core/utils/utils.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_bloc.dart';
+import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_event.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_state.dart';
+
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart_bloc.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart_event.dart';
 import 'inside_overlay_dialog.dart';
@@ -15,7 +17,14 @@ import 'inside_overlay_dialog.dart';
 /// Renders the dropdown list of product suggestions using DashboardBloc state.
 class SearchSuggestionsDropdown extends StatelessWidget {
   final SearchOverlayController searchController;
-  const SearchSuggestionsDropdown({super.key, required this.searchController});
+  final TextEditingController textController;
+  final FocusNode focusNode;
+  const SearchSuggestionsDropdown({
+    super.key,
+    required this.searchController,
+    required this.textController,
+    required this.focusNode,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -53,24 +62,19 @@ class SearchSuggestionsDropdown extends StatelessWidget {
                       )
                     : null,
                 onTap: () {
-                  final name = p.name ?? '';
-                  debugPrint('Selected suggestion: $name');
+                  // Hide dropdown, clear field, and dismiss keyboard immediately
+                  searchController.hide();
+                  textController.clear();
+                  focusNode.unfocus();
+                  // Clear search state in bloc
+                  context.read<DashboardBloc>().add(const SearchProducts(''));
 
-                  // Correctly hide the overlay dropdown
-                  try{
-                    searchController.hide();
-                  } catch (e) {
-                    debugPrint('Failed to hide overlay: $e');
-                  }
-
-                  // Show overlay dialog via root navigator
+                  // Show the product detail dialog
                   final rootCtx = Navigator.of(context, rootNavigator: true).context;
                   Utils.showOverlayDialog<void>(
                     rootCtx,
                     onPressed: () => _onAddToCartOverlay(rootCtx, p),
-                    child: InsideOverlay(
-                      products: p,
-                    ),
+                    child: InsideOverlay(products: p),
                   );
                 },
               );

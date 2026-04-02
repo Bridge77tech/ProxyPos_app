@@ -1,7 +1,9 @@
 import 'package:bloc/bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
+import 'package:inventory_app_pos/core/routing/navigation_helper.dart';
 
 import '../../data/data_source/local/pending_sales_storage.dart';
 import '../../data/model/variant.dart';
@@ -16,6 +18,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   final PendingSalesStorage _pendingStorage;
   final Connectivity _connectivity;
 
+  // TextEditingController for amount input
+  late final TextEditingController amountController;
+
   CartBloc({
     required CreateSaleUseCase createSaleUseCase,
     PendingSalesStorage? pendingStorage,
@@ -24,6 +29,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         _pendingStorage = pendingStorage ?? PendingSalesStorageImpl.instance,
         _connectivity = connectivity ?? Connectivity(),
         super(const CartState()) {
+    // Initialize amount controller
+    amountController = TextEditingController();
+
     on<CartSelectVariant>(_onSelectVariant);
     on<CartSelectUnit>(_onSelectUnit);
     on<CartChangeQuantity>(_onChangeQuantity);
@@ -37,6 +45,12 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<CartSyncPending>(_onSyncPending);
     on<CartSelectPayment>(_onSelectPayment);
     on<CartSetAmountReceived>(_onSetAmountReceived);
+  }
+
+  @override
+  Future<void> close() {
+    amountController.dispose();
+    return super.close();
   }
 
   void _onSelectVariant(CartSelectVariant event, Emitter<CartState> emit) {
@@ -142,10 +156,12 @@ class CartBloc extends Bloc<CartEvent, CartState> {
 
     if (isOnline) {
       _log.i('Online: submitting order immediately');
+      NavigationHelper.pop();
       try {
         await _createSale.call(payload);
         _log.i('Order submitted successfully');
         // Success - clear cart, amount received, and show success message
+        amountController.clear();
         emit(state.copyWith(
           items: [],
           selectedQuantity: 0,
@@ -178,10 +194,14 @@ class CartBloc extends Bloc<CartEvent, CartState> {
           error: 'Unexpected error: ${e.toString()}',
           successMessage: null,
         ));
+      } finally {
+        NavigationHelper.pop();
       }
     } else {
       _log.w('Offline: queueing order payload for later sync');
+      NavigationHelper.pop();
       await _pendingStorage.enqueue(payload);
+      amountController.clear();
       emit(state.copyWith(
         items: [],
         selectedQuantity: 0,
@@ -252,7 +272,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   void _onClear(CartClear event, Emitter<CartState> emit) {
-    emit(state.copyWith(items: [], selectedVariant: null, selectedUnit: null));
+    amountController.clear();
+    emit(state.copyWith(items: [], selectedVariant: null, selectedUnit: null, amountReceived: 0.0, paymentMethod: null));
   }
 
   void _onResetSelection(CartResetSelection event, Emitter<CartState> emit) {

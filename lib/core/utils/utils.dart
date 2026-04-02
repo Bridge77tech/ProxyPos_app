@@ -16,6 +16,7 @@ class Utils {
         double height = 0.8,
         double roundCorner = 0,
         String btnText = 'Add to Cart',
+        Widget? bottomWidget,
       }) {
     return showDialog<T>(
       context: context,
@@ -81,7 +82,7 @@ class Utils {
               child: Column(
                 children: [
                   Expanded(child: SingleChildScrollView(child: child)),
-                  ApButton(
+                  bottomWidget ?? ApButton(
                     btnText: btnText,
                     width: 0.3.sw,
                     cornerRadius: roundCorner,

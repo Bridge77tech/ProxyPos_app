@@ -43,7 +43,6 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
     return Container(
       padding: EdgeInsets.all(10.w),
       decoration: BoxDecoration(
-        // border: Border.all(color: InvAPColors.kBorderColor, width: 0.7.w),
         borderRadius: BorderRadius.circular(16.r),
       ),
       child: Column(
@@ -65,12 +64,29 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
             alignment: Alignment.center,
             child: SizedBox(
               height: 43.h,
-              child: Image.network(
-                widget.product?.imagePath ?? Assets.imagesItem,
-                fit: BoxFit.contain,
-                width: 43.w,
-                height: 43.h,
-              ),
+              child: () {
+                final path = widget.product?.imagePath;
+                if (path != null && path.isNotEmpty) {
+                  return Image.network(
+                    path,
+                    fit: BoxFit.contain,
+                    width: 43.w,
+                    height: 43.h,
+                    errorBuilder: (ctx, e, stack) => Image.asset(
+                      Assets.imagesItem,
+                      fit: BoxFit.contain,
+                      width: 43.w,
+                      height: 43.h,
+                    ),
+                  );
+                }
+                return Image.asset(
+                  Assets.imagesItem,
+                  fit: BoxFit.contain,
+                  width: 43.w,
+                  height: 43.h,
+                );
+              }(),
             ),
           ),
           Text(

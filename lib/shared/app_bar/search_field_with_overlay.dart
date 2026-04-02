@@ -5,10 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory_app_pos/shared/app_bar/search_suggestions_dropdown.dart';
 
 import '../../core/app_constants/ap_colors.dart';
-import '../../core/utils/utils.dart'; // used to show modal on selection
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_bloc.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_event.dart';
-import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_state.dart';
 import '../../generated/assets.dart';
 import 'search_overlay_controller.dart';
 
@@ -48,31 +46,7 @@ class _SearchFieldWithOverlayState extends State<SearchFieldWithOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<DashboardBloc, DashboardState>(
-      listenWhen: (previous, current) => previous.selectedName != current.selectedName,
-      listener: (context, state) {
-        // Hide dropdown on explicit selection
-        _overlayController.hide();
-
-        // When a suggestion is selected, clear the field and remove focus
-        // so the overlay doesn't re-open and the UI resets cleanly
-        if ((state.selectedName?.isNotEmpty ?? false)) {
-          // Clear text & dismiss keyboard
-          _controller.clear();
-          _focusNode.unfocus();
-
-          // Show dialog modal only for explicit selection
-          final rootCtx = Navigator.of(context, rootNavigator: true).context;
-          Utils.showOverlayDialog<void>(
-            rootCtx,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text('Selected: ${state.selectedName!}')
-            ),
-          );
-        }
-      },
-      child: CompositedTransformTarget(
+    return CompositedTransformTarget(
         link: _layerLink,
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -95,7 +69,11 @@ class _SearchFieldWithOverlayState extends State<SearchFieldWithOverlay> {
                     _overlayController.show(
                       context,
                       width: fieldWidth,
-                      child: SearchSuggestionsDropdown(searchController: _overlayController,),
+                      child: SearchSuggestionsDropdown(
+                        searchController: _overlayController,
+                        textController: _controller,
+                        focusNode: _focusNode,
+                      ),
                     );
                   }
                 } else {
@@ -122,7 +100,6 @@ class _SearchFieldWithOverlayState extends State<SearchFieldWithOverlay> {
             );
           },
         ),
-      ),
-    );
+      );
   }
 }
