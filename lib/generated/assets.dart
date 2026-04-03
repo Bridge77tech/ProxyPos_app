@@ -20,6 +20,7 @@ class Assets {
   static const String iconsSearchIcon = 'assets/icons/search-icon.png';
   static const String iconsVisibilityOn = 'assets/icons/visibility_on.png';
   static const String iconsWarningIcon = 'assets/icons/warning-icon.png';
+  static const String imagesItem = 'assets/images/item.png';
   static const String imagesLoginLeftImage1 = 'assets/images/login-left-image-1.png';
   static const String imagesLoginLeftImage2 = 'assets/images/login-left-image-2.png';
 

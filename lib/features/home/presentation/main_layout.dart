@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/views/dashboard.dart';
-import 'package:inventory_app_pos/shared/inv_app_bar.dart';
+import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_outlet.dart';
+import 'package:inventory_app_pos/shared/app_bar/inv_app_bar.dart';
 
 import '../../../core/app_constants/ap_colors.dart';
 import 'bloc/main_layout_bloc.dart';
@@ -19,26 +19,14 @@ class APMainLayoutPage extends StatelessWidget {
         builder: (context, state) {
           switch (state.selectedTab) {
             case MainLayoutTab.dashboard:
-              return _buildDashboard();
+              return dashboardOutlet;
             case MainLayoutTab.history:
-              return _buildHistory();
+              return const Center(child: Text('History'));
             case MainLayoutTab.myAccount:
-              return _buildMyAccount();
+              return const Center(child: Text('My Account'));
           }
         },
       ),
     );
-  }
-
-  Widget _buildDashboard() {
-    return const APDashboardPage();
-  }
-
-  Widget _buildHistory() {
-    return const Center(child: Text('History'));
-  }
-
-  Widget _buildMyAccount() {
-    return const Center(child: Text('My Account'));
   }
 }

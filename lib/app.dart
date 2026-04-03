@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory_app_pos/core/app_theme/inv_theme.dart';
+import 'package:inventory_app_pos/core/state/connectivity/connectivity_bloc.dart';
 import 'package:inventory_app_pos/shared/ap_loader_overlay.dart';
 import 'package:loader_overlay/loader_overlay.dart';
 import 'package:toastification/toastification.dart';
 
 import 'core/app_constants/ap_colors.dart';
 import 'core/routing/inv_routes.dart';
+import 'features/home/presentation/presentation/dashboard/presentation/bloc/cart_outlet.dart';
+
+
 
 class InventoryApp extends StatelessWidget {
   const InventoryApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+
     return GlobalLoaderOverlay(
       overlayColor: InvAPColors.kBlackColor.withValues(alpha: 0.7),
       overlayWidgetBuilder: (value) => const FittedBox(
@@ -32,11 +38,19 @@ class InventoryApp extends StatelessWidget {
               itemWidth: MediaQuery.of(context).size.width,
               marginBuilder: (context, _) => EdgeInsets.symmetric(horizontal: 16.w),
             ),
-          child: MaterialApp.router(
-            debugShowCheckedModeBanner: false,
-            title: "Inventory App",
-            theme: themeData(),
-            routerConfig: InvRouters.apRouter,
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider<ConnectivityBloc>(
+                  create: (_) => ConnectivityBloc(),
+              ),
+              cartOutlet,
+            ],
+            child: MaterialApp.router(
+              debugShowCheckedModeBanner: false,
+              title: "Inventory App",
+              theme: themeData(),
+              routerConfig: InvRouters.apRouter,
+            ),
           ),
         ),
       ),

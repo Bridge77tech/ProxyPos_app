@@ -17,7 +17,7 @@ class InvRoutes {
     apHome,
   ];
 
-  static get routes => _apRoutes;
+  static List<GoRoute> get routes => _apRoutes;
 
   static final GoRoute apLogin = GoRoute(
     path: InvRouteConstants.loginRoute.routePath,
