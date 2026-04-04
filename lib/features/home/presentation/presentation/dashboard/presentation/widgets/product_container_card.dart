@@ -10,8 +10,8 @@ import 'package:inventory_app_pos/shared/app_buttons/ap_button.dart';
 import '../../data/model/product_model.dart';
 import '../../data/model/variant.dart';
 import '../../data/model/unit_model.dart';
-import '../bloc/cart_bloc.dart';
-import '../bloc/cart_event.dart';
+import '../bloc/cart/cart_bloc.dart';
+import '../bloc/cart/cart_event.dart';
 
 
 

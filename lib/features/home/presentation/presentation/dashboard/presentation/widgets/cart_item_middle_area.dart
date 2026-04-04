@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../../../../core/app_constants/ap_colors.dart';
-import '../bloc/cart_bloc.dart';
-import '../bloc/cart_state.dart';
+import '../bloc/cart/cart_bloc.dart';
+import '../bloc/cart/cart_state.dart';
 import 'cart_item_card_row.dart';
 
 class CartItemsMiddleArea extends StatelessWidget {

@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
-import '../../data/model/product_model.dart';
-import '../../data/model/variant.dart';
-import '../../data/model/unit_model.dart';
+import '../../../data/model/product_model.dart';
+import '../../../data/model/variant.dart';
+import '../../../data/model/unit_model.dart';
 import 'cart_state.dart' show PaymentMethod;
 
 abstract class CartEvent extends Equatable {

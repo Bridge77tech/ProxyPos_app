@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../presentation/bloc/dashboard_bloc.dart';
+import '../presentation/bloc/dashboard/dashboard_bloc.dart';
 
 /// Provides DashboardBloc without auto-dispatching initial events.
 class DashboardProvider extends StatelessWidget {

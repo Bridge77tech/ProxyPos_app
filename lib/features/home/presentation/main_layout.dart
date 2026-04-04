@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_outlet.dart';
+import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/presentation/bloc/dashboard/dashboard_outlet.dart';
 import 'package:inventory_app_pos/shared/app_bar/inv_app_bar.dart';
 
 import '../../../core/app_constants/ap_colors.dart';

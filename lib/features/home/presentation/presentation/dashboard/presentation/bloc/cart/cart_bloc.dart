@@ -5,10 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 import 'package:inventory_app_pos/core/routing/navigation_helper.dart';
 
-import '../../data/data_source/local/pending_sales_storage.dart';
-import '../../data/model/variant.dart';
-import '../../data/model/unit_model.dart';
-import '../../domain/usecases/create_sale_use_case.dart';
+import '../../../data/data_source/local/pending_sales_storage.dart';
+import '../../../data/model/variant.dart';
+import '../../../data/model/unit_model.dart';
+import '../../../domain/usecases/create_sale_use_case.dart';
 import 'cart_event.dart';
 import 'cart_state.dart' show CartState, CartItem;
 

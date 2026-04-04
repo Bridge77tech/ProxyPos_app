@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../data/model/product_model.dart';
+import '../../../data/model/product_model.dart';
 
 class DashboardState extends Equatable {
   final bool loading;
@@ -12,6 +12,7 @@ class DashboardState extends Equatable {
   final String? lastQuery;
   final String? lastCategory;
   final String? selectedName;
+  final Products? barcodeProduct;
 
   const DashboardState({
     this.loading = false,
@@ -23,6 +24,7 @@ class DashboardState extends Equatable {
     this.lastQuery,
     this.lastCategory,
     this.selectedName,
+    this.barcodeProduct,
   });
 
   DashboardState copyWith({
@@ -35,6 +37,8 @@ class DashboardState extends Equatable {
     String? lastQuery,
     String? lastCategory,
     String? selectedName,
+    Products? barcodeProduct,
+    bool clearBarcodeProduct = false,
   }) {
     return DashboardState(
       loading: loading ?? this.loading,
@@ -46,6 +50,7 @@ class DashboardState extends Equatable {
       lastQuery: lastQuery ?? this.lastQuery,
       lastCategory: lastCategory ?? this.lastCategory,
       selectedName: selectedName ?? this.selectedName,
+      barcodeProduct: clearBarcodeProduct ? null : (barcodeProduct ?? this.barcodeProduct),
     );
   }
 
@@ -60,5 +65,6 @@ class DashboardState extends Equatable {
     lastQuery,
     lastCategory,
     selectedName,
+    barcodeProduct,
   ];
 }

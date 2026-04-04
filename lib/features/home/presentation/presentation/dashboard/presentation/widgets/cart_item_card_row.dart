@@ -6,8 +6,8 @@ import 'package:gap/gap.dart';
 import '../../../../../../../core/app_constants/ap_colors.dart';
 import '../../../../../../../core/app_constants/inv_app_constants.dart';
 import '../../../../../../../generated/assets.dart';
-import '../bloc/cart_bloc.dart';
-import '../bloc/cart_event.dart';
+import '../bloc/cart/cart_bloc.dart';
+import '../bloc/cart/cart_event.dart';
 
 class CartItemCardRow extends StatelessWidget {
   const CartItemCardRow({

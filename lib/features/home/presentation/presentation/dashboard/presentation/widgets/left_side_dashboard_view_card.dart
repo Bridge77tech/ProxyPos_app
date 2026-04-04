@@ -5,12 +5,20 @@ import 'package:gap/gap.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/presentation/widgets/product_container_card.dart';
 
 import '../../../../../../../core/app_constants/ap_colors.dart';
+import '../../../../../../../core/utils/utils.dart';
+import '../../../../../../../shared/app_bar/inside_overlay_dialog.dart';
+import '../../../../../../../shared/app_buttons/ap_button.dart';
 import '../../data/model/product_model.dart';
 import '../../data/model/variant.dart';
 import '../../data/model/unit_model.dart';
-import '../../presentation/bloc/dashboard_bloc.dart';
-import '../../presentation/bloc/dashboard_event.dart';
-import '../../presentation/bloc/dashboard_state.dart';
+import '../bloc/barcode/bar_code_bloc.dart';
+import '../bloc/barcode/bar_code_state.dart';
+import '../bloc/cart/cart_bloc.dart';
+import '../bloc/cart/cart_event.dart';
+import '../bloc/cart/cart_state.dart';
+import '../bloc/dashboard/dashboard_bloc.dart';
+import '../bloc/dashboard/dashboard_event.dart';
+import '../bloc/dashboard/dashboard_state.dart';
 
 class LeftSideDashboardViewCard extends StatelessWidget {
   const LeftSideDashboardViewCard({
@@ -19,7 +27,81 @@ class LeftSideDashboardViewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return MultiBlocListener(
+      listeners: [
+        // Step 0: order submitted successfully → refresh top products from API
+        BlocListener<CartBloc, CartState>(
+          listenWhen: (prev, curr) =>
+              curr.successMessage != null && curr.successMessage != prev.successMessage,
+          listener: (context, state) {
+            context.read<DashboardBloc>().add(const RefreshTopProducts());
+          },
+        ),
+        // Step 1: barcode scanned → ask DashboardBloc to find the product
+        BlocListener<BarcodeBloc, BarcodeState>(
+          listenWhen: (prev, curr) => curr.scannedBarcode != null && curr.scannedBarcode != prev.scannedBarcode,
+          listener: (context, state) {
+            context.read<DashboardBloc>().add(SearchByBarcode(state.scannedBarcode!));
+          },
+        ),
+        // Step 2: DashboardBloc resolved the product → add to cart or show picker
+        BlocListener<DashboardBloc, DashboardState>(
+          listenWhen: (prev, curr) => curr.barcodeProduct != null && curr.barcodeProduct != prev.barcodeProduct,
+          listener: (context, state) {
+            final product = state.barcodeProduct!;
+            final cartBloc = context.read<CartBloc>();
+            context.read<DashboardBloc>().add(const ClearBarcodeProduct());
+
+            // Flatten all variant+unit combos
+            final combos = <({Variants variant, UnitModel unit})>[];
+            for (final v in product.variants ?? <Variants>[]) {
+              for (final u in v.units ?? <UnitModel>[]) {
+                combos.add((variant: v, unit: u));
+              }
+            }
+
+            if (combos.length == 1) {
+              // Only one option — add directly with qty 1
+              cartBloc.add(CartAddItem(
+                product: product,
+                variant: combos.first.variant,
+                unit: combos.first.unit,
+                quantity: 1,
+              ));
+            } else {
+              // Multiple options — let user pick variant/unit and quantity
+              Utils.showOverlayDialog<void>(
+                context,
+                title: product.name ?? 'Product',
+                roundCorner: 10,
+                height: 0.7,
+                child: InsideOverlay(products: product),
+                bottomWidget: BlocBuilder<CartBloc, CartState>(
+                  bloc: cartBloc,
+                  builder: (ctx, cartState) => ApButton(
+                    btnText: 'Add to Cart',
+                    width: 0.3.sw,
+                    cornerRadius: 10,
+                    onPressed: cartState.selectedUnit == null || cartState.selectedQuantity <= 0
+                        ? null
+                        : () {
+                            cartBloc.add(CartAddItem(
+                              product: product,
+                              variant: cartState.selectedVariant!,
+                              unit: cartState.selectedUnit!,
+                              quantity: cartState.selectedQuantity,
+                            ));
+                            cartBloc.add(const CartResetSelection());
+                            Navigator.of(ctx).pop();
+                          },
+                  ),
+                ),
+              );
+            }
+          },
+        ),
+      ],
+      child: Column(
       children: [
         Container(
           width: double.infinity,
@@ -139,6 +221,7 @@ class LeftSideDashboardViewCard extends StatelessWidget {
           ),
         ),
       ],
+    ),
     );
   }
 }

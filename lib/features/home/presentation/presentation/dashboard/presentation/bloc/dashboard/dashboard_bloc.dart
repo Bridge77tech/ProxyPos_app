@@ -4,9 +4,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/data_source/local/all_product_storage.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/repos/product_repo_impl.dart';
 
-import '../../../../../../auth/data/data_source/local/auth_session_storage_impl.dart';
-import '../../data/data_source/local/top_products_storage.dart';
-import '../../data/model/product_model.dart';
+import '../../../../../../../auth/data/data_source/local/auth_session_storage_impl.dart';
+import '../../../data/data_source/local/top_products_storage.dart';
+import '../../../data/model/product_model.dart';
 import 'dashboard_event.dart';
 import 'dashboard_state.dart';
 
@@ -19,6 +19,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<LoadTopProducts>(_onLoadTopProducts);
     on<SearchProducts>(_onSearchProducts);
     on<SelectSearchSuggestion>(_onSelectSearchSuggestion);
+    on<SearchByBarcode>(_onSearchByBarcode);
+    on<ClearBarcodeProduct>(_onClearBarcodeProduct);
+    on<RefreshTopProducts>(_onRefreshTopProducts);
   }
 
   Future<void> _onLoadTopProducts(
@@ -139,6 +142,108 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     } catch (e, st) {
       _log.e('Select suggestion failed', error: e, stackTrace: st);
       emit(state.copyWith(error: e.toString()));
+    }
+  }
+
+  Future<void> _onSearchByBarcode(
+    SearchByBarcode event,
+    Emitter<DashboardState> emit,
+  ) async {
+    final barcode = event.barcode.trim();
+    if (barcode.isEmpty) return;
+
+    _log.i('Barcode scanned: $barcode');
+    emit(state.copyWith(searching: true));
+
+    try {
+      // 1. Lazily load local cache
+      if (_allProductsCache == null) {
+        final allStorage = AllProductsStorageImpl.instance;
+        final allModel = await allStorage.getAllProducts();
+        _allProductsCache = allModel?.products ?? const [];
+      }
+
+      // 2. Search local cache by barcode field
+      Products? match = _allProductsCache!.cast<Products?>().firstWhere(
+        (p) => p?.barcode?.trim() == barcode,
+        orElse: () => null,
+      );
+
+      if (match != null) {
+        _log.i('Barcode match found in cache: ${match.name}');
+        emit(state.copyWith(searching: false, barcodeProduct: match));
+        return;
+      }
+
+      // 3. Cache miss — fall back to remote API using barcode as search query
+      _log.i('Barcode not in cache, querying API...');
+      final token = await AuthSessionStorageImpl.instance.getStorageData();
+      if (token is! String || token.isEmpty) {
+        emit(state.copyWith(searching: false, error: 'Missing auth token'));
+        return;
+      }
+
+      final repo = ProductRepoImpl.instance;
+      final remoteModel = await repo.getAllProducts('Bearer $token', search: barcode);
+      final remoteProducts = remoteModel.products ?? const [];
+
+      // Match by barcode in the remote results
+      match = remoteProducts.cast<Products?>().firstWhere(
+        (p) => p?.barcode?.trim() == barcode,
+        orElse: () => null,
+      );
+
+      if (match != null) {
+        _log.i('Barcode match found via API: ${match.name}');
+        // Merge into cache so subsequent scans are instant
+        _allProductsCache = [..._allProductsCache!, ...remoteProducts];
+        final allStorage = AllProductsStorageImpl.instance;
+        await allStorage.saveAllProducts(remoteModel);
+        emit(state.copyWith(searching: false, barcodeProduct: match));
+      } else {
+        _log.w('No product found for barcode: $barcode');
+        emit(state.copyWith(searching: false, error: 'Product not found for barcode: $barcode'));
+      }
+    } catch (e, st) {
+      _log.e('Barcode search failed', error: e, stackTrace: st);
+      emit(state.copyWith(searching: false, error: e.toString()));
+    }
+  }
+
+  void _onClearBarcodeProduct(
+    ClearBarcodeProduct event,
+    Emitter<DashboardState> emit,
+  ) {
+    emit(state.copyWith(clearBarcodeProduct: true));
+  }
+
+  Future<void> _onRefreshTopProducts(
+    RefreshTopProducts event,
+    Emitter<DashboardState> emit,
+  ) async {
+    _log.i('Refreshing top products after order...');
+    try {
+      final token = await AuthSessionStorageImpl.instance.getStorageData();
+      if (token is! String || token.isEmpty) {
+        _log.w('Cannot refresh top products: missing auth token');
+        return;
+      }
+
+      final repo = ProductRepoImpl.instance;
+      final model = await repo.getTopProducts('Bearer $token');
+      final products = model.products ?? const [];
+
+      // Persist to local cache so the next cold load is also up-to-date
+      await TopProductsStorageImpl.instance.saveTopProducts(model);
+
+      // Also invalidate the in-memory all-products cache so stock counts
+      // shown in search results reflect the latest quantities
+      _allProductsCache = null;
+
+      _log.i('Top products refreshed: ${products.length} items');
+      emit(state.copyWith(topProducts: products));
+    } catch (e, st) {
+      _log.e('Failed to refresh top products', error: e, stackTrace: st);
     }
   }
 }

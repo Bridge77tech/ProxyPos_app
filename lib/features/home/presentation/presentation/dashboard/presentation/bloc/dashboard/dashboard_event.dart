@@ -29,3 +29,20 @@ class SelectSearchSuggestion extends DashboardEvent {
   @override
   List<Object?> get props => [name];
 }
+
+class SearchByBarcode extends DashboardEvent {
+  final String barcode;
+  const SearchByBarcode(this.barcode);
+  @override
+  List<Object?> get props => [barcode];
+}
+
+class ClearBarcodeProduct extends DashboardEvent {
+  const ClearBarcodeProduct();
+}
+
+/// Fetches fresh top products from the API and updates the display.
+/// Dispatched after a successful order so stock quantities stay accurate.
+class RefreshTopProducts extends DashboardEvent {
+  const RefreshTopProducts();
+}

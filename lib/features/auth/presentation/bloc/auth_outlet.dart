@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inventory_app_pos/features/auth/data/data_source/local/auth_session_storage_impl.dart';
 import 'package:inventory_app_pos/features/auth/domain/usecases/save_user_token_use_case.dart';
@@ -52,7 +53,11 @@ BlocProvider get authOutlet {
   );
 
   // Create a sync service that refreshes all products every 30 minutes
-  final allProductsSync = AllProductsSyncService(getAllProduct, interval: const Duration(minutes: 30));
+  final allProductsSync = AllProductsSyncService(
+    getAllProduct,
+    interval: const Duration(minutes: 30),
+    onError: (e, st) => debugPrint('[AllProductsSync] error: $e'),
+  );
   if (!allProductsSync.isRunning) {
     allProductsSync.start(runImmediately: true);
   }

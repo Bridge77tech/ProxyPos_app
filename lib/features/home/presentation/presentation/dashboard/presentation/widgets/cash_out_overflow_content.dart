@@ -6,9 +6,9 @@ import 'package:inventory_app_pos/features/home/presentation/presentation/dashbo
 
 import '../../../../../../../core/app_constants/ap_colors.dart';
 import '../../../../../../../generated/assets.dart';
-import '../bloc/cart_bloc.dart';
-import '../bloc/cart_event.dart';
-import '../bloc/cart_state.dart';
+import '../bloc/cart/cart_bloc.dart';
+import '../bloc/cart/cart_event.dart';
+import '../bloc/cart/cart_state.dart';
 
 class CheckOutOverFlowContent extends StatelessWidget {
   const CheckOutOverFlowContent({super.key});
