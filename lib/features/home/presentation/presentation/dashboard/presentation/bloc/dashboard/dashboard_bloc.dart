@@ -28,7 +28,6 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     LoadTopProducts event,
     Emitter<DashboardState> emit,
   ) async {
-    // If there is an active search query or category, skip loading top products
     final hasActiveQuery = (state.lastQuery?.trim().isNotEmpty ?? false) ||
         (state.lastCategory?.trim().isNotEmpty ?? false);
     if (hasActiveQuery) {
@@ -36,31 +35,42 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       return;
     }
 
-    _log.i('Loading top products from local cache...');
+    _log.i('Loading top products...');
     emit(state.copyWith(loading: true, error: null, requested: true));
+
+    // 1. Try local cache first.
+    List<Products> products = const [];
     try {
-      final cache = TopProductsStorageImpl.instance;
-      final productModel = await cache.getTopProducts();
-      final products = productModel?.products ?? const [];
-
-      if (productModel == null) {
-        _log.w('No cached top products found.');
-      }
-
-      _log.i('Top products count: ${products.length}');
-      if (products.isNotEmpty) {
-        _log.i('First product: ${products.first.name}');
-      }
-
-      emit(state.copyWith(
-        loading: false,
-        topProducts: products,
-        error: null,
-      ));
-    } catch (e, st) {
-      _log.e('Failed to fetch top products', error: e, stackTrace: st);
-      emit(state.copyWith(loading: false, error: e.toString()));
+      final productModel = await TopProductsStorageImpl.instance.getTopProducts();
+      products = productModel?.products ?? const [];
+      _log.i('Cache hit: ${products.length} top products');
+    } catch (e) {
+      _log.w('Cache read failed, will try network: $e');
     }
+
+    // 2. Cache was empty or unreadable — fall back to the remote API.
+    if (products.isEmpty) {
+      _log.i('Cache empty, fetching from network...');
+      try {
+        final token = await AuthSessionStorageImpl.instance.getStorageData();
+        if (token is String && token.isNotEmpty) {
+          final repo = ProductRepoImpl.instance;
+          final remoteModel = await repo.getTopProducts('Bearer $token');
+          products = remoteModel.products ?? const [];
+          // Persist to cache for next cold start.
+          await TopProductsStorageImpl.instance.saveTopProducts(remoteModel);
+          _log.i('Network fetch: ${products.length} top products');
+        } else {
+          _log.w('No auth token — skipping network fetch');
+        }
+      } catch (e, st) {
+        _log.e('Network fetch also failed', error: e, stackTrace: st);
+        emit(state.copyWith(loading: false, error: e.toString()));
+        return;
+      }
+    }
+
+    emit(state.copyWith(loading: false, topProducts: products, error: null));
   }
 
   Future<void> _onSearchProducts(
@@ -70,7 +80,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     final query = event.query.trim().toLowerCase();
     final category = event.category?.trim().toLowerCase();
     if (query.isEmpty && (category == null || category.isEmpty)) {
-      emit(state.copyWith(searching: false, searchResults: const [], lastQuery: null, lastCategory: null));
+      emit(state.copyWith(searching: false, clearSearch: true));
       return;
     }
 

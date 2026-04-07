@@ -39,6 +39,7 @@ class DashboardState extends Equatable {
     String? selectedName,
     Products? barcodeProduct,
     bool clearBarcodeProduct = false,
+    bool clearSearch = false,
   }) {
     return DashboardState(
       loading: loading ?? this.loading,
@@ -46,9 +47,9 @@ class DashboardState extends Equatable {
       error: error,
       requested: requested ?? this.requested,
       searching: searching ?? this.searching,
-      searchResults: searchResults ?? this.searchResults,
-      lastQuery: lastQuery ?? this.lastQuery,
-      lastCategory: lastCategory ?? this.lastCategory,
+      searchResults: clearSearch ? const [] : (searchResults ?? this.searchResults),
+      lastQuery: clearSearch ? null : (lastQuery ?? this.lastQuery),
+      lastCategory: clearSearch ? null : (lastCategory ?? this.lastCategory),
       selectedName: selectedName ?? this.selectedName,
       barcodeProduct: clearBarcodeProduct ? null : (barcodeProduct ?? this.barcodeProduct),
     );

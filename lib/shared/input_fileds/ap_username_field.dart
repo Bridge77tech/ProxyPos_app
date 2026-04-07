@@ -6,12 +6,15 @@ class APUsernameField extends StatelessWidget {
     this.errorText,
     this.onChanged,
     this.focusNode,
+    this.textInputAction,
+    this.onFieldSubmitted,
   });
 
   final String? errorText;
   final ValueChanged<String>? onChanged;
   final FocusNode? focusNode;
-
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +22,8 @@ class APUsernameField extends StatelessWidget {
       focusNode: focusNode,
       style: Theme.of(context).textTheme.bodyMedium,
       onChanged: onChanged,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       decoration: InputDecoration(
         hintText: "Username",
         hintStyle: Theme.of(context).textTheme.bodyMedium,
