@@ -4,9 +4,9 @@ import 'package:inventory_app_pos/data/local_storage_service_impl.dart';
 
 import 'app.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  LocalStorageServiceImpl.instance.init();
-  ConnectivityService.instance.initialize();
+  await LocalStorageServiceImpl.instance.init();
+  await ConnectivityService.instance.initialize();
   runApp(InventoryApp());
 }

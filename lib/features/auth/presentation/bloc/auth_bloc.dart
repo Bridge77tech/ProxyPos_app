@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:fasaha_utils/utils_export/fasaha_haus_state_status.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:loader_overlay/loader_overlay.dart';
 import 'package:inventory_app_pos/core/exceptions/local_storage_exception.dart';
 import 'package:inventory_app_pos/core/exceptions/login_exception.dart';
 import 'package:inventory_app_pos/features/auth/data/model/ap_user_model.dart';
@@ -13,6 +14,7 @@ import 'package:inventory_app_pos/features/home/presentation/presentation/dashbo
 import 'package:inventory_app_pos/features/auth/data/data_source/local/auth_session_storage_impl.dart';
 import 'package:inventory_app_pos/features/auth/data/data_source/local/cashier_info_storage_impl.dart';
 
+import '../../../../core/routing/inv_navigator_keys.dart';
 import '../../../../core/routing/navigation_helper.dart';
 import '../../../../core/routing/route_constants.dart';
 import 'auth_event.dart';
@@ -94,6 +96,13 @@ class AuthBloc<T> extends Bloc<AuthEvent, AuthState> {
       NavigationHelper.popAllAndPushNamed(
         InvRouteConstants.apHomeRoute.routeName,
       );
+      // Hide the global loader once the home page is in the tree.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = APNavigatorKeys.rootNavigatorKey.currentContext;
+        if (ctx != null && ctx.mounted) {
+          ctx.loaderOverlay.hide();
+        }
+      });
     } on LocalStorageException catch (e) {
       _log.e('Failed to save user info: ${e.message}');
       emit(
@@ -108,15 +117,20 @@ class AuthBloc<T> extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthState> emit) async {
     try {
-      _log.i('Clearing local storages on logout...');
+      _log.i('Clearing session storages on logout (pending sales preserved)...');
       await Future.wait([
         AuthSessionStorageImpl.instance.clearStorage(),
         CashierInfoStorageImpl.instance.clearStorage(),
         TopProductsStorageImpl.instance.clearTopProducts(),
         AllProductsStorageImpl.instance.clearAllProducts(),
+        // NOTE: PendingSalesStorageImpl is intentionally NOT cleared here —
+        // offline orders survive logout and sync after the next login.
       ]);
-      _log.i('Local storages cleared');
+      _log.i('Session storages cleared');
       emit(const AuthState());
+      NavigationHelper.popAllAndPushNamed(
+        InvRouteConstants.loginRoute.routeName,
+      );
     } catch (e, st) {
       _log.e('Failed to clear storages on logout', error: e, stackTrace: st);
     }

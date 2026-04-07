@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/presentation/widgets/product_container_card.dart';
+import 'package:inventory_app_pos/shared/ap_empty_products_widget.dart';
+import 'package:inventory_app_pos/shared/ap_error_widget.dart';
 
 import '../../../../../../../core/app_constants/ap_colors.dart';
 import '../../../../../../../core/utils/utils.dart';
@@ -160,16 +162,19 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                         return const Center(child: CircularProgressIndicator());
                       }
 
+                      if (state.error != null) {
+                        return APErrorWidget(
+                          onRetry: () => context
+                              .read<DashboardBloc>()
+                              .add(const LoadTopProducts()),
+                        );
+                      }
+
                       // Always display topProducts here, ignore search.
                       final List<Products> source = state.topProducts;
 
                       if (source.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'No products found',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        );
+                        return const APEmptyProductsWidget();
                       }
 
                       // Build a flat list of (product, variant, unit) entries so all units are displayed
@@ -185,12 +190,7 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                       }
 
                       if (items.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'No units available',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        );
+                        return const APEmptyProductsWidget();
                       }
 
                       return GridView.builder(

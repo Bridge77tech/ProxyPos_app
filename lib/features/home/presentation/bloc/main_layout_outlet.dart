@@ -4,6 +4,7 @@ import 'package:inventory_app_pos/features/home/presentation/main_layout.dart';
 import 'package:inventory_app_pos/features/home/presentation/bloc/main_layout_bloc.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/presentation/bloc/barcode/bar_code_bloc.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/presentation/bloc/dashboard/dashboard_bloc.dart';
+import 'package:inventory_app_pos/features/home/presentation/presentation/history/presentation/bloc/history_bloc.dart';
 
 Widget get mainLayOutlet {
   return MultiBlocProvider(
@@ -11,6 +12,7 @@ Widget get mainLayOutlet {
       BlocProvider<MainLayoutBloc>(create: (_) => MainLayoutBloc()),
       BlocProvider<DashboardBloc>(create: (_) => DashboardBloc()),
       BlocProvider<BarcodeBloc>(create: (_) => BarcodeBloc()),
+      BlocProvider<HistoryBloc>(create: (_) => HistoryBloc()),
     ],
     child: const APMainLayoutPage(),
   );
