@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/app_constants/ap_colors.dart';
-import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_bloc.dart';
+import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard/dashboard_bloc.dart';
 
 /// Controller that manages showing/hiding the search suggestions overlay.
 class SearchOverlayController {

@@ -1,14 +1,16 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 import 'package:inventory_app_pos/core/routing/navigation_helper.dart';
+import 'package:inventory_app_pos/core/services/connectivity_service.dart';
 
-import '../../data/data_source/local/pending_sales_storage.dart';
-import '../../data/model/variant.dart';
-import '../../data/model/unit_model.dart';
-import '../../domain/usecases/create_sale_use_case.dart';
+import '../../../data/data_source/local/pending_sales_storage.dart';
+import '../../../data/model/variant.dart';
+import '../../../data/model/unit_model.dart';
+import '../../../domain/usecases/create_sale_use_case.dart';
 import 'cart_event.dart';
 import 'cart_state.dart' show CartState, CartItem;
 
@@ -16,7 +18,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   final _log = getLogger('CartBloc');
   final CreateSaleUseCase _createSale;
   final PendingSalesStorage _pendingStorage;
-  final Connectivity _connectivity;
+  StreamSubscription<bool>? _connectivitySub;
 
   // TextEditingController for amount input
   late final TextEditingController amountController;
@@ -24,10 +26,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   CartBloc({
     required CreateSaleUseCase createSaleUseCase,
     PendingSalesStorage? pendingStorage,
-    Connectivity? connectivity,
   })  : _createSale = createSaleUseCase,
         _pendingStorage = pendingStorage ?? PendingSalesStorageImpl.instance,
-        _connectivity = connectivity ?? Connectivity(),
         super(const CartState()) {
     // Initialize amount controller
     amountController = TextEditingController();
@@ -45,10 +45,19 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<CartSyncPending>(_onSyncPending);
     on<CartSelectPayment>(_onSelectPayment);
     on<CartSetAmountReceived>(_onSetAmountReceived);
+
+    // Auto-sync pending sales whenever the device comes back online.
+    _connectivitySub = ConnectivityService.instance.onConnectivityChanged
+        .where((isOnline) => isOnline)
+        .listen((_) {
+      _log.i('Connection restored — triggering pending sales sync');
+      add(const CartSyncPending());
+    });
   }
 
   @override
-  Future<void> close() {
+  Future<void> close() async {
+    await _connectivitySub?.cancel();
     amountController.dispose();
     return super.close();
   }
@@ -149,10 +158,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       _log.w('No payment method selected; payload will include null paymentMethod');
     }
 
-    final results = await _connectivity.checkConnectivity();
-    final isOnline = results.contains(ConnectivityResult.mobile) ||
-        results.contains(ConnectivityResult.wifi) ||
-        results.contains(ConnectivityResult.ethernet);
+    final isOnline = await ConnectivityService.instance.checkConnectivity();
 
     if (isOnline) {
       _log.i('Online: submitting order immediately');
@@ -218,11 +224,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   }
 
   Future<void> _onSyncPending(CartSyncPending event, Emitter<CartState> emit) async {
-    final results = await _connectivity.checkConnectivity();
-    final isOnline = results.contains(ConnectivityResult.mobile) ||
-        results.contains(ConnectivityResult.wifi) ||
-        results.contains(ConnectivityResult.ethernet);
-    if (!isOnline) {
+    if (!ConnectivityService.instance.isOnline) {
       _log.w('Sync requested but still offline');
       return;
     }
@@ -234,14 +236,17 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     }
 
     _log.i('Syncing ${queue.length} pending sales');
+    // Always remove at index 0: after each successful removal the next
+    // pending item slides into position 0, so the index never drifts.
     for (int i = 0; i < queue.length; i++) {
       final payload = queue[i];
       try {
         await _createSale.call(payload);
-        await _pendingStorage.removeAt(i);
+        await _pendingStorage.removeAt(0);
+        _log.i('Synced pending sale ${i + 1}/${queue.length}');
       } catch (e, st) {
         _log.e('Failed to sync queued sale at index $i', error: e, stackTrace: st);
-        // Stop on first failure to avoid reordering; will retry later
+        // Stop on first failure to preserve ordering; next reconnect will retry
         break;
       }
     }

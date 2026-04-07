@@ -5,8 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory_app_pos/shared/app_bar/search_suggestions_dropdown.dart';
 
 import '../../core/app_constants/ap_colors.dart';
-import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_bloc.dart';
-import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard_event.dart';
+import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard/dashboard_bloc.dart';
+import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard/dashboard_event.dart';
 import '../../generated/assets.dart';
 import 'search_overlay_controller.dart';
 

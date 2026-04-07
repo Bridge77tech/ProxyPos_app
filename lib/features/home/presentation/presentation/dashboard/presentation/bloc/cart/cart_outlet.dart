@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inventory_app_pos/network/api_service.dart';
 import 'package:inventory_app_pos/features/auth/data/data_source/local/auth_session_storage_impl.dart';
-import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/presentation/bloc/cart_bloc.dart';
+import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/presentation/bloc/cart/cart_bloc.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/domain/usecases/create_sale_use_case.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/repos/create_sale_repo_impl.dart';
 

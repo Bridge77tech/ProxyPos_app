@@ -7,9 +7,9 @@ import '../../core/app_constants/ap_colors.dart';
 import '../../features/home/presentation/presentation/dashboard/data/model/product_model.dart';
 import '../../features/home/presentation/presentation/dashboard/data/model/unit_model.dart';
 import '../../features/home/presentation/presentation/dashboard/data/model/variant.dart';
-import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart_bloc.dart';
-import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart_event.dart';
-import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart_state.dart';
+import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart/cart_bloc.dart';
+import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart/cart_event.dart';
+import '../../features/home/presentation/presentation/dashboard/presentation/bloc/cart/cart_state.dart';
 
 class InsideOverlay extends StatelessWidget {
   const InsideOverlay({required this.products, super.key});

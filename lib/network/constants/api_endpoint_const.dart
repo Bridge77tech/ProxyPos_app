@@ -24,4 +24,5 @@ class APIEndpointConst {
   static const String apTopProduct = "pos/products/top-products";
   static const String apAllProduct = "pos/products";
   static const String apCreateNewSale = "pos/sales";
+  static const String apSalesHistory = "pos/sales";
 }

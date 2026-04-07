@@ -6,193 +6,202 @@ import 'package:inventory_app_pos/features/home/presentation/presentation/dashbo
 
 import '../../../../../../../core/app_constants/ap_colors.dart';
 import '../../../../../../../generated/assets.dart';
-import '../bloc/cart_bloc.dart';
-import '../bloc/cart_event.dart';
-import '../bloc/cart_state.dart';
+import '../bloc/cart/cart_bloc.dart';
+import '../bloc/cart/cart_event.dart';
+import '../bloc/cart/cart_state.dart';
 
 class CheckOutOverFlowContent extends StatelessWidget {
   const CheckOutOverFlowContent({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final cartBloc = context.read<CartBloc>();
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 20.h),
-      child: BlocBuilder<CartBloc, CartState>(
-        builder: (context, cartState) {
-          final cartBloc = context.read<CartBloc>();
-          // Update the text field when amount received changes
-          if (cartBloc.amountController.text !=
-              cartState.amountReceived.toStringAsFixed(2)) {
-            cartBloc.amountController.text = cartState.amountReceived == ''
-                ? ''
-                : cartState.amountReceived.toStringAsFixed(2);
-          }
-          return SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Gap(10.h),
-                Center(
-                  child: Text(
-                    'Customer To Pay',
-                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: InvAPColors.kBlack100,
-                    ),
-                  ),
-                ),
-                Center(
-                  child: Text(
-                    "GHC ${cartState.total.toStringAsFixed(2)}",
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: InvAPColors.kPrimaryColor,
-                      fontSize: 23,
-                    ),
-                  ),
-                ),
-                Gap(16.h),
-                // Payment method buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: PaymentMethodTile(
-                        label: 'Mobile Money',
-                        iconAsset: Assets.iconsMoneyIcon,
-                        selected:
-                            cartState.paymentMethod ==
-                            PaymentMethod.mobileMoney,
-                        onTap: () => context.read<CartBloc>().add(
-                          const CartSelectPayment(PaymentMethod.mobileMoney),
-                        ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Gap(10.h),
+
+            // Total — rebuilds only when total changes
+            BlocBuilder<CartBloc, CartState>(
+              buildWhen: (prev, curr) => prev.total != curr.total,
+              builder: (context, state) => Column(
+                children: [
+                  Center(
+                    child: Text(
+                      'Customer To Pay',
+                      style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: InvAPColors.kBlack100,
                       ),
                     ),
-                    Gap(10.w),
-                    Expanded(
-                      child: PaymentMethodTile(
-                        label: 'Cash',
-                        iconAsset: Assets.iconsMoneyIcon,
-                        selected: cartState.paymentMethod == PaymentMethod.cash,
-                        onTap: () => context.read<CartBloc>().add(
-                          const CartSelectPayment(PaymentMethod.cash),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Gap(16.h),
-                Center(
-                  child: Text(
-                    'Amount Received',
-                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                ),
-                Gap(8.h),
-                Row(
-                  spacing: 10.w,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10.w,
-                        vertical: 8.h,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5.r),
+                  Center(
+                    child: Text(
+                      "GHC ${state.total.toStringAsFixed(2)}",
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        fontWeight: FontWeight.w700,
                         color: InvAPColors.kPrimaryColor,
-                      ),
-                      child: const Text(
-                        "GHC",
-                        style: TextStyle(color: Colors.white),
+                        fontSize: 23,
                       ),
                     ),
-                    Expanded(
-                      child: TextFormField(
-                        controller: cartBloc.amountController,
-                        onChanged: (val) {
-                          final v = double.tryParse(val) ?? 0.0;
-                          context.read<CartBloc>().add(
-                            CartSetAmountReceived(v),
-                          );
-                        },
-                        decoration: InputDecoration(
-                          isDense: true,
-                          border: OutlineInputBorder(),
-                          hintText: '0.00',
-                          hintStyle: Theme.of(context).textTheme.bodyMedium,
-                        ),
+                  ),
+                ],
+              ),
+            ),
+
+            Gap(16.h),
+
+            // Payment method — rebuilds only when paymentMethod changes
+            BlocBuilder<CartBloc, CartState>(
+              buildWhen: (prev, curr) => prev.paymentMethod != curr.paymentMethod,
+              builder: (context, state) => Row(
+                children: [
+                  Expanded(
+                    child: PaymentMethodTile(
+                      label: 'Mobile Money',
+                      iconAsset: Assets.iconsMoneyIcon,
+                      selected: state.paymentMethod == PaymentMethod.mobileMoney,
+                      onTap: () => context.read<CartBloc>().add(
+                        const CartSelectPayment(PaymentMethod.mobileMoney),
                       ),
                     ),
-                  ],
-                ),
-                Gap(12.h),
-                // Remaining and Change
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 10.h,
                   ),
-                  decoration: BoxDecoration(
-                    color: InvAPColors.kLightRedColor,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Remaining:'),
-                      Text("GHC ${cartState.remaining.toStringAsFixed(2)}"),
-                    ],
-                  ),
-                ),
-                Gap(8.h),
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12.w,
-                    vertical: 10.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: InvAPColors.kLightGreenColor,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Change:'),
-                      Text("GHC ${cartState.change.toStringAsFixed(2)}"),
-                    ],
-                  ),
-                ),
-                // Quick amount chips (optional)
-                Gap(16.h),
-                Wrap(
-                  spacing: 12.w,
-                  runSpacing: 12.h,
-                  children: [
-                    for (final amt in const [5, 10, 20, 50, 100, 200])
-                      InkWell(
-                        onTap: () => context.read<CartBloc>().add(
-                          CartSetAmountReceived(amt.toDouble()),
-                        ),
-                        child: Container(
-                          height: 40.h,
-                          width: 80.w,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.r),
-                            border: Border.all(
-                              color: InvAPColors.kPrimaryColor,
-                              width: 0.7.w,
-                            ),
-                          ),
-                          child: Text('GHC ${amt.toStringAsFixed(2)}'),
-                        ),
+                  Gap(10.w),
+                  Expanded(
+                    child: PaymentMethodTile(
+                      label: 'Cash',
+                      iconAsset: Assets.iconsMoneyIcon,
+                      selected: state.paymentMethod == PaymentMethod.cash,
+                      onTap: () => context.read<CartBloc>().add(
+                        const CartSelectPayment(PaymentMethod.cash),
                       ),
-                  ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Gap(16.h),
+            Center(
+              child: Text(
+                'Amount Received',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            Gap(8.h),
+
+            // Text field — never rebuilt by BlocBuilder; controller is source of truth
+            Row(
+              spacing: 10.w,
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(5.r),
+                    color: InvAPColors.kPrimaryColor,
+                  ),
+                  child: const Text("GHC", style: TextStyle(color: Colors.white)),
                 ),
-                Gap(16.h),
+                Expanded(
+                  child: TextFormField(
+                    controller: cartBloc.amountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    onChanged: (val) {
+                      final v = double.tryParse(val) ?? 0.0;
+                      cartBloc.add(CartSetAmountReceived(v));
+                    },
+                    decoration: InputDecoration(
+                      isDense: true,
+                      border: const OutlineInputBorder(),
+                      hintText: '0.00',
+                      hintStyle: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ),
               ],
             ),
-          );
-        },
+
+            Gap(12.h),
+
+            // Remaining and Change — rebuild only when amountReceived changes
+            BlocBuilder<CartBloc, CartState>(
+              buildWhen: (prev, curr) => prev.amountReceived != curr.amountReceived || prev.total != curr.total,
+              builder: (context, state) => Column(
+                children: [
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: InvAPColors.kLightRedColor,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Remaining:'),
+                        Text("GHC ${state.remaining.toStringAsFixed(2)}"),
+                      ],
+                    ),
+                  ),
+                  Gap(8.h),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                    decoration: BoxDecoration(
+                      color: InvAPColors.kLightGreenColor,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text('Change:'),
+                        Text("GHC ${state.change.toStringAsFixed(2)}"),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Gap(16.h),
+
+            // Quick amount chips
+            Wrap(
+              spacing: 12.w,
+              runSpacing: 12.h,
+              children: [
+                for (final amt in const [5, 10, 20, 50, 100, 200])
+                  InkWell(
+                    onTap: () {
+                      final val = amt.toDouble();
+                      cartBloc.amountController.text = val.toStringAsFixed(2);
+                      cartBloc.amountController.selection = TextSelection.collapsed(
+                        offset: cartBloc.amountController.text.length,
+                      );
+                      cartBloc.add(CartSetAmountReceived(val));
+                    },
+                    child: Container(
+                      height: 40.h,
+                      width: 80.w,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8.r),
+                        border: Border.all(
+                          color: InvAPColors.kPrimaryColor,
+                          width: 0.7.w,
+                        ),
+                      ),
+                      child: Text('GHC ${amt.toStringAsFixed(2)}'),
+                    ),
+                  ),
+              ],
+            ),
+
+            Gap(16.h),
+          ],
+        ),
       ),
     );
   }

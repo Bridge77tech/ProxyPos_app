@@ -30,8 +30,13 @@ class LoginForm extends StatelessWidget {
           ),
           APUsernameField(
             focusNode: context.read<AuthBloc>().usernameFocusNode,
+            textInputAction: TextInputAction.next,
             onChanged: (value) =>
                 context.read<AuthBloc>().add(UsernameChanged(value)),
+            onFieldSubmitted: (_) => context
+                .read<AuthBloc>()
+                .passwordFocusNode
+                .requestFocus(),
           ),
           Gap(10.h),
           Text(
@@ -40,8 +45,15 @@ class LoginForm extends StatelessWidget {
           ),
           APPasswordField(
             focusNode: context.read<AuthBloc>().passwordFocusNode,
+            textInputAction: TextInputAction.done,
             onChanged: (value) =>
                 context.read<AuthBloc>().add(PasswordChanged(value)),
+            onFieldSubmitted: (_) {
+              final formKey = context.read<AuthBloc>().loginFormKey;
+              if (formKey.currentState?.validate() ?? false) {
+                context.read<AuthBloc>().add(const LoginFormSubmitted());
+              }
+            },
           ),
           Gap(20.h),
           BlocListener<AuthBloc, AuthState>(
@@ -49,10 +61,12 @@ class LoginForm extends StatelessWidget {
             oldState.stateStatus != newState.stateStatus,
             listener: (context, state) {
               switch (state.stateStatus.runtimeType) {
+                case (const (LoggingInUser)):
+                  context.loaderOverlay.show();
+                  break;
                 case (const (ErrorStatus)):
                   context.loaderOverlay.hide();
                   final message = (state.stateStatus as ErrorStatus).error;
-                  // Show snackbar at the top-right with 0.4.sw width
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -75,14 +89,10 @@ class LoginForm extends StatelessWidget {
                     ),
                   );
                   break;
-                case (const (LoggingInUser)):
-                  context.loaderOverlay.show();
-                  break;
-                case (const (LoginSuccess)):
-                  context.loaderOverlay.hide();
-                  break;
                 default:
-                  context.loaderOverlay.hide();
+                  // Keep loader visible for LoginSuccess and InitStatus —
+                  // the loader is hidden after navigation in the BLoC.
+                  break;
               }
             },
             child: ApButton(
