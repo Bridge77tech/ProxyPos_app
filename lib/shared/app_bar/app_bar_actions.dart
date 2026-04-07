@@ -45,25 +45,7 @@ class AppBarActions extends StatelessWidget {
               isActive: state.selectedTab == MainLayoutTab.history,
               onTap: () => mainBloc.add(const SelectTab(MainLayoutTab.history)),
             ),
-            Gap(18.w),
-            AppBarItem(
-              icon: Assets.iconsMyAccountIcon,
-              label: 'My Account',
-              isActive: state.selectedTab == MainLayoutTab.myAccount,
-              onTap: () => mainBloc.add(const SelectTab(MainLayoutTab.myAccount)),
-            ),
             Gap(20.w),
-            InkWell(
-              onTap: () {},
-              borderRadius: BorderRadius.circular(50.r),
-              child: Container(
-                height: 32.h,
-                width: 32.h,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: InvAPColors.kAppBackgroundColor),
-                child: Image.asset(Assets.iconsNotificationIcon, scale: 4.5),
-              ),
-            ),
-            Gap(10.w),
             PopupMenuButton<_ProfileMenu>(
               offset: Offset(0, 40.h),
               shape: RoundedRectangleBorder(

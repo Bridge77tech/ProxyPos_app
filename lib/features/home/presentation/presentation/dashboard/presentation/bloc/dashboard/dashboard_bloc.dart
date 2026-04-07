@@ -80,7 +80,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     final query = event.query.trim().toLowerCase();
     final category = event.category?.trim().toLowerCase();
     if (query.isEmpty && (category == null || category.isEmpty)) {
-      emit(state.copyWith(searching: false, searchResults: const [], lastQuery: null, lastCategory: null));
+      emit(state.copyWith(searching: false, clearSearch: true));
       return;
     }
 

@@ -103,125 +103,205 @@ class LeftSideDashboardViewCard extends StatelessWidget {
           },
         ),
       ],
-      child: Column(
-      children: [
-        Container(
-          width: double.infinity,
-          height: 0.2.sh,
-          padding: EdgeInsets.symmetric(
-            horizontal: 30.w,
-            vertical: 12.h,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12.r),
-            color: InvAPColors.kWhiteColor,
-          ),
-          child: Column(children: [
-
-          ],
-          ),
-        ),
-        Gap(10.h),
-        Expanded(
-          child: Container(
-            width: double.infinity,
-            margin: EdgeInsets.only(bottom: 10.h),
-            decoration: BoxDecoration(
-              color: InvAPColors.kWhiteColor,
-              borderRadius: BorderRadius.circular(12.r),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 25.w,
-                    vertical: 12.h,
-                  ),
-                  child: Text(
-                    'Most Purchased',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+      child: BlocBuilder<DashboardBloc, DashboardState>(
+        builder: (context, state) {
+          return Column(
+          children: [
+            _CategorySection(selectedCategory: state.lastCategory),
+            Gap(10.h),
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                margin: EdgeInsets.only(bottom: 10.h),
+                decoration: BoxDecoration(
+                  color: InvAPColors.kWhiteColor,
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
-                Expanded(
-                  child: BlocConsumer<DashboardBloc, DashboardState>(
-                    listenWhen: (previous, current) {
-                     return false;
-                    },
-                    listener: (context, state) {},
-                    builder: (context, state) {
-                      // Initial one-time dispatch to load top products
-                      if (!state.requested) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          context.read<DashboardBloc>().add(const LoadTopProducts());
-                        });
-                      }
-
-                      if (state.loading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (state.error != null) {
-                        return APErrorWidget(
-                          onRetry: () => context
-                              .read<DashboardBloc>()
-                              .add(const LoadTopProducts()),
-                        );
-                      }
-
-                      // Always display topProducts here, ignore search.
-                      final List<Products> source = state.topProducts;
-
-                      if (source.isEmpty) {
-                        return const APEmptyProductsWidget();
-                      }
-
-                      // Build a flat list of (product, variant, unit) entries so all units are displayed
-                      final List<({Products product, Variants variant, UnitModel unit})> items = [];
-                      for (final p in source) {
-                        final vars = p.variants ?? const [];
-                        for (final v in vars) {
-                          final units = v.units ?? const [];
-                          for (final u in units) {
-                            items.add((product: p, variant: v, unit: u));
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 25.w,
+                        vertical: 12.h,
+                      ),
+                      child: Text(
+                        'Most Purchased',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                    Expanded(
+                      child: BlocConsumer<DashboardBloc, DashboardState>(
+                        listenWhen: (previous, current) {
+                         return false;
+                        },
+                        listener: (context, state) {},
+                        builder: (context, state) {
+                          // Initial one-time dispatch to load top products
+                          if (!state.requested) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              context.read<DashboardBloc>().add(const LoadTopProducts());
+                            });
                           }
-                        }
-                      }
 
-                      if (items.isEmpty) {
-                        return const APEmptyProductsWidget();
-                      }
+                          if (state.loading || state.searching) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
 
-                      return GridView.builder(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        shrinkWrap: true,
-                        primary: false,
-                        itemCount: items.length,
-                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 150.w,
-                          mainAxisSpacing: 25.h,
-                          crossAxisSpacing: 25.w,
-                          childAspectRatio: 1,
-                        ),
-                        itemBuilder: (context, i) {
-                          final entry = items[i];
-                          return ProductContainerCard(
-                            product: entry.product,
-                            variants: entry.variant,
-                            unit: entry.unit,
+                          if (state.error != null) {
+                            return APErrorWidget(
+                              onRetry: () => context
+                                  .read<DashboardBloc>()
+                                  .add(const LoadTopProducts()),
+                            );
+                          }
+
+                          final bool isFiltering = state.lastCategory != null && state.lastCategory!.isNotEmpty;
+                          final List<Products> source = isFiltering ? state.searchResults : state.topProducts;
+
+                          if (source.isEmpty) {
+                            return const APEmptyProductsWidget();
+                          }
+
+                          // Build a flat list of (product, variant, unit) entries so all units are displayed
+                          final List<({Products product, Variants variant, UnitModel unit})> items = [];
+                          for (final p in source) {
+                            final vars = p.variants ?? const [];
+                            for (final v in vars) {
+                              final units = v.units ?? const [];
+                              for (final u in units) {
+                                items.add((product: p, variant: v, unit: u));
+                              }
+                            }
+                          }
+
+                          if (items.isEmpty) {
+                            return const APEmptyProductsWidget();
+                          }
+
+                          return GridView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w),
+                            shrinkWrap: true,
+                            primary: false,
+                            itemCount: items.length,
+                            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 150.w,
+                              mainAxisSpacing: 25.h,
+                              crossAxisSpacing: 25.w,
+                              childAspectRatio: 1,
+                            ),
+                            itemBuilder: (context, i) {
+                              final entry = items[i];
+                              return ProductContainerCard(
+                                product: entry.product,
+                                variants: entry.variant,
+                                unit: entry.unit,
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ),
+          ],
+        );
+        },
+      ),
+    );
+  }
+}
+
+class _CategorySection extends StatelessWidget {
+  const _CategorySection({this.selectedCategory});
+  final String? selectedCategory;
+
+  static const _categories = [
+    (emoji: '🛒', label: 'All'),
+    (emoji: '☕', label: 'Breakfast'),
+    (emoji: '🥛', label: 'Dairy'),
+    (emoji: '🍼', label: 'Child Care'),
+    (emoji: '💄', label: 'Beauty'),
+    (emoji: '🛁', label: 'Bath'),
+    (emoji: '🧹', label: 'Cleaning'),
+    (emoji: '🥩', label: 'Meat'),
+    (emoji: '🍞', label: 'Bakery'),
+    (emoji: '🥤', label: 'Beverages'),
+    (emoji: '🧴', label: 'Personal Care'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 14.h),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12.r),
+        color: InvAPColors.kWhiteColor,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Category', style: Theme.of(context).textTheme.bodyMedium),
+          Gap(12.h),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _categories.map((cat) {
+                final isSelected = cat.label == 'All'
+                    ? (selectedCategory == null || selectedCategory!.isEmpty)
+                    : selectedCategory?.toLowerCase() == cat.label.toLowerCase();
+                return Padding(
+                  padding: EdgeInsets.only(right: 24.w),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(8.r),
+                    onTap: () {
+                      final bloc = context.read<DashboardBloc>();
+                      if (cat.label == 'All' || isSelected) {
+                        bloc.add(const SearchProducts('', category: null));
+                      } else {
+                        bloc.add(SearchProducts('', category: cat.label));
+                      }
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 52.w,
+                          height: 52.w,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isSelected
+                                ? InvAPColors.kPrimaryColor.withValues(alpha: 0.12)
+                                : InvAPColors.kAppBackgroundColor,
+                            border: isSelected
+                                ? Border.all(color: InvAPColors.kPrimaryColor, width: 2)
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(cat.emoji, style: TextStyle(fontSize: 22.sp)),
+                          ),
+                        ),
+                        Gap(6.h),
+                        Text(
+                          cat.label,
+                          style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                            color: isSelected ? InvAPColors.kPrimaryColor : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
           ),
-        ),
-      ],
-    ),
+        ],
+      ),
     );
   }
 }
