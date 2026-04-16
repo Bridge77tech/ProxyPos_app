@@ -71,6 +71,24 @@ class CartResetSelection extends CartEvent {
   const CartResetSelection();
 }
 
+/// Look up a product by barcode and add it directly to the cart.
+class CartAddByBarcode extends CartEvent {
+  final String barcode;
+  const CartAddByBarcode(this.barcode);
+  @override
+  List<Object?> get props => [barcode];
+}
+
+/// Clear the pending barcode product (after picker dialog is shown).
+class CartClearPendingBarcodeProduct extends CartEvent {
+  const CartClearPendingBarcodeProduct();
+}
+
+/// Clear the barcode error (after snackbar is shown).
+class CartClearBarcodeError extends CartEvent {
+  const CartClearBarcodeError();
+}
+
 // Submit the current cart as a new sale
 class CartSubmitOrder extends CartEvent {
   const CartSubmitOrder();

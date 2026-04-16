@@ -11,7 +11,7 @@ class BarcodeBloc extends Bloc<BarcodeEvent, BarcodeState> {
   /// Barcode scanners fire all characters within a few milliseconds.
   /// If the gap between keystrokes exceeds this threshold, the buffer is
   /// treated as stale manual input and is cleared before accumulating again.
-  static const _scannerTimeout = Duration(milliseconds: 50);
+  static const _scannerTimeout = Duration(milliseconds: 150);
 
   BarcodeBloc() : super(const BarcodeState()) {
     on<BarcodeScanned>(_onBarcodeScanned);
@@ -32,8 +32,12 @@ class BarcodeBloc extends Bloc<BarcodeEvent, BarcodeState> {
 
       if (barcode.isNotEmpty) {
         add(BarcodeScanned(barcode));
+        // Consume this Enter so it does NOT activate whatever widget currently
+        // has focus (e.g. the profile PopupMenuButton).  We only consume when
+        // barcode is non-empty — an empty buffer means it is a real user Enter
+        // (navigation, form submit, etc.) so we leave it alone.
+        return true;
       }
-      // Don't consume — let the Enter key work normally elsewhere too
       return false;
     }
 
@@ -48,11 +52,15 @@ class BarcodeBloc extends Bloc<BarcodeEvent, BarcodeState> {
       _lastKeyTime = now;
     }
 
-    return false; // don't consume — allow normal keyboard input
+    return false;
   }
 
   void _onBarcodeScanned(BarcodeScanned event, Emitter<BarcodeState> emit) {
+    // Emit the barcode so all BlocListeners fire (null → value transition).
     emit(BarcodeState(scannedBarcode: event.barcode));
+    // Immediately reset to null so the NEXT scan — even the same barcode —
+    // produces another null → value transition and re-triggers every listener.
+    emit(const BarcodeState());
   }
 
   @override

@@ -13,6 +13,9 @@ class DashboardState extends Equatable {
   final String? lastCategory;
   final String? selectedName;
   final Products? barcodeProduct;
+  /// Error specifically from a barcode scan — shown as a snackbar and does
+  /// NOT replace the "Most Purchased" grid.
+  final String? barcodeError;
 
   const DashboardState({
     this.loading = false,
@@ -25,6 +28,7 @@ class DashboardState extends Equatable {
     this.lastCategory,
     this.selectedName,
     this.barcodeProduct,
+    this.barcodeError,
   });
 
   DashboardState copyWith({
@@ -40,6 +44,8 @@ class DashboardState extends Equatable {
     Products? barcodeProduct,
     bool clearBarcodeProduct = false,
     bool clearSearch = false,
+    String? barcodeError,
+    bool clearBarcodeError = false,
   }) {
     return DashboardState(
       loading: loading ?? this.loading,
@@ -52,6 +58,7 @@ class DashboardState extends Equatable {
       lastCategory: clearSearch ? null : (lastCategory ?? this.lastCategory),
       selectedName: selectedName ?? this.selectedName,
       barcodeProduct: clearBarcodeProduct ? null : (barcodeProduct ?? this.barcodeProduct),
+      barcodeError: clearBarcodeError ? null : (barcodeError ?? this.barcodeError),
     );
   }
 
@@ -67,5 +74,6 @@ class DashboardState extends Equatable {
     lastCategory,
     selectedName,
     barcodeProduct,
+    barcodeError,
   ];
 }

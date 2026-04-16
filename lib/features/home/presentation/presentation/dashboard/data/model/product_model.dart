@@ -11,9 +11,6 @@ class Products {
   @JsonKey(name: 'name')
   final String? name;
 
-  @JsonKey(name: 'barcode')
-  final String? barcode;
-
   @JsonKey(name: 'category')
   final String? category;
 
@@ -23,21 +20,28 @@ class Products {
   @JsonKey(name: 'currentStock')
   final int? currentStock;
 
-  @JsonKey(name: 'miniStockLevel')
-  final int? miniStockLevel;
+  @JsonKey(name: 'minStockLevel')
+  final int? minStockLevel;
 
-  @JsonKey(name: 'image')
-  final String? imagePath;
+  @JsonKey(name: 'isActive')
+  final bool? isActive;
+
+  @JsonKey(name: 'totalSold')
+  final int? totalSold;
+
+  @JsonKey(name: 'salesCount')
+  final int? salesCount;
 
   Products({
     this.id,
     this.name,
-    this.barcode,
     this.category,
     this.variants,
     this.currentStock,
-    this.miniStockLevel,
-    this.imagePath,
+    this.minStockLevel,
+    this.isActive,
+    this.totalSold,
+    this.salesCount,
   });
 
   factory Products.fromJson(Map<String, dynamic> json) =>

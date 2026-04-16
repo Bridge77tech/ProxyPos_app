@@ -2,19 +2,19 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 ; Non-commercial use only
 
-#define MyAppName "inventory_app_pos"
+#define MyAppName "inventory_pos"
 #define MyAppVersion "1.0"
-#define MyAppPublisher "Fasaha Haus Ltd"
+#define MyAppPublisher "Fasaha Haus Ltd."
 #define MyAppURL "https://www.fasahahaus.com/"
 #define MyAppExeName "inventory_app_pos.exe"
-#define MyAppAssocName MyAppName + " File"
+#define MyAppAssocName MyAppName + ""
 #define MyAppAssocExt ".myp"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{D8FCFC10-B711-46AF-A383-6AF384BADBDB}
+AppId={{F3765B58-4AE4-472C-B625-9CE52DD33C29}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -38,7 +38,7 @@ DisableProgramGroupPage=yes
 ;PrivilegesRequired=lowest
 OutputDir=C:\Users\f.dankwah\Documents\inventory_app_pos\installers
 OutputBaseFilename=inventory_pos
-SetupIconFile=C:\Users\f.dankwah\Downloads\Google-Flutter-Icon-PNG.ico
+SetupIconFile=C:\Users\f.dankwah\Documents\inventory_app_pos\windows\runner\resources\app_icon.ico
 SolidCompression=yes
 WizardStyle=modern dynamic
 
