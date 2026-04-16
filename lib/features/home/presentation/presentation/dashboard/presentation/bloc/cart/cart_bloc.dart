@@ -27,6 +27,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   // TextEditingController for amount input
   late final TextEditingController amountController;
 
+  // In-memory product cache — avoids Hive disk read + full JSON parse on every scan.
+  List<Products>? _productsCache;
+
   CartBloc({
     required CreateSaleUseCase createSaleUseCase,
     PendingSalesStorage? pendingStorage,
@@ -149,11 +152,15 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     _log.i('Barcode scanned: $barcode — looking up product');
 
     try {
-      // 1. Search local cache first.
-      // barcode is now on UnitModel, so we scan variants → units → barcode.
-      final allStorage = AllProductsStorageImpl.instance;
-      final allModel = await allStorage.getAllProducts();
-      var hit = _findUnitByBarcode(allModel?.products ?? const [], barcode);
+      // 1. Lazily populate in-memory cache from Hive once.
+      //    Subsequent scans search RAM only — no disk I/O, no JSON parse.
+      if (_productsCache == null) {
+        final allModel = await AllProductsStorageImpl.instance.getAllProducts();
+        _productsCache = allModel?.products ?? const [];
+        _log.i('Products cache loaded: ${_productsCache!.length} items');
+      }
+
+      var hit = _findUnitByBarcode(_productsCache!, barcode);
 
       // 2. Cache miss — query API.
       if (hit == null) {
@@ -180,14 +187,18 @@ class CartBloc extends Bloc<CartEvent, CartState> {
           } else if (allCombos.isNotEmpty) {
             // Multiple combos but exact barcode unknown — show picker
             _log.i('Single API result, multiple combos — showing picker for ${p.name}');
-            await allStorage.saveAllProducts(remoteModel);
+            _productsCache = [..._productsCache!, ...remoteProducts];
+            await AllProductsStorageImpl.instance.saveAllProducts(remoteModel);
             emit(state.copyWith(pendingBarcodeProduct: p));
             return;
           }
         }
 
         if (hit != null) {
-          await allStorage.saveAllProducts(remoteModel);
+          // Merge new products into the in-memory cache so the next scan of
+          // any product in this batch is also instant.
+          _productsCache = [..._productsCache!, ...remoteProducts];
+          await AllProductsStorageImpl.instance.saveAllProducts(remoteModel);
         }
       }
 
@@ -291,7 +302,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       try {
         await _createSale.call(payload);
         _log.i('Order submitted successfully');
-        // Success - clear cart, amount received, and show success message
+        // Success — clear cart and invalidate product cache so the next
+        // barcode scan fetches updated stock counts.
+        _productsCache = null;
         amountController.clear();
         emit(state.copyWith(
           items: [],
