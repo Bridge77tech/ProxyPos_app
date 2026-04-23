@@ -348,7 +348,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       amountController.clear();
       emit(state.copyWith(
         items: [],
-        selectedQuantity: 0,
+        selectedQuantity: 0,  
         selectedVariant: null,
         selectedUnit: null,
         currentProduct: null,
