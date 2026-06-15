@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 
 import '../../core/app_constants/ap_colors.dart';
+import '../../generated/assets.dart';
 import '../../features/home/presentation/presentation/dashboard/data/model/product_model.dart';
 import '../../features/home/presentation/presentation/dashboard/data/model/unit_model.dart';
 import '../../features/home/presentation/presentation/dashboard/data/model/variant.dart';
@@ -45,7 +46,23 @@ class InsideOverlay extends StatelessWidget {
                   SizedBox(
                     height: 24.h,
                     width: 24.w,
-                    child: Image.network(products.imagePath ?? ''),
+                    child: () {
+                      final imgPath = products.variants
+                          ?.map((v) => v.imagePath)
+                          .firstWhere(
+                            (p) => p != null && p.isNotEmpty,
+                            orElse: () => null,
+                          );
+                      if (imgPath != null) {
+                        return Image.network(
+                          imgPath,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) =>
+                              Image.asset(Assets.imagesItem, fit: BoxFit.contain),
+                        );
+                      }
+                      return Image.asset(Assets.imagesItem, fit: BoxFit.contain);
+                    }(),
                   ),
                   Text("${products.name}", style: Theme.of(context).textTheme.bodySmall,)
                 ],

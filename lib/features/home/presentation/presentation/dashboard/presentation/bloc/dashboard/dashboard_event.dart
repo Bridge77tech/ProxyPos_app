@@ -41,6 +41,10 @@ class ClearBarcodeProduct extends DashboardEvent {
   const ClearBarcodeProduct();
 }
 
+class ClearBarcodeError extends DashboardEvent {
+  const ClearBarcodeError();
+}
+
 /// Fetches fresh top products from the API and updates the display.
 /// Dispatched after a successful order so stock quantities stay accurate.
 class RefreshTopProducts extends DashboardEvent {

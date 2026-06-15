@@ -7,6 +7,8 @@ import 'package:inventory_app_pos/features/home/presentation/presentation/dashbo
 import '../../../../../../../auth/data/data_source/local/auth_session_storage_impl.dart';
 import '../../../data/data_source/local/top_products_storage.dart';
 import '../../../data/model/product_model.dart';
+import '../../../data/model/unit_model.dart';
+import '../../../data/model/variant.dart';
 import 'dashboard_event.dart';
 import 'dashboard_state.dart';
 
@@ -21,6 +23,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     on<SelectSearchSuggestion>(_onSelectSearchSuggestion);
     on<SearchByBarcode>(_onSearchByBarcode);
     on<ClearBarcodeProduct>(_onClearBarcodeProduct);
+    on<ClearBarcodeError>(_onClearBarcodeError);
     on<RefreshTopProducts>(_onRefreshTopProducts);
   }
 
@@ -131,7 +134,9 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       emit(state.copyWith(searching: false, searchResults: remoteResults));
     } catch (e, st) {
       _log.e('Search failed', error: e, stackTrace: st);
-      emit(state.copyWith(searching: false, error: e.toString()));
+      // Return empty results rather than an error so the Most Purchased grid
+      // is never replaced with the error widget due to a failed text search.
+      emit(state.copyWith(searching: false, searchResults: const [], clearSearch: true));
     }
   }
 
@@ -173,11 +178,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         _allProductsCache = allModel?.products ?? const [];
       }
 
-      // 2. Search local cache by barcode field
-      Products? match = _allProductsCache!.cast<Products?>().firstWhere(
-        (p) => p?.barcode?.trim() == barcode,
-        orElse: () => null,
-      );
+      // 2. Search local cache — barcode is now on UnitModel, not Products.
+      Products? match = _findProductByUnitBarcode(_allProductsCache!, barcode);
 
       if (match != null) {
         _log.i('Barcode match found in cache: ${match.name}');
@@ -189,7 +191,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       _log.i('Barcode not in cache, querying API...');
       final token = await AuthSessionStorageImpl.instance.getStorageData();
       if (token is! String || token.isEmpty) {
-        emit(state.copyWith(searching: false, error: 'Missing auth token'));
+        emit(state.copyWith(searching: false, barcodeError: 'Missing auth token'));
         return;
       }
 
@@ -197,26 +199,29 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       final remoteModel = await repo.getAllProducts('Bearer $token', search: barcode);
       final remoteProducts = remoteModel.products ?? const [];
 
-      // Match by barcode in the remote results
-      match = remoteProducts.cast<Products?>().firstWhere(
-        (p) => p?.barcode?.trim() == barcode,
-        orElse: () => null,
-      );
+      // Try exact unit-barcode match first; fall back to single-result trust.
+      match = _findProductByUnitBarcode(remoteProducts, barcode);
+      match ??= remoteProducts.length == 1 ? remoteProducts.first : null;
 
       if (match != null) {
         _log.i('Barcode match found via API: ${match.name}');
-        // Merge into cache so subsequent scans are instant
         _allProductsCache = [..._allProductsCache!, ...remoteProducts];
         final allStorage = AllProductsStorageImpl.instance;
         await allStorage.saveAllProducts(remoteModel);
         emit(state.copyWith(searching: false, barcodeProduct: match));
       } else {
         _log.w('No product found for barcode: $barcode');
-        emit(state.copyWith(searching: false, error: 'Product not found for barcode: $barcode'));
+        emit(state.copyWith(
+          searching: false,
+          barcodeError: 'No product found for barcode: $barcode',
+        ));
       }
     } catch (e, st) {
       _log.e('Barcode search failed', error: e, stackTrace: st);
-      emit(state.copyWith(searching: false, error: e.toString()));
+      emit(state.copyWith(
+        searching: false,
+        barcodeError: 'Barcode search failed: ${e.toString()}',
+      ));
     }
   }
 
@@ -225,6 +230,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     Emitter<DashboardState> emit,
   ) {
     emit(state.copyWith(clearBarcodeProduct: true));
+  }
+
+  void _onClearBarcodeError(
+    ClearBarcodeError event,
+    Emitter<DashboardState> emit,
+  ) {
+    emit(state.copyWith(clearBarcodeError: true));
   }
 
   Future<void> _onRefreshTopProducts(
@@ -255,5 +267,21 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     } catch (e, st) {
       _log.e('Failed to refresh top products', error: e, stackTrace: st);
     }
+  }
+
+  /// Returns the first product in [products] that owns a unit whose barcode
+  /// matches [barcode]. Returns null if no match is found.
+  static Products? _findProductByUnitBarcode(
+    List<Products> products,
+    String barcode,
+  ) {
+    for (final p in products) {
+      for (final v in p.variants ?? <Variants>[]) {
+        for (final u in v.units ?? <UnitModel>[]) {
+          if (u.barcode.trim() == barcode) return p;
+        }
+      }
+    }
+    return null;
   }
 }

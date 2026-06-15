@@ -2,16 +2,19 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 ; Non-commercial use only
 
-#define MyAppName "Inverntory Management"
+#define MyAppName "inventory_pos"
 #define MyAppVersion "1.0"
-#define MyAppPublisher "Fasaha Haus ltd"
-#define MyAppURL "fasahahaus.com"
+#define MyAppPublisher "Fasaha Haus Ltd."
+#define MyAppURL "https://www.fasahahaus.com/"
 #define MyAppExeName "inventory_app_pos.exe"
+#define MyAppAssocName MyAppName + ""
+#define MyAppAssocExt ".myp"
+#define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{CFAE2F79-A1FB-4189-A0D7-5D3E9E7AAA4F}
+AppId={{F3765B58-4AE4-472C-B625-9CE52DD33C29}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={#MyAppName} {#MyAppVersion}
@@ -29,12 +32,13 @@ ArchitecturesAllowed=x64compatible
 ; meaning it should use the native 64-bit Program Files directory and
 ; the 64-bit view of the registry.
 ArchitecturesInstallIn64BitMode=x64compatible
+ChangesAssociations=yes
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
 OutputDir=C:\Users\f.dankwah\Documents\inventory_app_pos\installers
 OutputBaseFilename=inventory_pos
-SetupIconFile=C:\Users\f.dankwah\Downloads\Google-Flutter-Icon-PNG.ico
+SetupIconFile=C:\Users\f.dankwah\Documents\inventory_app_pos\windows\runner\resources\app_icon.ico
 SolidCompression=yes
 WizardStyle=modern dynamic
 
@@ -49,9 +53,16 @@ Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner
 Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\connectivity_plus_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\flutter_secure_storage_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\install_firewall_rules.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\nb_utils_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+
+[Registry]
+Root: HKA; Subkey: "Software\Classes\{#MyAppAssocExt}\OpenWithProgids"; ValueType: string; ValueName: "{#MyAppAssocKey}"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}"; ValueType: string; ValueName: ""; ValueData: "{#MyAppAssocName}"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
+Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

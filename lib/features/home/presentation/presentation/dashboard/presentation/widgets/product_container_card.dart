@@ -65,7 +65,7 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
             child: SizedBox(
               height: 43.h,
               child: () {
-                final path = widget.product?.imagePath;
+                final path = widget.variants?.imagePath;
                 if (path != null && path.isNotEmpty) {
                   return Image.network(
                     path,

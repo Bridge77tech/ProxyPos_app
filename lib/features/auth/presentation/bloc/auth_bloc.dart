@@ -63,6 +63,17 @@ class AuthBloc<T> extends Bloc<AuthEvent, AuthState> {
 
       debugPrint('Login response: ${rawData.token}');
 
+      final role = rawData.user?.role?.toLowerCase().trim();
+      if (role != 'clerk') {
+        _log.w('Login blocked — role "$role" is not allowed');
+        emit(state.copyWith(
+          stateStatus: const ErrorStatus(
+            'Unauthorized: only clerks are allowed to login here.',
+          ),
+        ));
+        return;
+      }
+
       if(rawData.user != null) {
         add(SaveUserInfo(rawData));
       }

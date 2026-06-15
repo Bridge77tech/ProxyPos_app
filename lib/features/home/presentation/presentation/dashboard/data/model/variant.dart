@@ -17,6 +17,9 @@ class Variants {
   @JsonKey(name: 'type')
   final String? type;
 
+  @JsonKey(name: 'image')
+  final String? imagePath;
+
   @JsonKey(name: 'units')
   final List<UnitModel>? units;
 
@@ -28,6 +31,7 @@ class Variants {
     this.name,
     this.size,
     this.type,
+    this.imagePath,
     this.units,
     this.currentStock,
   });

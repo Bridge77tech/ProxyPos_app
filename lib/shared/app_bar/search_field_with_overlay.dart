@@ -5,6 +5,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:inventory_app_pos/shared/app_bar/search_suggestions_dropdown.dart';
 
 import '../../core/app_constants/ap_colors.dart';
+import '../../features/home/presentation/presentation/dashboard/presentation/bloc/barcode/bar_code_bloc.dart';
+import '../../features/home/presentation/presentation/dashboard/presentation/bloc/barcode/bar_code_state.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard/dashboard_bloc.dart';
 import '../../features/home/presentation/presentation/dashboard/presentation/bloc/dashboard/dashboard_event.dart';
 import '../../generated/assets.dart';
@@ -46,7 +48,18 @@ class _SearchFieldWithOverlayState extends State<SearchFieldWithOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return CompositedTransformTarget(
+    return BlocListener<BarcodeBloc, BarcodeState>(
+      listenWhen: (prev, curr) =>
+          curr.scannedBarcode != null && curr.scannedBarcode != prev.scannedBarcode,
+      listener: (context, state) {
+        // Barcode scanner typed into this field — clear it so the barcode
+        // text doesn't trigger a product-name search.
+        _controller.clear();
+        _focusNode.unfocus();
+        _overlayController.hide();
+        context.read<DashboardBloc>().add(const SearchProducts(''));
+      },
+      child: CompositedTransformTarget(
         link: _layerLink,
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -100,6 +113,7 @@ class _SearchFieldWithOverlayState extends State<SearchFieldWithOverlay> {
             );
           },
         ),
-      );
+      ),
+    );
   }
 }

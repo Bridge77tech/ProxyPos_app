@@ -33,6 +33,11 @@ class CartState extends Equatable {
   final PaymentMethod? paymentMethod;
   final double amountReceived;
   final bool submitting;
+  /// Set when a barcode scan finds a product with multiple variant/unit combos
+  /// so the UI can show a picker dialog.
+  final Products? pendingBarcodeProduct;
+  /// Set when a barcode scan fails to find a product — shown as a snackbar.
+  final String? barcodeError;
 
   const CartState({
     this.items = const [],
@@ -45,6 +50,8 @@ class CartState extends Equatable {
     this.paymentMethod,
     this.amountReceived = 0.0,
     this.submitting = false,
+    this.pendingBarcodeProduct,
+    this.barcodeError,
   });
 
   double get subTotal => items.fold(0.0, (sum, it) => sum + (it.unit.sellingPrice * it.quantity));
@@ -66,6 +73,10 @@ class CartState extends Equatable {
     PaymentMethod? paymentMethod,
     double? amountReceived,
     bool? submitting,
+    Products? pendingBarcodeProduct,
+    bool clearPendingBarcodeProduct = false,
+    String? barcodeError,
+    bool clearBarcodeError = false,
   }) {
     return CartState(
       items: items ?? this.items,
@@ -78,9 +89,11 @@ class CartState extends Equatable {
       paymentMethod: paymentMethod ?? this.paymentMethod,
       amountReceived: amountReceived ?? this.amountReceived,
       submitting: submitting ?? this.submitting,
+      pendingBarcodeProduct: clearPendingBarcodeProduct ? null : (pendingBarcodeProduct ?? this.pendingBarcodeProduct),
+      barcodeError: clearBarcodeError ? null : (barcodeError ?? this.barcodeError),
     );
   }
 
   @override
-  List<Object?> get props => [items, currentProduct, selectedVariant, selectedUnit, selectedQuantity, error, successMessage, paymentMethod, amountReceived, submitting];
+  List<Object?> get props => [items, currentProduct, selectedVariant, selectedUnit, selectedQuantity, error, successMessage, paymentMethod, amountReceived, submitting, pendingBarcodeProduct, barcodeError];
 }

@@ -27,9 +27,28 @@ class TopProductsStorageImpl extends BaseUserLocalStorage<dynamic> implements To
   Future<ProductModel?> getTopProducts() async {
     final data = await super.getStorageData();
     if (data == null) return null;
-    // Ensure we have a String-keyed map
-    final map = Map<String, dynamic>.from(data as Map);
-    return ProductModel.fromJson(map);
+    try {
+      final converted = _deepConvert(data);
+      return ProductModel.fromJson(converted as Map<String, dynamic>);
+    } catch (e) {
+      log.w('Cached top products unreadable, clearing: $e');
+      await clearTopProducts();
+      return null;
+    }
+  }
+
+  static dynamic _deepConvert(dynamic value) {
+    if (value is Map) {
+      return Map<String, dynamic>.fromEntries(
+        value.entries.map(
+          (e) => MapEntry(e.key.toString(), _deepConvert(e.value)),
+        ),
+      );
+    }
+    if (value is List) {
+      return value.map(_deepConvert).toList();
+    }
+    return value;
   }
 
   @override
