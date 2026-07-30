@@ -47,7 +47,7 @@ class InventoryApp extends StatelessWidget {
             ],
             child: MaterialApp.router(
               debugShowCheckedModeBanner: false,
-              title: "Inventory App",
+              title: "ProxyPos",
               theme: themeData(),
               routerConfig: InvRouters.apRouter,
             ),

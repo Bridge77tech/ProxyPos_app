@@ -6,7 +6,7 @@ class InvAppConstants {
   static final String kUsername = "Username";
   static final String kPassword = "Password";
   static final String kLogin = "Login";
-  static final String kPoweredByFasaha = "powered by Fasaha Haus";
+  static final String kPoweredBy = "powered by Bridge77 Technologies";
   static final String kCart = 'Cart';
   static final String kGHC = "GHC";
   static final String kVAT = "VAT";

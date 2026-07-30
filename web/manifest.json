@@ -1,6 +1,6 @@
 {
-    "name": "inventory_app_pos",
-    "short_name": "inventory_app_pos",
+    "name": "ProxyPos",
+    "short_name": "ProxyPos",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

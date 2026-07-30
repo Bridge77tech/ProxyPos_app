@@ -1,4 +1,4 @@
-# inventory_app_pos
+# ProxyPos
 
 A new Flutter project.
 

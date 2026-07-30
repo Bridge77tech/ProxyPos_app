@@ -48,7 +48,7 @@ class LeftDisplayWidget extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(bottom: 20.h),
             child: Text(
-              InvAppConstants.kPoweredByFasaha,
+              InvAppConstants.kPoweredBy,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
