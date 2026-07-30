@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Compiled installer artifacts (distribute via GitHub Releases instead)
+installers.zip
+installers/*.exe
