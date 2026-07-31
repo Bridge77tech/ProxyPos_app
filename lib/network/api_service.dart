@@ -14,6 +14,7 @@ import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import '../features/auth/domain/usecases/clear_session_usecase.dart';
 import '../features/auth/domain/usecases/get_access_token_use_case.dart';
+import '../features/auth/domain/usecases/save_user_token_use_case.dart';
 import 'interceptors/api_error_interceptors.dart';
 
 class APIService {
@@ -40,6 +41,7 @@ class APIService {
 
   late final GetAccessTokenUseCase _getAccessToken;
   late final ClearSessionUseCase _clearSession;
+  late final SaveUserTokenUseCase _saveUserToken;
   // ignore: unused_field
   late final ProductAPIService _productAPIService;
 
@@ -49,6 +51,7 @@ class APIService {
   }) {
     _dio = dio ?? Dio();
     _clearSession = ClearSessionUseCase(authSessionStorage);
+    _saveUserToken = SaveUserTokenUseCase(authSessionStorage);
     // Pass baseUrl override to include API prefix if needed
     _productAPIService = ProductAPIService(_dio);
     _getAccessToken = GetAccessTokenUseCase(
@@ -79,6 +82,7 @@ class APIService {
       AuthInterceptor(
         _getAccessToken,
         _clearSession,
+        _saveUserToken,
       ),
       APIErrorInterceptor(),
       RetryInterceptor(

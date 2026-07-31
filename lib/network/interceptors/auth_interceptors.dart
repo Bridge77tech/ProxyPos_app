@@ -1,24 +1,28 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 
 import '../../core/exceptions/session_expired_exception.dart';
 import '../../core/routing/navigation_helper.dart';
 import '../../core/routing/route_constants.dart';
-import '../../features/auth/data/data_source/local/auth_session_storage_impl.dart';
 import '../../features/auth/domain/usecases/clear_session_usecase.dart';
 import '../../features/auth/domain/usecases/get_access_token_use_case.dart';
+import '../../features/auth/domain/usecases/save_user_token_use_case.dart';
 import '../constants/api_endpoint_const.dart';
 import '../models/api_endpoint.dart';
 
 class AuthInterceptor extends QueuedInterceptorsWrapper {
   final GetAccessTokenUseCase _getAccessToken;
   final ClearSessionUseCase _clearSession;
+  final SaveUserTokenUseCase _saveUserToken;
 
   final _log = getLogger("AuthInterceptor");
 
   AuthInterceptor(
     this._getAccessToken,
     this._clearSession,
+    this._saveUserToken,
   );
 
   @override
@@ -67,13 +71,11 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
   ) async {
     // Sliding session: pick up the token the backend silently refreshes on
     // every authenticated request, so an active user is never logged out.
+    // Persisting is fire-and-forget (SaveUserTokenUseCase logs its own
+    // failures) so a slow disk write never delays forwarding the response.
     final refreshedToken = response.headers.value('x-refreshed-token');
     if (refreshedToken != null && refreshedToken.isNotEmpty) {
-      try {
-        await AuthSessionStorageImpl.instance.saveData(refreshedToken);
-      } catch (e) {
-        _log.w('Failed to persist refreshed token: ${e.toString()}');
-      }
+      unawaited(_saveUserToken(refreshedToken));
     }
     return handler.next(response);
   }
