@@ -64,11 +64,12 @@ class AuthBloc<T> extends Bloc<AuthEvent, AuthState> {
       debugPrint('Login response: ${rawData.token}');
 
       final role = rawData.user?.role?.toLowerCase().trim();
-      if (role != 'clerk') {
+      const allowedRoles = {'clerk', 'manager', 'owner'};
+      if (!allowedRoles.contains(role)) {
         _log.w('Login blocked — role "$role" is not allowed');
         emit(state.copyWith(
           stateStatus: const ErrorStatus(
-            'Unauthorized: only clerks are allowed to login here.',
+            'Unauthorized: this account role cannot log in here.',
           ),
         ));
         return;
