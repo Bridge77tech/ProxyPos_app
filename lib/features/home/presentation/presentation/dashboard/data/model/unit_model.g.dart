@@ -7,13 +7,17 @@ part of 'unit_model.dart';
 // **************************************************************************
 
 UnitModel _$UnitModelFromJson(Map<String, dynamic> json) => UnitModel(
+  json['id'] as String?,
   json['type'] as String,
-  json['barcode'] as String,
+  // Barcode is optional server-side; coerce null to '' so a unit without one
+  // (loose goods) can't crash the catalogue parse.
+  json['barcode'] as String? ?? '',
   _parseDouble(json['sellingPrice']),
   _parseDouble(json['individualPieces']),
 );
 
 Map<String, dynamic> _$UnitModelToJson(UnitModel instance) => <String, dynamic>{
+  'id': instance.id,
   'type': instance.type,
   'barcode': instance.barcode,
   'sellingPrice': instance.sellingPrice,

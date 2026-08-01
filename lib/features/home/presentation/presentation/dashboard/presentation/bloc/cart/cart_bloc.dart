@@ -301,6 +301,14 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         'productId': it.productId,
         'variantId': it.variant.id,
         'quantity': it.quantity,
+        // Identifies the exact unit sold. Required once a variant carries more
+        // than one pack size, where saleType alone can't tell a 12-pack from a
+        // 24-pack, and the server refuses rather than guess. Omitted entirely
+        // (not sent as null) when absent, since product data cached by an older
+        // build has no unit ids and the server validates the field when present.
+        if (it.unit.id != null && it.unit.id!.isNotEmpty)
+          'variantUnitId': it.unit.id,
+        // Always sent: it's the fallback the server uses when there's no unit id.
         'saleType': it.unit.type,
       }).toList(),
       'amountPaid': state.amountReceived,
