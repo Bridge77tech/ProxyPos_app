@@ -11,7 +11,11 @@ Variants _$VariantsFromJson(Map<String, dynamic> json) => Variants(
   name: json['name'] as String?,
   size: json['size'] as String?,
   type: json['type'] as String?,
-  imagePath: json['image'] as String?,
+  // Prefer displayImage: the server resolves it to the variant's own picture or,
+  // failing that, its category's — so the grid stays recognisable without a photo
+  // for every item. Falls back to `image` for older cached payloads; the bundled
+  // placeholder asset still covers the case where neither exists.
+  imagePath: (json['displayImage'] ?? json['image']) as String?,
   units: (json['units'] as List<dynamic>?)
       ?.map((e) => UnitModel.fromJson(e as Map<String, dynamic>))
       .toList(),
