@@ -17,7 +17,7 @@ import '../../../data/model/unit_model.dart';
 import '../../../data/repos/product_repo_impl.dart';
 import '../../../domain/usecases/create_sale_use_case.dart';
 import 'cart_event.dart';
-import 'cart_state.dart' show CartState, CartItem;
+import 'cart_state.dart' show CartState, CartItem, PaymentMethodWire;
 
 /// Random v4-style identifier, used as a sale's idempotency key.
 ///
@@ -312,7 +312,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         'saleType': it.unit.type,
       }).toList(),
       'amountPaid': state.amountReceived,
-      'paymentMethod': state.paymentMethod?.name,
+      'paymentMethod': state.paymentMethod?.wireValue,
       'deviceId': "POS-TABLET-001",
       // Generated once here and stored with the queued payload, so every retry
       // carries the SAME key. Without it, a crash between a successful submit and

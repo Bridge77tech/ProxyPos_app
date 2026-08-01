@@ -5,6 +5,20 @@ import '../../../data/model/unit_model.dart';
 
 enum PaymentMethod { mobileMoney, cash }
 
+extension PaymentMethodWire on PaymentMethod {
+  /// The spelling the API expects.
+  ///
+  /// Deliberately not `.name`: that returns the Dart identifier, so
+  /// `PaymentMethod.mobileMoney` went out as `mobileMoney` and the server
+  /// rejected every mobile-money sale with "Invalid payment method". Cash worked
+  /// only because its identifier happens to match. Stating the wire value here
+  /// stops a rename of the enum from silently breaking sales again.
+  String get wireValue => switch (this) {
+        PaymentMethod.mobileMoney => 'mobile_money',
+        PaymentMethod.cash => 'cash',
+      };
+}
+
 class CartItem extends Equatable {
   final String productId;
   final String productName;
