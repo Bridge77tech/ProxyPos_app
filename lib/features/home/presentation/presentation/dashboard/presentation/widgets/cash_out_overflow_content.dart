@@ -57,14 +57,16 @@ class CheckOutOverFlowContent extends StatelessWidget {
 
             // Payment method — rebuilds only when paymentMethod changes
             BlocBuilder<CartBloc, CartState>(
-              buildWhen: (prev, curr) => prev.paymentMethod != curr.paymentMethod,
+              buildWhen: (prev, curr) =>
+                  prev.paymentMethod != curr.paymentMethod,
               builder: (context, state) => Row(
                 children: [
                   Expanded(
                     child: PaymentMethodTile(
                       label: 'Mobile Money',
                       iconAsset: Assets.iconsMoneyIcon,
-                      selected: state.paymentMethod == PaymentMethod.mobileMoney,
+                      selected:
+                          state.paymentMethod == PaymentMethod.mobileMoney,
                       onTap: () => context.read<CartBloc>().add(
                         const CartSelectPayment(PaymentMethod.mobileMoney),
                       ),
@@ -94,46 +96,101 @@ class CheckOutOverFlowContent extends StatelessWidget {
             ),
             Gap(8.h),
 
-            // Text field — never rebuilt by BlocBuilder; controller is source of truth
-            Row(
-              spacing: 10.w,
-              children: [
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5.r),
-                    color: InvAPColors.kPrimaryColor,
+            // The field itself is never rebuilt from state — the controller stays the
+            // source of truth for its text. Only the border colour and the message
+            // below react, so typing is never interrupted.
+            BlocBuilder<CartBloc, CartState>(
+              buildWhen: (prev, curr) =>
+                  prev.amountReceived != curr.amountReceived ||
+                  prev.total != curr.total ||
+                  prev.paymentMethod != curr.paymentMethod,
+              builder: (context, state) {
+                // Only for cash, and only once something has been entered — an
+                // untouched field isn't an error. Mirrors the server's own rule,
+                // which rejects a short payment for cash only.
+                final isShort =
+                    state.paymentMethod == PaymentMethod.cash &&
+                    state.amountReceived > 0 &&
+                    state.remaining > 0;
+
+                final border = OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: isShort ? InvAPColors.kErrorRedColor : Colors.grey,
+                    width: isShort ? 1.4 : 1.0,
                   ),
-                  child: const Text("GHC", style: TextStyle(color: Colors.white)),
-                ),
-                Expanded(
-                  child: TextFormField(
-                    controller: cartBloc.amountController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    onChanged: (val) {
-                      final v = double.tryParse(val) ?? 0.0;
-                      cartBloc.add(CartSetAmountReceived(v));
-                    },
-                    decoration: InputDecoration(
-                      isDense: true,
-                      border: const OutlineInputBorder(),
-                      hintText: '0.00',
-                      hintStyle: Theme.of(context).textTheme.bodyMedium,
+                );
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      spacing: 10.w,
+                      children: [
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10.w,
+                            vertical: 8.h,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5.r),
+                            color: InvAPColors.kPrimaryColor,
+                          ),
+                          child: const Text(
+                            "GHC",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            controller: cartBloc.amountController,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            onChanged: (val) {
+                              final v = double.tryParse(val) ?? 0.0;
+                              cartBloc.add(CartSetAmountReceived(v));
+                            },
+                            decoration: InputDecoration(
+                              isDense: true,
+                              border: border,
+                              enabledBorder: border,
+                              focusedBorder: border,
+                              hintText: '0.00',
+                              hintStyle: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-              ],
+                    if (isShort) ...[
+                      Gap(6.h),
+                      Text(
+                        'Insufficient amount — GHC '
+                        '${state.remaining.toStringAsFixed(2)} short',
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                          color: InvAPColors.kErrorRedColor,
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
             ),
 
             Gap(12.h),
 
             // Remaining and Change — rebuild only when amountReceived changes
             BlocBuilder<CartBloc, CartState>(
-              buildWhen: (prev, curr) => prev.amountReceived != curr.amountReceived || prev.total != curr.total,
+              buildWhen: (prev, curr) =>
+                  prev.amountReceived != curr.amountReceived ||
+                  prev.total != curr.total,
               builder: (context, state) => Column(
                 children: [
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 10.h,
+                    ),
                     decoration: BoxDecoration(
                       color: InvAPColors.kLightRedColor,
                       borderRadius: BorderRadius.circular(8.r),
@@ -148,7 +205,10 @@ class CheckOutOverFlowContent extends StatelessWidget {
                   ),
                   Gap(8.h),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 10.h,
+                    ),
                     decoration: BoxDecoration(
                       color: InvAPColors.kLightGreenColor,
                       borderRadius: BorderRadius.circular(8.r),
@@ -177,9 +237,10 @@ class CheckOutOverFlowContent extends StatelessWidget {
                     onTap: () {
                       final val = amt.toDouble();
                       cartBloc.amountController.text = val.toStringAsFixed(2);
-                      cartBloc.amountController.selection = TextSelection.collapsed(
-                        offset: cartBloc.amountController.text.length,
-                      );
+                      cartBloc.amountController.selection =
+                          TextSelection.collapsed(
+                            offset: cartBloc.amountController.text.length,
+                          );
                       cartBloc.add(CartSetAmountReceived(val));
                     },
                     child: Container(

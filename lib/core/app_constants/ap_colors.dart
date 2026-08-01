@@ -13,5 +13,8 @@ class InvAPColors {
   static const kAppBackgroundColor = Color(0xFFF3F5F2);
   static const kBlackColor = Color(0xFF000000);
   static const kLightRedColor = Color.fromRGBO(252, 222, 219, 0.54);
+  /// Strong red for validation errors — the light red above is a background tint
+  /// and fails contrast as text or a border.
+  static const kErrorRedColor = Color(0xFFD32F2F);
   static const kLightGreenColor = Color.fromRGBO(226, 252, 219, 0.45);
 }
