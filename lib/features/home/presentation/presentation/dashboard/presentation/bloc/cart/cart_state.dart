@@ -76,6 +76,18 @@ class CartState extends Equatable {
   double get remaining => (total - amountReceived).clamp(0.0, double.infinity);
   double get change => (amountReceived - total).clamp(0.0, double.infinity);
 
+  /// Whether the amount entered falls short of the total.
+  ///
+  /// Defined once here because both the warning under the amount field and the
+  /// Submit button have to agree with each other — and with the server, which
+  /// rejects an underpaid sale for every payment method.
+  ///
+  /// The half-pesewa tolerance matters: money is settled to two decimals, but
+  /// these are binary doubles, so an exactly-correct payment can leave a residue
+  /// like 4e-17 behind. Testing `remaining > 0` would call that short and leave
+  /// the clerk unable to submit a sale that is, to the pesewa, paid in full.
+  bool get isShortPayment => remaining > 0.005;
+
   CartState copyWith({
     List<CartItem>? items,
     Products? currentProduct,

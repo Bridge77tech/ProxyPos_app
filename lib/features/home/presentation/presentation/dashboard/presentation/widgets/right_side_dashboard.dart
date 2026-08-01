@@ -89,7 +89,12 @@ class RightSideDashboard extends StatelessWidget {
                                 btnText: 'Submit',
                                 width: 0.3.sw,
                                 cornerRadius: 10,
-                                onPressed: state.paymentMethod == null || state.amountReceived <= 0
+                                // Also disabled while the amount is short: the server
+                                // rejects an underpaid sale for every payment method,
+                                // so submitting one can only ever fail.
+                                onPressed: state.paymentMethod == null ||
+                                        state.amountReceived <= 0 ||
+                                        state.isShortPayment
                                     ? null
                                     : () {
                                         bloc.add(const CartSubmitOrder());
