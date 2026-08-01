@@ -38,8 +38,22 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final displayName = widget.product?.name ?? '';
-    final unitType = widget.unit?.type;
+    final variantName = widget.variants?.name?.trim() ?? '';
     final price = widget.unit?.sellingPrice ?? widget.variants?.sellingPrice ?? 0.0;
+
+    // Unit, type and size on one line, e.g. "Bulk · tin · 500g".
+    //
+    // This line used to read `unitType ?? "${type}, ${size}"`, which showed the
+    // unit type *instead of* the type and size. Every card in the grid is built
+    // from a unit, so unitType was never null and the fallback never ran — the
+    // variant's type and size were unreachable. Joining only the parts that are
+    // actually present also avoids rendering stray separators for the many
+    // variants that have no type or no size.
+    final unitTypeAndSize = [
+      widget.unit?.type,
+      widget.variants?.type,
+      widget.variants?.size,
+    ].whereType<String>().map((v) => v.trim()).where((v) => v.isNotEmpty).join(' · ');
     return Container(
       padding: EdgeInsets.all(10.w),
       decoration: BoxDecoration(
@@ -95,15 +109,26 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          Text(
-            unitType ?? "${widget.variants?.type}, ${widget.variants?.size}",
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: InvAPColors.kSecondaryTextColor,
-              fontSize: 10.sp,
+          if (variantName.isNotEmpty)
+            Text(
+              variantName,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: InvAPColors.kSecondaryTextColor,
+                fontSize: 10.sp,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
+          if (unitTypeAndSize.isNotEmpty)
+            Text(
+              unitTypeAndSize,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: InvAPColors.kSecondaryTextColor,
+                fontSize: 10.sp,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

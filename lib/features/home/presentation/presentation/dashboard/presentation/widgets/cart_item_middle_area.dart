@@ -48,7 +48,17 @@ class CartItemsMiddleArea extends StatelessWidget {
                   return CartItemCardRow(
                     index: index,
                     name: it.productName,
-                    variantLabel: it.unit.type,
+                    // Was just the unit type, so two variants of the same product
+                    // — a 400g tin and a sachet, say — were indistinguishable in
+                    // the cart. The variant name and size identify which one.
+                    variantLabel: [
+                      it.variant.name,
+                      it.unit.type,
+                      it.variant.size,
+                    ].whereType<String>()
+                        .map((v) => v.trim())
+                        .where((v) => v.isNotEmpty)
+                        .join(' · '),
                     price: it.unit.sellingPrice,
                     quantity: it.quantity,
                   );
