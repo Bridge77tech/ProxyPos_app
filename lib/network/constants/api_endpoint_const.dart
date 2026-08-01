@@ -6,6 +6,7 @@ class APIEndpointConst {
   static const APIEndpoint apLoginEndpoint = APIEndpoint(route: 'auth/login', requiredAuth: false);
   static const APIEndpoint apTopProductEndpoint = APIEndpoint(route: 'pos/products/top-products', requiredAuth: true);
   static const APIEndpoint apAllProductEndpoint = APIEndpoint(route: 'pos/products', requiredAuth: true);
+  static const APIEndpoint apCategoriesEndpoint = APIEndpoint(route: 'pos/products/categories', requiredAuth: true);
   static const APIEndpoint apCreateNewSaleEndPoint = APIEndpoint(route: 'pos/sales', requiredAuth: true);
 
   /// Public endpoints that DO NOT require authentication
@@ -15,6 +16,7 @@ class APIEndpointConst {
 
   /// Private endpoints that REQUIRE authentication
   static const List<APIEndpoint> privateAPIEndpoint = [
+    apCategoriesEndpoint,
     apTopProductEndpoint,
     apAllProductEndpoint,
     apCreateNewSaleEndPoint,
@@ -23,6 +25,7 @@ class APIEndpointConst {
   static const String apLogin = "auth/login";
   static const String apTopProduct = "pos/products/top-products";
   static const String apAllProduct = "pos/products";
+  static const String apCategories = "pos/products/categories";
   static const String apCreateNewSale = "pos/sales";
   static const String apSalesHistory = "pos/sales";
 }
