@@ -105,11 +105,16 @@ class CheckOutOverFlowContent extends StatelessWidget {
                   prev.total != curr.total ||
                   prev.paymentMethod != curr.paymentMethod,
               builder: (context, state) {
-                // Only for cash, and only once something has been entered — an
-                // untouched field isn't an error. Mirrors the server's own rule,
-                // which rejects a short payment for cash only.
+                // Shown for any selected payment method — a short payment is a short
+                // payment whether it arrives as cash or mobile money. Only once
+                // something has been entered, though: an untouched field isn't an
+                // error.
+                //
+                // Note this is stricter than the server, which rejects a short
+                // payment for cash only, so for mobile money the warning is the only
+                // thing standing between a clerk and an underpaid sale.
                 final isShort =
-                    state.paymentMethod == PaymentMethod.cash &&
+                    state.paymentMethod != null &&
                     state.amountReceived > 0 &&
                     state.remaining > 0;
 
