@@ -154,7 +154,9 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                   ),
                   SizedBox(width: 3.w),
                   Text(
-                    '${widget.variants?.currentStock ?? 0}',
+                    // Stock is a whole count of individual items, but the model
+                    // holds it as a double, so plain interpolation printed "164.0".
+                    (widget.variants?.currentStock ?? 0).toStringAsFixed(0),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: InvAPColors.kPrimaryColor,
                     ),
