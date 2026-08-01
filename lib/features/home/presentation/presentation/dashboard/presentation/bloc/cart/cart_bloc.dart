@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:bloc/bloc.dart';
 import 'package:dio/dio.dart';
@@ -17,6 +18,23 @@ import '../../../data/repos/product_repo_impl.dart';
 import '../../../domain/usecases/create_sale_use_case.dart';
 import 'cart_event.dart';
 import 'cart_state.dart' show CartState, CartItem;
+
+/// Random v4-style identifier, used as a sale's idempotency key.
+///
+/// Generated once per sale — before the first submit attempt — and reused on every
+/// retry, so replaying a queued offline sale is recognised by the server instead
+/// of creating a second sale. Uses Random.secure() to make collisions between
+/// devices a non-issue. Hand-rolled rather than adding a `uuid` dependency for
+/// one call site.
+String _generateIdempotencyKey() {
+  final rnd = Random.secure();
+  final bytes = List<int>.generate(16, (_) => rnd.nextInt(256));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 1
+  final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}'
+      '-${hex.substring(16, 20)}-${hex.substring(20)}';
+}
 
 class CartBloc extends Bloc<CartEvent, CartState> {
   final _log = getLogger('CartBloc');
@@ -287,7 +305,11 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       }).toList(),
       'amountPaid': state.amountReceived,
       'paymentMethod': state.paymentMethod?.name,
-      "deviceId": "POS-TABLET-001"
+      'deviceId': "POS-TABLET-001",
+      // Generated once here and stored with the queued payload, so every retry
+      // carries the SAME key. Without it, a crash between a successful submit and
+      // dequeuing would replay the sale and charge the customer twice.
+      'idempotencyKey': _generateIdempotencyKey(),
     };
 
     if (state.paymentMethod == null) {
