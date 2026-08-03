@@ -123,12 +123,80 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     _log.i('Quantity set to $next');
   }
 
+  /// Individual items one line consumes.
+  ///
+  /// `individualPieces` is already 1 for a Single and the pack size for a Pack, so
+  /// this is uniform. Stock is only ever counted in individual items, which is why
+  /// a pack of 12 draws 12 — the same arithmetic the server applies when it
+  /// deducts stock.
+  int _baseUnits(UnitModel unit, int quantity) {
+    final per = unit.individualPieces <= 0 ? 1.0 : unit.individualPieces;
+    return (per * quantity).round();
+  }
+
+  /// Individual items of [variant] already committed across the whole cart.
+  ///
+  /// Summed across units rather than per unit: a Single line and a Pack line of the
+  /// same variant draw on one shared pool, so checking either in isolation would
+  /// let the two together oversell.
+  int _committedBaseUnits(Variants variant, {int? ignoreIndex}) {
+    var total = 0;
+    for (var i = 0; i < state.items.length; i++) {
+      if (i == ignoreIndex) continue;
+      final it = state.items[i];
+      if (it.variant.id != variant.id) continue;
+      total += _baseUnits(it.unit, it.quantity);
+    }
+    return total;
+  }
+
+  /// Why [quantity] of [unit] cannot be added, or null when it can.
+  ///
+  /// The cart used to accept any quantity up to 999 with no reference to stock, so
+  /// a clerk could ring up 4 bottles when 2 remained and only find out at checkout,
+  /// where the server refuses the sale with the customer already waiting.
+  String? _stockShortfall(
+    String productName,
+    Variants variant,
+    UnitModel unit,
+    int quantity, {
+    int? ignoreIndex,
+  }) {
+    final available = (variant.currentStock ?? 0).round();
+    final committed = _committedBaseUnits(variant, ignoreIndex: ignoreIndex);
+    final wanted = _baseUnits(unit, quantity);
+    if (committed + wanted <= available) return null;
+
+    final label = (variant.name != null && variant.name!.trim().isNotEmpty)
+        ? '$productName — ${variant.name!.trim()}'
+        : productName;
+    final left = (available - committed).clamp(0, available);
+
+    final parts = <String>[
+      committed > 0
+          ? 'Only $left of $label left ($available in stock, $committed already in the cart).'
+          : 'Only $available of $label in stock.',
+    ];
+    if (wanted > quantity) {
+      // A pack draws more than its line quantity, which is not obvious.
+      parts.add('$quantity × ${unit.type} needs $wanted.');
+    }
+    return parts.join(' ');
+  }
+
   void _onAddItem(CartAddItem event, Emitter<CartState> emit) {
     try {
       final productId = event.product.id?.toString() ?? '';
       final productName = event.product.name ?? '';
       final v = event.variant;
       final u = event.unit;
+
+      final shortfall = _stockShortfall(productName, v, u, event.quantity);
+      if (shortfall != null) {
+        _log.w('Refused add to cart — $shortfall');
+        emit(state.copyWith(error: shortfall));
+        return;
+      }
 
       // Merge with existing if same productId + variant + unit
       final items = List<CartItem>.from(state.items);
@@ -433,6 +501,23 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     if (event.index >= 0 && event.index < items.length) {
       final existing = items[event.index];
       final nextQty = (existing.quantity + event.delta).clamp(1, 999);
+
+      // Only when going up: reducing a line can never oversell. The line itself is
+      // excluded from the committed total, since nextQty replaces it.
+      if (event.delta > 0) {
+        final shortfall = _stockShortfall(
+          existing.productName,
+          existing.variant,
+          existing.unit,
+          nextQty,
+          ignoreIndex: event.index,
+        );
+        if (shortfall != null) {
+          emit(state.copyWith(error: shortfall));
+          return;
+        }
+      }
+
       items[event.index] = CartItem(
         productId: existing.productId,
         productName: existing.productName,

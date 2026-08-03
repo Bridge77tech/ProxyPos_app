@@ -41,6 +41,15 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
     final variantName = widget.variants?.name?.trim() ?? '';
     final price = widget.unit?.sellingPrice ?? widget.variants?.sellingPrice ?? 0.0;
 
+    // Most of this unit that stock allows. A pack of 12 draws 12 individual items,
+    // so 20 in stock permits one pack, not twenty. This ignores what is already in
+    // the cart — the card cannot see it — so CartBloc still has the final say; this
+    // just stops the obvious case of dialling past what exists.
+    final perUnit = (widget.unit?.individualPieces ?? 1) <= 0
+        ? 1.0
+        : (widget.unit?.individualPieces ?? 1);
+    final maxQty = ((widget.variants?.currentStock ?? 0) / perUnit).floor();
+
     // Unit, type and size on one line, e.g. "Bulk · tin · 500g".
     //
     // This line used to read `unitType ?? "${type}, ${size}"`, which showed the
@@ -196,11 +205,15 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                     Text('$qty', style: theme.textTheme.bodyMedium),
                     SizedBox(width: 10.w),
                     InkWell(
-                      onTap: () => setState(() => qty = qty + 1),
+                      onTap: qty < maxQty
+                          ? () => setState(() => qty = qty + 1)
+                          : null,
                       child: Icon(
                         Icons.add,
                         size: 12.sp,
-                        color: InvAPColors.kSecondaryTextColor,
+                        color: qty < maxQty
+                            ? InvAPColors.kSecondaryTextColor
+                            : InvAPColors.kBorderColor,
                       ),
                     ),
                   ],
