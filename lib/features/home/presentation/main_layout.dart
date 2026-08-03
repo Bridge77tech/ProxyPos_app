@@ -17,6 +17,7 @@ import '../../../core/routing/route_constants.dart';
 import '../../../core/services/connectivity_service.dart';
 import 'bloc/main_layout_bloc.dart';
 import 'bloc/main_layout_state.dart';
+import 'widgets/idle_screensaver.dart';
 
 class APMainLayoutPage extends StatefulWidget {
   const APMainLayoutPage({super.key});
@@ -52,9 +53,7 @@ class _APMainLayoutPageState extends State<APMainLayoutPage> {
       TopProductsStorageImpl.instance.clearTopProducts(),
       AllProductsStorageImpl.instance.clearAllProducts(),
     ]);
-    NavigationHelper.popAllAndPushNamed(
-      InvRouteConstants.loginRoute.routeName,
-    );
+    NavigationHelper.popAllAndPushNamed(InvRouteConstants.loginRoute.routeName);
   }
 
   /// If the device is online and there are queued offline orders, kick off
@@ -70,20 +69,24 @@ class _APMainLayoutPageState extends State<APMainLayoutPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: InvAPColors.kAppBackgroundColor,
-      appBar: const InvAppBar(),
-      body: BlocBuilder<MainLayoutBloc, MainLayoutState>(
-        builder: (context, state) {
-          switch (state.selectedTab) {
-            case MainLayoutTab.dashboard:
-              return dashboardOutlet;
-            case MainLayoutTab.history:
-              return historyOutlet;
-            case MainLayoutTab.myAccount:
-              return const Center(child: Text('My Account'));
-          }
-        },
+    // Wraps the whole authenticated shell, including the app bar, so an idle till
+    // is covered completely. Never reaches the login screen, which sits outside.
+    return IdleScreensaver(
+      child: Scaffold(
+        backgroundColor: InvAPColors.kAppBackgroundColor,
+        appBar: const InvAppBar(),
+        body: BlocBuilder<MainLayoutBloc, MainLayoutState>(
+          builder: (context, state) {
+            switch (state.selectedTab) {
+              case MainLayoutTab.dashboard:
+                return dashboardOutlet;
+              case MainLayoutTab.history:
+                return historyOutlet;
+              case MainLayoutTab.myAccount:
+                return const Center(child: Text('My Account'));
+            }
+          },
+        ),
       ),
     );
   }
