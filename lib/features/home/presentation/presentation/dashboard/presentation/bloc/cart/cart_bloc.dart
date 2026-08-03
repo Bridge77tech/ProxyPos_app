@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 import 'package:inventory_app_pos/core/routing/navigation_helper.dart';
+import 'package:inventory_app_pos/core/services/background_sync_scope.dart';
 import 'package:inventory_app_pos/core/services/connectivity_service.dart';
 
 import '../../../../../../../auth/data/data_source/local/auth_session_storage_impl.dart';
@@ -477,7 +478,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     for (int i = 0; i < queue.length; i++) {
       final payload = queue[i];
       try {
-        await _createSale.call(payload);
+        // Marked as background so an expired token reports a failure instead of
+        // logging the clerk out — see BackgroundSyncScope.
+        await BackgroundSyncScope.run(() => _createSale.call(payload));
         await _pendingStorage.removeAt(0);
         _log.i('Synced pending sale ${i + 1}/${queue.length}');
       } catch (e, st) {

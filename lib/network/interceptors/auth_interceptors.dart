@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 
 import '../../core/exceptions/session_expired_exception.dart';
+import '../../core/services/background_sync_scope.dart';
 import '../../core/routing/navigation_helper.dart';
 import '../../core/routing/route_constants.dart';
 import '../../features/auth/domain/usecases/clear_session_usecase.dart';
@@ -38,6 +39,18 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
         options.headers['Authorization'] = 'Bearer $token';
         return handler.next(options);
       } on SessionExpiredException catch (e) {
+        // A background queue flush must not eject the person at the till. The sale
+        // stays queued and idempotent, so retrying later is safe and lossless.
+        if (BackgroundSyncScope.inProgress) {
+          _log.w('Session expired during background sync; leaving the session alone');
+          return handler.reject(
+            DioException(
+              requestOptions: options,
+              type: DioExceptionType.cancel,
+              error: 'Session expired while syncing. Will retry.',
+            ),
+          );
+        }
         _log.e('Session expired: ${e.toString()}');
         await _clearSession();
         // Navigate to login page
@@ -93,6 +106,13 @@ class AuthInterceptor extends QueuedInterceptorsWrapper {
         // This is a failed login attempt (wrong credentials)
         // Don't clear session or navigate - just pass the error through
         _log.i('Login failed with 401 (invalid credentials), not clearing session');
+        return handler.next(err);
+      }
+
+      // Same reasoning as the expired-token branch in onRequest: a 401 arriving
+      // from work the user did not initiate should not log them out.
+      if (BackgroundSyncScope.inProgress) {
+        _log.w('401 during background sync; leaving the session alone');
         return handler.next(err);
       }
 
