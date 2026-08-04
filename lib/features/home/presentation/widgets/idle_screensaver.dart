@@ -90,14 +90,22 @@ class _IdleScreensaverState extends State<IdleScreensaver> {
   }
 
   Widget _cover() {
-    // Opaque so the tap that dismisses the cover stops here instead of pressing
-    // whatever sits beneath it.
+    // Material, not a ColoredBox. This widget wraps the Scaffold, so the cover sits
+    // above every Material in the tree — and without one, WidgetsApp's fallback
+    // DefaultTextStyle applies: black text with a double yellow underline, its debug
+    // label literally "consider putting your text in a Material". An explicit
+    // TextStyle doesn't escape it, because Text merges with the inherited style and
+    // so keeps the decoration. Material supplies the proper text style and the
+    // theme's Satoshi font as well as an opaque canvas.
+    //
+    // Opaque hit testing so the tap that dismisses the cover stops here instead of
+    // pressing whatever sits beneath it.
     return MouseRegion(
       cursor: SystemMouseCursors.none,
       child: Listener(
         behavior: HitTestBehavior.opaque,
         onPointerDown: (_) => _wake(),
-        child: ColoredBox(
+        child: Material(
           color: Colors.white,
           child: Stack(
             children: [
@@ -122,7 +130,7 @@ class _IdleScreensaverState extends State<IdleScreensaver> {
                 child: Text(
                   'A product of Bridge77 Technologies',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16.sp, color: Colors.black),
+                  style: _labelStyle(context),
                 ),
               ),
             ],
@@ -132,15 +140,20 @@ class _IdleScreensaverState extends State<IdleScreensaver> {
     );
   }
 
+  /// 16px black Satoshi, matching the design. Decoration cleared explicitly.
+  TextStyle _labelStyle(BuildContext context) {
+    return (Theme.of(context).textTheme.bodyMedium ?? const TextStyle())
+        .copyWith(
+          fontSize: 16.sp,
+          color: Colors.black,
+          decoration: TextDecoration.none,
+        );
+  }
+
   Widget _audienceRow() {
     final children = <Widget>[];
     for (var i = 0; i < _audiences.length; i++) {
-      children.add(
-        Text(
-          _audiences[i],
-          style: TextStyle(fontSize: 16.sp, color: Colors.black),
-        ),
-      );
+      children.add(Text(_audiences[i], style: _labelStyle(context)));
       if (i < _audiences.length - 1) {
         // A plain hairline in the design, so a sized box rather than an exported
         // asset — there is no glyph here to reproduce.
