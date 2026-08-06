@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 // FilteringTextInputFormatter lives here; material does not re-export it.
 import 'package:flutter/services.dart';
@@ -81,6 +79,13 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
         widget.unit?.sellingPrice ?? widget.variants?.sellingPrice ?? 0.0;
 
     final maxQty = _maxQty;
+
+    // One height for the stepper and the Add button, so they line up.
+    //
+    // Raw design units, not pre-scaled: ApButton applies ScreenUtil itself
+    // (fixedSize: Size(width.w, height.h), fontSize.sp), so a caller passing 20.h had
+    // it scaled twice. The stepper multiplies by .h at its own use site instead.
+    const controlHeight = 38.0;
 
     // Unit, type and size on one line, e.g. "Bulk · tin · 500g".
     //
@@ -210,9 +215,11 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
               // button leaves means it cannot overflow at any card width.
               Expanded(
                 child: Container(
-                  // Half a rem (8) top and bottom. Originally 1.h, which left the
-                  // control barely taller than its glyphs; a full rem proved too much.
-                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 9.h),
+                  // Fixed height rather than derived from padding, so this and the
+                  // Add button are provably the same size rather than coincidentally
+                  // similar. The Row centres its children within it.
+                  height: controlHeight.h,
+                  padding: EdgeInsets.symmetric(horizontal: 4.w),
                   decoration: BoxDecoration(
                     border: Border.all(
                       color: InvAPColors.kBorderColor,
@@ -275,12 +282,17 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                   ),
                 ),
               ),
+              // 24px between the stepper and the button.
+              SizedBox(width: 24.w),
               SizedBox(
-                width: Platform.isWindows ? 40.w : 50.w,
-                height: Platform.isWindows ? 32.h : 20.h,
                 child: ApButton(
-                  height: 20.h,
-                  width: 50.w,
+                  // Raw units — ApButton scales them itself. Font raised from 8 in
+                  // step with the height going 20 -> 38, so the label keeps its
+                  // proportions. The Windows-specific box is gone: both controls now
+                  // share one height on every platform.
+                  height: controlHeight,
+                  width: 56,
+                  fontSize: 15,
                   onPressed:
                       qty == 0 ||
                           widget.product == null ||
@@ -307,7 +319,6 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                         },
                   btnText: 'Add',
                   paddingHorizontal: 8.0,
-                  fontSize: 8,
                 ),
               ),
             ],
