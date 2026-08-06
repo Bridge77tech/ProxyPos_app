@@ -15,8 +15,6 @@ import '../../data/model/unit_model.dart';
 import '../bloc/cart/cart_bloc.dart';
 import '../bloc/cart/cart_event.dart';
 
-
-
 class ProductContainerCard extends StatefulWidget {
   const ProductContainerCard({
     super.key,
@@ -79,19 +77,10 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
     final theme = Theme.of(context);
     final displayName = widget.product?.name ?? '';
     final variantName = widget.variants?.name?.trim() ?? '';
-    final price = widget.unit?.sellingPrice ?? widget.variants?.sellingPrice ?? 0.0;
+    final price =
+        widget.unit?.sellingPrice ?? widget.variants?.sellingPrice ?? 0.0;
 
     final maxQty = _maxQty;
-
-    // Three digits' worth of room for the quantity, so the +/- keep their positions
-    // as digits are added. The row is MainAxisSize.min, so without a fixed slot the
-    // whole control resized on every tap and the button moved out from under the
-    // finger mid-tap — which is how a cashier ends up pressing minus while counting up.
-    //
-    // A constant rather than derived from each card's maximum, so every stepper on the
-    // grid is the same width. Past 999 the row would grow again, which no one is going
-    // to reach by tapping.
-    final quantitySlotWidth = 30.w;
 
     // Unit, type and size on one line, e.g. "Bulk · tin · 500g".
     //
@@ -101,16 +90,15 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
     // variant's type and size were unreachable. Joining only the parts that are
     // actually present also avoids rendering stray separators for the many
     // variants that have no type or no size.
-    final unitTypeAndSize = [
-      widget.unit?.type,
-      widget.variants?.type,
-      widget.variants?.size,
-    ].whereType<String>().map((v) => v.trim()).where((v) => v.isNotEmpty).join(' · ');
+    final unitTypeAndSize =
+        [widget.unit?.type, widget.variants?.type, widget.variants?.size]
+            .whereType<String>()
+            .map((v) => v.trim())
+            .where((v) => v.isNotEmpty)
+            .join(' · ');
     return Container(
       padding: EdgeInsets.all(10.w),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16.r),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16.r)),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,10 +109,7 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
             height: 73.h,
             decoration: BoxDecoration(
               color: InvAPColors.kWhiteColor,
-              border: Border.all(
-                color: InvAPColors.kBorderColor,
-                width: 0.7.w,
-              ),
+              border: Border.all(color: InvAPColors.kBorderColor, width: 0.7.w),
               borderRadius: BorderRadius.circular(12.r),
             ),
             alignment: Alignment.center,
@@ -220,66 +205,74 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                // Half a rem (8) top and bottom. Originally 1.h, which left the
-                // control barely taller than its glyphs; a full rem proved too much.
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 9.h),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: InvAPColors.kBorderColor,
-                    width: 0.7.w,
+              // Expanded rather than self-sizing: the fixed-width quantity slot
+              // pushed this row 14px past the card. Taking whatever the Add
+              // button leaves means it cannot overflow at any card width.
+              Expanded(
+                child: Container(
+                  // Half a rem (8) top and bottom. Originally 1.h, which left the
+                  // control barely taller than its glyphs; a full rem proved too much.
+                  padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 9.h),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: InvAPColors.kBorderColor,
+                      width: 0.7.w,
+                    ),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    InkWell(
-                      onTap: qty > 0 ? () => _setQty(qty - 1) : null,
-                      child: Icon(
-                        Icons.remove,
-                        size: 12.sp,
-                        color: qty > 0
-                            ? InvAPColors.kSecondaryTextColor
-                            : InvAPColors.kBorderColor,
-                      ),
-                    ),
-                    SizedBox(width: 10.w),
-                    SizedBox(
-                      width: quantitySlotWidth,
-                      child: TextField(
-                        controller: _qtyController,
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        // Digits only, so there is no such thing as an unparseable
-                        // value to defend against further down.
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        style: theme.textTheme.bodyMedium,
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
+                  child: Row(
+                    // Pinned to the edges, so the buttons stay put whatever the
+                    // number between them reads.
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      InkWell(
+                        onTap: qty > 0 ? () => _setQty(qty - 1) : null,
+                        child: Icon(
+                          Icons.remove,
+                          size: 12.sp,
+                          color: qty > 0
+                              ? InvAPColors.kSecondaryTextColor
+                              : InvAPColors.kBorderColor,
                         ),
-                        // Empty reads as 0 rather than snapping back to the previous
-                        // value, so clearing the box to retype is not a fight.
-                        onChanged: (value) =>
-                            _setQty(int.tryParse(value) ?? 0, fromField: true),
                       ),
-                    ),
-                    SizedBox(width: 10.w),
-                    InkWell(
-                      onTap: qty < maxQty ? () => _setQty(qty + 1) : null,
-                      child: Icon(
-                        Icons.add,
-                        size: 12.sp,
-                        color: qty < maxQty
-                            ? InvAPColors.kSecondaryTextColor
-                            : InvAPColors.kBorderColor,
+                      Expanded(
+                        child: TextField(
+                          controller: _qtyController,
+                          textAlign: TextAlign.center,
+                          keyboardType: TextInputType.number,
+                          // Digits only, so there is no such thing as an unparseable
+                          // value to defend against further down.
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          style: theme.textTheme.bodyMedium,
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                          ),
+                          // Empty reads as 0 rather than snapping back to the previous
+                          // value, so clearing the box to retype is not a fight.
+                          onChanged: (value) => _setQty(
+                            int.tryParse(value) ?? 0,
+                            fromField: true,
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
+                      InkWell(
+                        onTap: qty < maxQty ? () => _setQty(qty + 1) : null,
+                        child: Icon(
+                          Icons.add,
+                          size: 12.sp,
+                          color: qty < maxQty
+                              ? InvAPColors.kSecondaryTextColor
+                              : InvAPColors.kBorderColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               SizedBox(
@@ -288,14 +281,25 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                 child: ApButton(
                   height: 20.h,
                   width: 50.w,
-                  onPressed: qty == 0 || widget.product == null || widget.variants == null || widget.unit == null
+                  onPressed:
+                      qty == 0 ||
+                          widget.product == null ||
+                          widget.variants == null ||
+                          widget.unit == null
                       ? null
                       : () {
                           final cart = context.read<CartBloc>();
                           final product = widget.product!;
                           final variant = widget.variants!;
                           final unit = widget.unit!;
-                          cart.add(CartAddItem(product: product, variant: variant, unit: unit, quantity: qty));
+                          cart.add(
+                            CartAddItem(
+                              product: product,
+                              variant: variant,
+                              unit: unit,
+                              quantity: qty,
+                            ),
+                          );
                           // Through the setter, so the field clears with it —
                           // otherwise Add greys out while the box still shows a
                           // number.
