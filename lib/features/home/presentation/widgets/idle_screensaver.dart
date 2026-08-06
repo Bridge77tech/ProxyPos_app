@@ -19,10 +19,9 @@ class IdleScreensaver extends StatefulWidget {
 
   /// Idle time before the cover appears.
   ///
-  /// One minute is short for a working till — a cashier reading a label or talking
-  /// to a customer will meet it — but any pointer movement or key press clears it
-  /// instantly and nothing behind it is disturbed.
-  static const Duration idleAfter = Duration(minutes: 1);
+  /// Any pointer movement or key press clears it instantly and nothing behind it is
+  /// disturbed — the session itself runs for eight hours regardless.
+  static const Duration idleAfter = Duration(minutes: 5);
 
   @override
   State<IdleScreensaver> createState() => _IdleScreensaverState();

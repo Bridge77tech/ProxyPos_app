@@ -164,9 +164,10 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
           if (unitTypeAndSize.isNotEmpty)
             Text(
               unitTypeAndSize,
+              // Swapped with the price: this takes bodySmall (13), the price takes
+              // the 10 this used to have.
               style: theme.textTheme.bodySmall?.copyWith(
                 color: InvAPColors.kSecondaryTextColor,
-                fontSize: 10.sp,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -178,6 +179,9 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                 'GH₵${price.toStringAsFixed(2)}',
                 style: theme.textTheme.bodySmall!.copyWith(
                   fontWeight: FontWeight.bold,
+                  // Swapped with the unit/size line above, which now takes the 13
+                  // this had.
+                  fontSize: 10.sp,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -207,121 +211,126 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
               ),
             ],
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Expanded rather than self-sizing: the fixed-width quantity slot
-              // pushed this row 14px past the card. Taking whatever the Add
-              // button leaves means it cannot overflow at any card width.
-              Expanded(
-                child: Container(
-                  // Fixed height rather than derived from padding, so this and the
-                  // Add button are provably the same size rather than coincidentally
-                  // similar. The Row centres its children within it.
-                  height: controlHeight.h,
-                  padding: EdgeInsets.symmetric(horizontal: 4.w),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: InvAPColors.kBorderColor,
-                      width: 0.7.w,
+          // 4px above: the Column contributes 2 via its spacing, this adds the
+          // other 2.
+          Padding(
+            padding: EdgeInsets.only(top: 2.h),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Expanded rather than self-sizing: the fixed-width quantity slot
+                // pushed this row 14px past the card. Taking whatever the Add
+                // button leaves means it cannot overflow at any card width.
+                Expanded(
+                  child: Container(
+                    // Fixed height rather than derived from padding, so this and the
+                    // Add button are provably the same size rather than coincidentally
+                    // similar. The Row centres its children within it.
+                    height: controlHeight.h,
+                    padding: EdgeInsets.symmetric(horizontal: 4.w),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: InvAPColors.kBorderColor,
+                        width: 0.7.w,
+                      ),
+                      borderRadius: BorderRadius.circular(8.r),
                     ),
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  child: Row(
-                    // Pinned to the edges, so the buttons stay put whatever the
-                    // number between them reads.
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      InkWell(
-                        onTap: qty > 0 ? () => _setQty(qty - 1) : null,
-                        child: Icon(
-                          Icons.remove,
-                          size: 12.sp,
-                          color: qty > 0
-                              ? InvAPColors.kSecondaryTextColor
-                              : InvAPColors.kBorderColor,
-                        ),
-                      ),
-                      Expanded(
-                        child: TextField(
-                          controller: _qtyController,
-                          textAlign: TextAlign.center,
-                          keyboardType: TextInputType.number,
-                          // Digits only, so there is no such thing as an unparseable
-                          // value to defend against further down.
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          style: theme.textTheme.bodyMedium,
-                          decoration: const InputDecoration(
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                          ),
-                          // Empty reads as 0 rather than snapping back to the previous
-                          // value, so clearing the box to retype is not a fight.
-                          onChanged: (value) => _setQty(
-                            int.tryParse(value) ?? 0,
-                            fromField: true,
+                    child: Row(
+                      // Pinned to the edges, so the buttons stay put whatever the
+                      // number between them reads.
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        InkWell(
+                          onTap: qty > 0 ? () => _setQty(qty - 1) : null,
+                          child: Icon(
+                            Icons.remove,
+                            size: 12.sp,
+                            color: qty > 0
+                                ? InvAPColors.kSecondaryTextColor
+                                : InvAPColors.kBorderColor,
                           ),
                         ),
-                      ),
-                      InkWell(
-                        onTap: qty < maxQty ? () => _setQty(qty + 1) : null,
-                        child: Icon(
-                          Icons.add,
-                          size: 12.sp,
-                          color: qty < maxQty
-                              ? InvAPColors.kSecondaryTextColor
-                              : InvAPColors.kBorderColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // 24px between the stepper and the button.
-              SizedBox(width: 24.w),
-              SizedBox(
-                child: ApButton(
-                  // Raw units — ApButton scales them itself. Font raised from 8 in
-                  // step with the height going 20 -> 38, so the label keeps its
-                  // proportions. The Windows-specific box is gone: both controls now
-                  // share one height on every platform.
-                  height: controlHeight,
-                  width: 56,
-                  fontSize: 15,
-                  onPressed:
-                      qty == 0 ||
-                          widget.product == null ||
-                          widget.variants == null ||
-                          widget.unit == null
-                      ? null
-                      : () {
-                          final cart = context.read<CartBloc>();
-                          final product = widget.product!;
-                          final variant = widget.variants!;
-                          final unit = widget.unit!;
-                          cart.add(
-                            CartAddItem(
-                              product: product,
-                              variant: variant,
-                              unit: unit,
-                              quantity: qty,
+                        Expanded(
+                          child: TextField(
+                            controller: _qtyController,
+                            textAlign: TextAlign.center,
+                            keyboardType: TextInputType.number,
+                            // Digits only, so there is no such thing as an unparseable
+                            // value to defend against further down.
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            style: theme.textTheme.bodyMedium,
+                            decoration: const InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
                             ),
-                          );
-                          // Through the setter, so the field clears with it —
-                          // otherwise Add greys out while the box still shows a
-                          // number.
-                          _setQty(0);
-                        },
-                  btnText: 'Add',
-                  paddingHorizontal: 8.0,
+                            // Empty reads as 0 rather than snapping back to the previous
+                            // value, so clearing the box to retype is not a fight.
+                            onChanged: (value) => _setQty(
+                              int.tryParse(value) ?? 0,
+                              fromField: true,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: qty < maxQty ? () => _setQty(qty + 1) : null,
+                          child: Icon(
+                            Icons.add,
+                            size: 12.sp,
+                            color: qty < maxQty
+                                ? InvAPColors.kSecondaryTextColor
+                                : InvAPColors.kBorderColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ],
+                // 8px between the stepper and the button.
+                SizedBox(width: 8.w),
+                SizedBox(
+                  child: ApButton(
+                    // Raw units — ApButton scales them itself. Font raised from 8 in
+                    // step with the height going 20 -> 38, so the label keeps its
+                    // proportions. The Windows-specific box is gone: both controls now
+                    // share one height on every platform.
+                    height: controlHeight,
+                    width: 56,
+                    fontSize: 15,
+                    onPressed:
+                        qty == 0 ||
+                            widget.product == null ||
+                            widget.variants == null ||
+                            widget.unit == null
+                        ? null
+                        : () {
+                            final cart = context.read<CartBloc>();
+                            final product = widget.product!;
+                            final variant = widget.variants!;
+                            final unit = widget.unit!;
+                            cart.add(
+                              CartAddItem(
+                                product: product,
+                                variant: variant,
+                                unit: unit,
+                                quantity: qty,
+                              ),
+                            );
+                            // Through the setter, so the field clears with it —
+                            // otherwise Add greys out while the box still shows a
+                            // number.
+                            _setQty(0);
+                          },
+                    btnText: 'Add',
+                    paddingHorizontal: 8.0,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
