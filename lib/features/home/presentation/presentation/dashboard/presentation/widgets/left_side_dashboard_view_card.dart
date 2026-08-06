@@ -211,11 +211,12 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                                 maxCrossAxisExtent: 150.w,
                                 mainAxisSpacing: 25.h,
                                 crossAxisSpacing: 25.w,
-                                // Taller than square: the card now carries the
-                                // variant name on its own line as well as the
-                                // unit/type/size line, which a 1:1 tile could
-                                // not fit without overflowing.
-                                childAspectRatio: 0.85,
+                                // Taller than square: the card carries the variant name on its
+                                // own line as well as the unit/type/size line, and the quantity
+                                // stepper has a rem of padding top and bottom. A tile that does
+                                // not grow with them overflows, and Flutter paints the
+                                // overflow stripes.
+                                childAspectRatio: 0.72,
                               ),
                               itemBuilder: (context, i) {
                                 final entry = items[i];
