@@ -207,17 +207,16 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                               shrinkWrap: true,
                               primary: false,
                               itemCount: items.length,
-                              gridDelegate:
-                                  SliverGridDelegateWithMaxCrossAxisExtent(
-                                    maxCrossAxisExtent: 150.w,
-                                    mainAxisSpacing: 25.h,
-                                    crossAxisSpacing: 25.w,
-                                    // Taller than square: the card now carries the
-                                    // variant name on its own line as well as the
-                                    // unit/type/size line, which a 1:1 tile could
-                                    // not fit without overflowing.
-                                    childAspectRatio: 0.85,
-                                  ),
+                              gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 150.w,
+                                mainAxisSpacing: 25.h,
+                                crossAxisSpacing: 25.w,
+                                // Taller than square: the card now carries the
+                                // variant name on its own line as well as the
+                                // unit/type/size line, which a 1:1 tile could
+                                // not fit without overflowing.
+                                childAspectRatio: 0.85,
+                              ),
                               itemBuilder: (context, i) {
                                 final entry = items[i];
                                 return ProductContainerCard(
@@ -337,75 +336,95 @@ class _CategorySectionState extends State<_CategorySection> {
             },
             child: ScrollConfiguration(
               behavior: ScrollConfiguration.of(context).copyWith(
-                dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+                // Flutter's default set is {touch, stylus, invertedStylus, trackpad,
+                // unknown}. Listing only touch and mouse to enable click-and-drag
+                // silently dropped trackpad, so a two-finger pan on a Mac was filtered
+                // out before it reached the scrollable. Start from the default and add
+                // mouse, rather than replacing it.
+                dragDevices: {
+                  ...ScrollConfiguration.of(context).dragDevices,
+                  PointerDeviceKind.mouse,
+                },
               ),
-              child: SingleChildScrollView(
+              // Nothing on screen said the strip scrolled, so a category past the
+              // right edge simply looked absent. The bar only appears when there is
+              // something to scroll to.
+              child: Scrollbar(
                 controller: _scrollController,
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _categories.map((cat) {
-                    final isSelected = cat.label == 'All'
-                        ? (widget.selectedCategory == null ||
-                              widget.selectedCategory!.isEmpty)
-                        : widget.selectedCategory?.toLowerCase() ==
-                              cat.label.toLowerCase();
-                    return Padding(
-                      padding: EdgeInsets.only(right: 24.w),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(8.r),
-                        onTap: () {
-                          final bloc = context.read<DashboardBloc>();
-                          if (cat.label == 'All' || isSelected) {
-                            bloc.add(const SearchProducts('', category: null));
-                          } else {
-                            bloc.add(SearchProducts('', category: cat.label));
-                          }
-                        },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 52.w,
-                              height: 52.w,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isSelected
-                                    ? InvAPColors.kPrimaryColor.withValues(
-                                        alpha: 0.12,
-                                      )
-                                    : InvAPColors.kAppBackgroundColor,
-                                border: isSelected
-                                    ? Border.all(
-                                        color: InvAPColors.kPrimaryColor,
-                                        width: 2,
-                                      )
-                                    : null,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  cat.emoji,
-                                  style: TextStyle(fontSize: 22.sp),
+                thickness: 4,
+                radius: Radius.circular(4.r),
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  scrollDirection: Axis.horizontal,
+                  // Clearance beneath the labels for the bar.
+                  padding: EdgeInsets.only(bottom: 10.h),
+                  child: Row(
+                    children: _categories.map((cat) {
+                      final isSelected = cat.label == 'All'
+                          ? (widget.selectedCategory == null ||
+                                widget.selectedCategory!.isEmpty)
+                          : widget.selectedCategory?.toLowerCase() ==
+                                cat.label.toLowerCase();
+                      return Padding(
+                        padding: EdgeInsets.only(right: 24.w),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(8.r),
+                          onTap: () {
+                            final bloc = context.read<DashboardBloc>();
+                            if (cat.label == 'All' || isSelected) {
+                              bloc.add(
+                                const SearchProducts('', category: null),
+                              );
+                            } else {
+                              bloc.add(SearchProducts('', category: cat.label));
+                            }
+                          },
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 52.w,
+                                height: 52.w,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isSelected
+                                      ? InvAPColors.kPrimaryColor.withValues(
+                                          alpha: 0.12,
+                                        )
+                                      : InvAPColors.kAppBackgroundColor,
+                                  border: isSelected
+                                      ? Border.all(
+                                          color: InvAPColors.kPrimaryColor,
+                                          width: 2,
+                                        )
+                                      : null,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    cat.emoji,
+                                    style: TextStyle(fontSize: 22.sp),
+                                  ),
                                 ),
                               ),
-                            ),
-                            Gap(6.h),
-                            Text(
-                              cat.label,
-                              style: Theme.of(context).textTheme.bodySmall!
-                                  .copyWith(
-                                    fontWeight: isSelected
-                                        ? FontWeight.w600
-                                        : FontWeight.w400,
-                                    color: isSelected
-                                        ? InvAPColors.kPrimaryColor
-                                        : null,
-                                  ),
-                            ),
-                          ],
+                              Gap(6.h),
+                              Text(
+                                cat.label,
+                                style: Theme.of(context).textTheme.bodySmall!
+                                    .copyWith(
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: isSelected
+                                          ? InvAPColors.kPrimaryColor
+                                          : null,
+                                    ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  }).toList(),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
             ),
