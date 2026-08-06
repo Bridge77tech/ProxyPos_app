@@ -178,9 +178,9 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                // 1rem (16) added to top and bottom. Was 1.h, which made the control
-                // barely taller than the glyphs — a poor tap target on a till.
-                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 17.h),
+                // Half a rem (8) top and bottom. Originally 1.h, which left the
+                // control barely taller than its glyphs; a full rem proved too much.
+                padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 9.h),
                 decoration: BoxDecoration(
                   border: Border.all(
                     color: InvAPColors.kBorderColor,
