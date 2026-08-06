@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+// FilteringTextInputFormatter lives here; material does not re-export it.
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inventory_app_pos/core/app_constants/ap_colors.dart';
@@ -34,6 +36,44 @@ class ProductContainerCard extends StatefulWidget {
 class _ProductContainerCardState extends State<ProductContainerCard> {
   int qty = 0;
 
+  /// Lets the quantity be typed as well as stepped. Kept in sync both ways: the
+  /// buttons write into it, and typing writes back into [qty].
+  final _qtyController = TextEditingController(text: '0');
+
+  @override
+  void dispose() {
+    _qtyController.dispose();
+    super.dispose();
+  }
+
+  /// Individual items one of this unit consumes. A pack of 12 draws 12, so 20 in
+  /// stock permits one pack, not twenty.
+  double get _perUnit {
+    final per = widget.unit?.individualPieces ?? 1;
+    return per <= 0 ? 1.0 : per;
+  }
+
+  /// Most of this unit that stock allows. Ignores what is already in the cart — the
+  /// card cannot see it — so CartBloc still has the final say; this only stops the
+  /// obvious case of asking for more than exists.
+  int get _maxQty => ((widget.variants?.currentStock ?? 0) / _perUnit).floor();
+
+  /// Single point of change for the quantity, so the field and the buttons can never
+  /// disagree. [fromField] avoids rewriting the text the user is mid-way through
+  /// typing, which would fight their cursor.
+  void _setQty(int next, {bool fromField = false}) {
+    final clamped = next.clamp(0, _maxQty);
+    setState(() => qty = clamped);
+
+    final text = clamped.toString();
+    if (_qtyController.text != text && !(fromField && next == clamped)) {
+      _qtyController.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -41,14 +81,17 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
     final variantName = widget.variants?.name?.trim() ?? '';
     final price = widget.unit?.sellingPrice ?? widget.variants?.sellingPrice ?? 0.0;
 
-    // Most of this unit that stock allows. A pack of 12 draws 12 individual items,
-    // so 20 in stock permits one pack, not twenty. This ignores what is already in
-    // the cart — the card cannot see it — so CartBloc still has the final say; this
-    // just stops the obvious case of dialling past what exists.
-    final perUnit = (widget.unit?.individualPieces ?? 1) <= 0
-        ? 1.0
-        : (widget.unit?.individualPieces ?? 1);
-    final maxQty = ((widget.variants?.currentStock ?? 0) / perUnit).floor();
+    final maxQty = _maxQty;
+
+    // Three digits' worth of room for the quantity, so the +/- keep their positions
+    // as digits are added. The row is MainAxisSize.min, so without a fixed slot the
+    // whole control resized on every tap and the button moved out from under the
+    // finger mid-tap — which is how a cashier ends up pressing minus while counting up.
+    //
+    // A constant rather than derived from each card's maximum, so every stepper on the
+    // grid is the same width. Past 999 the row would grow again, which no one is going
+    // to reach by tapping.
+    final quantitySlotWidth = 30.w;
 
     // Unit, type and size on one line, e.g. "Bulk · tin · 500g".
     //
@@ -192,9 +235,7 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     InkWell(
-                      onTap: qty > 0
-                          ? () => setState(() => qty = qty - 1)
-                          : null,
+                      onTap: qty > 0 ? () => _setQty(qty - 1) : null,
                       child: Icon(
                         Icons.remove,
                         size: 12.sp,
@@ -204,12 +245,32 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                       ),
                     ),
                     SizedBox(width: 10.w),
-                    Text('$qty', style: theme.textTheme.bodyMedium),
+                    SizedBox(
+                      width: quantitySlotWidth,
+                      child: TextField(
+                        controller: _qtyController,
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        // Digits only, so there is no such thing as an unparseable
+                        // value to defend against further down.
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        style: theme.textTheme.bodyMedium,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                        ),
+                        // Empty reads as 0 rather than snapping back to the previous
+                        // value, so clearing the box to retype is not a fight.
+                        onChanged: (value) =>
+                            _setQty(int.tryParse(value) ?? 0, fromField: true),
+                      ),
+                    ),
                     SizedBox(width: 10.w),
                     InkWell(
-                      onTap: qty < maxQty
-                          ? () => setState(() => qty = qty + 1)
-                          : null,
+                      onTap: qty < maxQty ? () => _setQty(qty + 1) : null,
                       child: Icon(
                         Icons.add,
                         size: 12.sp,
@@ -235,7 +296,10 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                           final variant = widget.variants!;
                           final unit = widget.unit!;
                           cart.add(CartAddItem(product: product, variant: variant, unit: unit, quantity: qty));
-                          setState(() => qty = 0);
+                          // Through the setter, so the field clears with it —
+                          // otherwise Add greys out while the box still shows a
+                          // number.
+                          _setQty(0);
                         },
                   btnText: 'Add',
                   paddingHorizontal: 8.0,
