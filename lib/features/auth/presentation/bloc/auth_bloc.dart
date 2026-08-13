@@ -64,7 +64,15 @@ class AuthBloc<T> extends Bloc<AuthEvent, AuthState> {
       debugPrint('Login response: ${rawData.token}');
 
       final role = rawData.user?.role?.toLowerCase().trim();
-      const allowedRoles = {'clerk', 'manager', 'owner'};
+
+      // 'clerk' was renamed to 'salesperson'. Because this is an allow-list rather than a
+      // deny-list, the rename failed *closed*: a salesperson was not in the set, so the till
+      // refused the exact role it exists for with "this account role cannot log in here".
+      //
+      // Both names stay. The four apps deploy separately and this one ships through an app store,
+      // so a till running an older build has to keep working against a renamed backend — and a
+      // till that cannot take a sale is the most expensive failure in the system.
+      const allowedRoles = {'salesperson', 'clerk', 'manager', 'owner'};
       if (!allowedRoles.contains(role)) {
         _log.w('Login blocked — role "$role" is not allowed');
         emit(state.copyWith(
