@@ -155,6 +155,17 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   ///
   /// The cart used to accept any quantity up to 999 with no reference to stock, so
   /// a clerk could ring up 4 bottles when 2 remained and only find out at checkout,
+  /// How a variant reads in a message to the cashier: "Bottled Water — 500ml".
+  ///
+  /// Shared by the out-of-stock and expired refusals so the two read the same way; they are the same
+  /// sentence about the same thing and were on their way to being worded differently.
+  String _variantLabel(String productName, Variants variant) {
+    final name = variant.name;
+    return (name != null && name.trim().isNotEmpty)
+        ? '$productName — ${name.trim()}'
+        : productName;
+  }
+
   /// where the server refuses the sale with the customer already waiting.
   String? _stockShortfall(
     String productName,
@@ -168,9 +179,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     final wanted = _baseUnits(unit, quantity);
     if (committed + wanted <= available) return null;
 
-    final label = (variant.name != null && variant.name!.trim().isNotEmpty)
-        ? '$productName — ${variant.name!.trim()}'
-        : productName;
+    final label = _variantLabel(productName, variant);
     final left = (available - committed).clamp(0, available);
 
     final parts = <String>[
@@ -196,6 +205,24 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       if (shortfall != null) {
         _log.w('Refused add to cart — $shortfall');
         emit(state.copyWith(error: shortfall));
+        return;
+      }
+
+      /// Expired stock is refused outright.
+      ///
+      /// The server has always sent expiringDate on every variant; the app dropped the field, so
+      /// nothing here knew and nothing stopped a cashier ringing up expired goods. Refusing is the
+      /// right severity — the customer is standing there, and a warning that can be tapped past is a
+      /// warning that gets tapped past.
+      ///
+      /// Only bites when the server sent a date. Most goods have none, and those are unaffected.
+      if (v.isExpired) {
+        final on = v.expiringDate!;
+        final label = _variantLabel(productName, v);
+        final message = '$label expired on ${on.day}/${on.month}/${on.year} '
+            'and cannot be sold. Remove it from the shelf.';
+        _log.w('Refused add to cart — $message');
+        emit(state.copyWith(error: message));
         return;
       }
 
@@ -553,7 +580,24 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     _log.i('Amount received set: $amt');
   }
 
+  /// Whether two cart lines are the same thing, and so should merge.
+  ///
+  /// By id when both sides have one. This compared type, size and selling price instead, which
+  /// merges two units that are genuinely different: a 6-pack and a 12-pack priced the same — a
+  /// promotion, or a pricing mistake — become one line. The merged line then carries a single
+  /// `variantUnitId`, so the server deducts that unit's pack size for the whole quantity: two
+  /// scanned items, 12 or 24 base units removed where 18 left the shelf.
+  ///
+  /// The attribute comparison stays as the fallback, because unit ids are nullable — product data
+  /// cached by an older build has none, and merging by attributes is better than never merging at
+  /// all. It is only reached when an id is genuinely absent.
   bool _sameVariantUnit(Variants aVar, UnitModel aUnit, Variants bVar, UnitModel bUnit) {
+    final aUnitId = aUnit.id;
+    final bUnitId = bUnit.id;
+    if (aUnitId != null && aUnitId.isNotEmpty && bUnitId != null && bUnitId.isNotEmpty) {
+      return aVar.id == bVar.id && aUnitId == bUnitId;
+    }
+
     return aVar.type == bVar.type &&
         aVar.size == bVar.size &&
         aUnit.type == bUnit.type &&

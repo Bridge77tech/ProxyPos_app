@@ -54,6 +54,36 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
   /// obvious case of asking for more than exists.
   int get _maxQty => ((widget.variants?.currentStock ?? 0) / _perUnit).floor();
 
+  /// What the stock dot means, worst state first.
+  ///
+  /// Expired outranks out-of-stock: a shelf holding expired goods is a worse problem than an
+  /// empty one, and the cart refuses the sale either way.
+  ///
+  /// The server decides what "low" means — Variants.isLowStock prefers the stockStatus it sends
+  /// over recomputing the comparison here, so the till and the portal cannot disagree.
+  Color get _stockDotColour {
+    final v = widget.variants;
+    if (v == null) return InvAPColors.kBorderColor;
+    if (v.isExpired) return Colors.red;
+    if (v.isOutOfStock) return InvAPColors.kBorderColor;
+    if (v.isExpiringSoon || v.isLowStock) return Colors.orange;
+    return Colors.green;
+  }
+
+  /// A short word beside the count, or null when the stock is simply fine.
+  String? get _stockNote {
+    final v = widget.variants;
+    if (v == null) return null;
+    if (v.isExpired) return 'Expired';
+    if (v.isOutOfStock) return null; // the count already reads 0
+    if (v.isExpiringSoon) {
+      final days = v.expiringDate!.difference(DateTime.now()).inDays;
+      return days <= 0 ? 'Expires today' : 'Expires in \${days}d';
+    }
+    if (v.isLowStock) return 'Low';
+    return null;
+  }
+
   /// Single point of change for the quantity, so the field and the buttons can never
   /// disagree. [fromField] avoids rewriting the text the user is mid-way through
   /// typing, which would fight their cursor.
@@ -192,9 +222,7 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                     width: 4.w,
                     height: 4.w,
                     decoration: BoxDecoration(
-                      color: (widget.variants?.currentStock ?? 0) > 0
-                          ? Colors.green
-                          : InvAPColors.kBorderColor,
+                      color: _stockDotColour,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -207,6 +235,19 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                       color: InvAPColors.kPrimaryColor,
                     ),
                   ),
+                  // Only rendered when there is something to say. Most stock is neither low nor
+                  // perishable, and a card carrying an empty badge reads as a rendering fault.
+                  if (_stockNote != null) ...[
+                    SizedBox(width: 3.w),
+                    Flexible(
+                      child: Text(
+                        _stockNote!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(color: _stockDotColour),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],

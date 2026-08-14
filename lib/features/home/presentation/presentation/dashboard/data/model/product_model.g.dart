@@ -13,11 +13,11 @@ Products _$ProductsFromJson(Map<String, dynamic> json) => Products(
   variants: (json['variants'] as List<dynamic>?)
       ?.map((e) => Variants.fromJson(e as Map<String, dynamic>))
       .toList(),
-  currentStock: _parseIntOrNull(json['currentStock']),
-  minStockLevel: _parseIntOrNull(json['minStockLevel']),
+  currentStock: (json['currentStock'] as num?)?.toInt(),
+  minStockLevel: (json['minStockLevel'] as num?)?.toInt(),
   isActive: json['isActive'] as bool?,
-  totalSold: _parseIntOrNull(json['totalSold']),
-  salesCount: _parseIntOrNull(json['salesCount']),
+  totalSold: (json['totalSold'] as num?)?.toInt(),
+  salesCount: (json['salesCount'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$ProductsToJson(Products instance) => <String, dynamic>{
@@ -31,11 +31,3 @@ Map<String, dynamic> _$ProductsToJson(Products instance) => <String, dynamic>{
   'totalSold': instance.totalSold,
   'salesCount': instance.salesCount,
 };
-
-// Handles APIs that return numeric fields as JSON strings.
-int? _parseIntOrNull(dynamic v) {
-  if (v == null) return null;
-  if (v is num) return v.toInt();
-  if (v is String) return int.tryParse(v) ?? double.tryParse(v)?.toInt();
-  return null;
-}
