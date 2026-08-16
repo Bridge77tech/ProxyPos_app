@@ -348,7 +348,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     for (final p in products) {
       for (final v in p.variants ?? <Variants>[]) {
         for (final u in v.units ?? <UnitModel>[]) {
-          if (u.barcode.trim() == barcode) {
+          // A unit with no barcode cannot match a scan. Skipping it is the whole point of the field
+          // being optional — most loose goods are sold without one.
+          if (u.barcode?.trim() == barcode) {
             return (product: p, variant: v, unit: u);
           }
         }

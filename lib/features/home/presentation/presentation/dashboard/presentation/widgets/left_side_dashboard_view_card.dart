@@ -93,6 +93,21 @@ class LeftSideDashboardViewCard extends StatelessWidget {
             );
           },
         ),
+        // A search that failed outright, as opposed to one that found nothing. Same treatment as a
+        // failed barcode lookup: a snackbar over the grid, rather than replacing it.
+        BlocListener<DashboardBloc, DashboardState>(
+          listenWhen: (prev, curr) =>
+              curr.searchError != null && curr.searchError != prev.searchError,
+          listener: (context, state) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.searchError!),
+                backgroundColor: Colors.red.shade700,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+        ),
         // Barcode lookup failed → show snackbar
         BlocListener<CartBloc, CartState>(
           listenWhen: (prev, curr) =>

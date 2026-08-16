@@ -134,9 +134,20 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       emit(state.copyWith(searching: false, searchResults: remoteResults));
     } catch (e, st) {
       _log.e('Search failed', error: e, stackTrace: st);
-      // Return empty results rather than an error so the Most Purchased grid
-      // is never replaced with the error widget due to a failed text search.
-      emit(state.copyWith(searching: false, searchResults: const [], clearSearch: true));
+      // Empty results, so a failed text search never replaces the Most Purchased grid with an
+      // error widget — but with searchError set alongside, because emitting only the empty list
+      // made a total failure indistinguishable from "no matches".
+      //
+      // That is precisely how this hid a real bug. UnitModel declared barcode as non-nullable
+      // while the server has always sent null for unscanned goods, so parsing threw a TypeError
+      // on the first such unit and took the whole product list with it. Every search returned
+      // nothing, quietly, and looked like an empty shop.
+      emit(state.copyWith(
+        searching: false,
+        searchResults: const [],
+        clearSearch: true,
+        searchError: 'Could not load products. Check your connection and try again.',
+      ));
     }
   }
 
@@ -278,7 +289,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     for (final p in products) {
       for (final v in p.variants ?? <Variants>[]) {
         for (final u in v.units ?? <UnitModel>[]) {
-          if (u.barcode.trim() == barcode) return p;
+          // Unbarcoded units simply never match a scan.
+          if (u.barcode?.trim() == barcode) return p;
         }
       }
     }

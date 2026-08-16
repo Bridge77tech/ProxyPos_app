@@ -9,9 +9,9 @@ part of 'unit_model.dart';
 UnitModel _$UnitModelFromJson(Map<String, dynamic> json) => UnitModel(
   json['id'] as String?,
   json['type'] as String,
-  json['barcode'] as String,
-  (json['sellingPrice'] as num).toDouble(),
-  (json['individualPieces'] as num).toDouble(),
+  json['barcode'] as String?,
+  _toDouble(json['sellingPrice']),
+  _toDouble(json['individualPieces']),
 );
 
 Map<String, dynamic> _$UnitModelToJson(UnitModel instance) => <String, dynamic>{
