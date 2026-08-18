@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:inventory_app_pos/core/app_constants/ap_colors.dart';
+import 'package:inventory_app_pos/core/utils/unit_stock.dart';
 import 'package:inventory_app_pos/generated/assets.dart';
 import 'package:inventory_app_pos/shared/app_buttons/ap_button.dart';
 
@@ -42,31 +43,59 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
     super.dispose();
   }
 
-  /// Individual items one of this unit consumes. A pack of 12 draws 12, so 20 in
-  /// stock permits one pack, not twenty.
-  double get _perUnit {
-    final per = widget.unit?.individualPieces ?? 1;
-    return per <= 0 ? 1.0 : per;
+  /// How many of THIS unit the shelf holds, or null when the pack size cannot say.
+  ///
+  /// The one number the cashier needs. They have already tapped "Coca-Cola 12-pack" and there is a
+  /// customer waiting; that the variant holds 240 bottles is true and, at this moment, noise.
+  ///
+  /// Uses the shared mirror in core/utils/unit_stock.dart rather than dividing here, so this card,
+  /// the quantity clamp below and the portal cannot drift on the rounding.
+  int? get _stockInUnits => unitsAvailable(
+        widget.unit?.individualPieces,
+        widget.variants?.currentStock,
+      );
+
+  /// This unit's own state, falling back to the variant's when the unit cannot be expressed.
+  ///
+  /// Judged against the threshold converted into this unit — 20 packs is not "low" because the
+  /// variant's threshold of 24 bottles happens to be a bigger number.
+  UnitStockState get _stockState {
+    final own = unitStockState(
+      individualPieces: widget.unit?.individualPieces,
+      baseUnits: widget.variants?.currentStock,
+      baseThreshold: widget.variants?.lowThresholdAlert,
+    );
+    if (own != null) return own;
+
+    // No usable pack size. Fall back to what the server said about the variant, which is the
+    // behaviour this card had before it counted in units.
+    final v = widget.variants;
+    if (v == null || v.isOutOfStock) return UnitStockState.outOfStock;
+    return v.isLowStock ? UnitStockState.lowStock : UnitStockState.inStock;
   }
 
   /// Most of this unit that stock allows. Ignores what is already in the cart — the
   /// card cannot see it — so CartBloc still has the final say; this only stops the
   /// obvious case of asking for more than exists.
-  int get _maxQty => ((widget.variants?.currentStock ?? 0) / _perUnit).floor();
+  ///
+  /// An unusable pack size clamps to 0 rather than to the raw pool. The old fallback treated a
+  /// broken pack size as 1 base item, which would have offered the cashier 240 crates; the sale
+  /// path refuses such a unit anyway (baseUnitsFor throws), so offering it was never real.
+  int get _maxQty => _stockInUnits ?? 0;
 
   /// What the stock dot means, worst state first.
   ///
   /// Expired outranks out-of-stock: a shelf holding expired goods is a worse problem than an
   /// empty one, and the cart refuses the sale either way.
   ///
-  /// The server decides what "low" means — Variants.isLowStock prefers the stockStatus it sends
-  /// over recomputing the comparison here, so the till and the portal cannot disagree.
+  /// Stock is judged for the selected unit, expiry for the whole variant — a batch expires as a
+  /// batch, regardless of how it is packaged.
   Color get _stockDotColour {
     final v = widget.variants;
     if (v == null) return InvAPColors.kBorderColor;
     if (v.isExpired) return Colors.red;
-    if (v.isOutOfStock) return InvAPColors.kBorderColor;
-    if (v.isExpiringSoon || v.isLowStock) return Colors.orange;
+    if (_stockState == UnitStockState.outOfStock) return InvAPColors.kBorderColor;
+    if (v.isExpiringSoon || _stockState == UnitStockState.lowStock) return Colors.orange;
     return Colors.green;
   }
 
@@ -75,12 +104,12 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
     final v = widget.variants;
     if (v == null) return null;
     if (v.isExpired) return 'Expired';
-    if (v.isOutOfStock) return null; // the count already reads 0
+    if (_stockState == UnitStockState.outOfStock) return null; // the count already reads 0
     if (v.isExpiringSoon) {
       final days = v.expiringDate!.difference(DateTime.now()).inDays;
       return days <= 0 ? 'Expires today' : 'Expires in \${days}d';
     }
-    if (v.isLowStock) return 'Low';
+    if (_stockState == UnitStockState.lowStock) return 'Low';
     return null;
   }
 
@@ -228,9 +257,14 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
                   ),
                   SizedBox(width: 3.w),
                   Text(
-                    // Stock is a whole count of individual items, but the model
-                    // holds it as a double, so plain interpolation printed "164.0".
-                    (widget.variants?.currentStock ?? 0).toStringAsFixed(0),
+                    // The count in the SELECTED unit, not the variant's base-unit pool. Having
+                    // tapped "12-pack", the useful number is 20 crates, not 240 bottles. Base
+                    // units belong at the till in exactly one place — the refusal message, which
+                    // still says "need 12, have 11" and stays that way.
+                    //
+                    // A dash when the pack size cannot say: falling back to the pool would put
+                    // 240 back on the pack card, which is the bug.
+                    _stockInUnits?.toString() ?? '—',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: InvAPColors.kPrimaryColor,
                     ),
