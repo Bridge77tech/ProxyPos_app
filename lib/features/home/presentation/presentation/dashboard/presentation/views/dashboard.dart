@@ -104,16 +104,31 @@ class APDashboardPage extends StatelessWidget {
                         // Connection state, and the queue badge immediately beside it. Placed in
                         // the Cart header because that is where a cashier is looking when a sale
                         // fails to go through.
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              InvAppConstants.kCart,
-                              style: Theme.of(context).textTheme.bodyLarge,
-                            ),
-                            Gap(10.w),
-                            const CartQueueIndicators(),
-                          ],
+                        //
+                        // Expanded, with the label Flexible inside it, is load-bearing rather than
+                        // tidiness. Unconstrained, this group takes its natural width, and at the
+                        // 800x600 the app opens at that is wider than the column — which puts the
+                        // badge outside its parent's bounds. It still PAINTS there, so the badge
+                        // looks entirely normal, but hit testing stops at the parent and the tap
+                        // never reaches it: a badge plainly on screen that does nothing when
+                        // tapped. Constrained, the label gives up its width first and the badge
+                        // stays inside and tappable at any window size.
+                        Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  InvAppConstants.kCart,
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Gap(10.w),
+                              const CartQueueIndicators(),
+                            ],
+                          ),
                         ),
                         InkWell(
                           onTap: () =>
