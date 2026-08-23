@@ -13,6 +13,7 @@ import '../bloc/cart/cart_event.dart';
 import '../bloc/cart/cart_state.dart';
 import '../widgets/cart_item_middle_area.dart';
 import '../widgets/left_side_dashboard_view_card.dart';
+import '../widgets/queue/cart_queue_indicators.dart';
 
 class APDashboardPage extends StatelessWidget {
   const APDashboardPage({super.key});
@@ -100,9 +101,19 @@ class APDashboardPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Text(
-                          InvAppConstants.kCart,
-                          style: Theme.of(context).textTheme.bodyLarge,
+                        // Connection state, and the queue badge immediately beside it. Placed in
+                        // the Cart header because that is where a cashier is looking when a sale
+                        // fails to go through.
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              InvAppConstants.kCart,
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            Gap(10.w),
+                            const CartQueueIndicators(),
+                          ],
                         ),
                         InkWell(
                           onTap: () =>

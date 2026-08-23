@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import '../../../data/model/product_model.dart';
 import '../../../data/model/variant.dart';
 import '../../../data/model/unit_model.dart';
+import '../../../data/data_source/local/pending_sales_storage.dart';
 
 enum PaymentMethod { mobileMoney, cash }
 
@@ -53,6 +54,13 @@ class CartState extends Equatable {
   /// Set when a barcode scan fails to find a product — shown as a snackbar.
   final String? barcodeError;
 
+  /// Sales waiting to reach the server, read from disk.
+  ///
+  /// Drives the queue badge on the Cart section. Non-nullable and defaulting to empty so that a
+  /// drained queue can actually clear the badge — with a nullable field, copyWith cannot tell
+  /// "leave this alone" from "it is now empty", and the badge would stick at its last count.
+  final List<PendingSale> pendingSales;
+
   const CartState({
     this.items = const [],
     this.currentProduct,
@@ -66,6 +74,7 @@ class CartState extends Equatable {
     this.submitting = false,
     this.pendingBarcodeProduct,
     this.barcodeError,
+    this.pendingSales = const [],
   });
 
   double get subTotal => items.fold(0.0, (sum, it) => sum + (it.unit.sellingPrice * it.quantity));
@@ -103,6 +112,7 @@ class CartState extends Equatable {
     bool clearPendingBarcodeProduct = false,
     String? barcodeError,
     bool clearBarcodeError = false,
+    List<PendingSale>? pendingSales,
   }) {
     return CartState(
       items: items ?? this.items,
@@ -117,9 +127,19 @@ class CartState extends Equatable {
       submitting: submitting ?? this.submitting,
       pendingBarcodeProduct: clearPendingBarcodeProduct ? null : (pendingBarcodeProduct ?? this.pendingBarcodeProduct),
       barcodeError: clearBarcodeError ? null : (barcodeError ?? this.barcodeError),
+      pendingSales: pendingSales ?? this.pendingSales,
     );
   }
 
+  /// The queue reduced to what the badge actually renders from.
+  ///
+  /// Compared as a signature rather than as the list itself: every drain pass re-reads from disk
+  /// and builds fresh PendingSale objects, so comparing instances would report a change on every
+  /// pass and rebuild the till for nothing. This changes only when the count, the identities, or a
+  /// held-up flag really change.
+  String get _queueSignature =>
+      pendingSales.map((e) => '${e.queueId}:${e.attempts}:${e.heldUp}').join('|');
+
   @override
-  List<Object?> get props => [items, currentProduct, selectedVariant, selectedUnit, selectedQuantity, error, successMessage, paymentMethod, amountReceived, submitting, pendingBarcodeProduct, barcodeError];
+  List<Object?> get props => [items, currentProduct, selectedVariant, selectedUnit, selectedQuantity, error, successMessage, paymentMethod, amountReceived, submitting, pendingBarcodeProduct, barcodeError, _queueSignature];
 }

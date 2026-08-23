@@ -16,6 +16,7 @@ import '../../../data/model/product_model.dart';
 import '../../../data/model/variant.dart';
 import '../../../data/model/unit_model.dart';
 import '../../../data/repos/product_repo_impl.dart';
+import '../../../domain/services/pending_sales_drainer.dart';
 import '../../../domain/usecases/create_sale_use_case.dart';
 import 'cart_event.dart';
 import 'cart_state.dart' show CartState, CartItem, PaymentMethodWire;
@@ -74,6 +75,10 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<CartSyncPending>(_onSyncPending);
     on<CartSelectPayment>(_onSelectPayment);
     on<CartSetAmountReceived>(_onSetAmountReceived);
+    on<CartRefreshQueue>(_onRefreshQueue);
+    on<CartRetryPending>(_onRetryPending);
+    on<CartDiscardPending>(_onDiscardPending);
+    on<CartReenterPending>(_onReenterPending);
 
     // Auto-sync pending sales whenever the device comes back online.
     _connectivitySub = ConnectivityService.instance.onConnectivityChanged
@@ -472,7 +477,22 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     } else {
       _log.w('Offline: queueing order payload for later sync');
       NavigationHelper.pop();
-      await _pendingStorage.enqueue(payload);
+      // The total and the line descriptions are captured here because this is the only moment they
+      // exist: the payload carries ids and quantities, and the cart that knew the names and prices
+      // is cleared on the next line. The queue UI needs them to show what is stuck, and the discard
+      // confirmation needs the total so nobody clears a real sale to silence a badge.
+      await _pendingStorage.enqueue(
+        payload,
+        total: state.total,
+        lines: state.items
+            .map((it) => PendingSaleLine(
+                  productName: it.productName,
+                  unitType: it.unit.type,
+                  quantity: it.quantity,
+                  unitPrice: it.unit.sellingPrice,
+                ))
+            .toList(),
+      );
       amountController.clear();
       emit(state.copyWith(
         items: [],
@@ -495,29 +515,78 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       return;
     }
 
-    final queue = await _pendingStorage.getQueue();
-    if (queue.isEmpty) {
-      _log.i('No pending sales to sync');
-      return;
+    // The loop itself lives in PendingSalesDrainer, which takes its storage and its submit
+    // function as arguments — so the retry cap, the held-up rule and the ordering guarantee are
+    // testable without Hive, a network, or the connectivity singleton.
+    final drainer = PendingSalesDrainer(
+      storage: _pendingStorage,
+      // Marked as background so an expired token reports a failure instead of
+      // logging the clerk out — see BackgroundSyncScope.
+      submit: (payload) => BackgroundSyncScope.run(() => _createSale.call(payload)),
+      log: _log.i,
+    );
+
+    final report = await drainer.drain();
+    if (report.submitted > 0 || report.heldUp > 0) {
+      _log.i('Drain pass: ${report.submitted} sent, ${report.heldUp} held up, '
+          '${report.skipped} already held up');
     }
 
-    _log.i('Syncing ${queue.length} pending sales');
-    // Always remove at index 0: after each successful removal the next
-    // pending item slides into position 0, so the index never drifts.
-    for (int i = 0; i < queue.length; i++) {
-      final payload = queue[i];
-      try {
-        // Marked as background so an expired token reports a failure instead of
-        // logging the clerk out — see BackgroundSyncScope.
-        await BackgroundSyncScope.run(() => _createSale.call(payload));
-        await _pendingStorage.removeAt(0);
-        _log.i('Synced pending sale ${i + 1}/${queue.length}');
-      } catch (e, st) {
-        _log.e('Failed to sync queued sale at index $i', error: e, stackTrace: st);
-        // Stop on first failure to preserve ordering; next reconnect will retry
-        break;
-      }
-    }
+    // Re-read so anything watching the badge sees the new count and any held-up flags.
+    await _emitQueueState(emit);
+  }
+
+  /// Publishes the queue onto cart state, which is what the till's queue badge renders from.
+  Future<void> _emitQueueState(Emitter<CartState> emit) async {
+    final queue = await _pendingStorage.getQueue();
+    emit(state.copyWith(
+      pendingSales: queue,
+      // copyWith cannot distinguish "no change" from "clear" for a nullable, and an empty queue
+      // must be able to clear the badge, so the list is always non-null.
+    ));
+  }
+
+  Future<void> _onRefreshQueue(CartRefreshQueue event, Emitter<CartState> emit) =>
+      _emitQueueState(emit);
+
+  /// Retry one held-up sale, on the cashier's request.
+  ///
+  /// Safe for anyone to press: the payload keeps the idempotency key it was created with, so the
+  /// worst case is the server returning the sale it already recorded. See PendingSalesDrainer.
+  Future<void> _onRetryPending(CartRetryPending event, Emitter<CartState> emit) async {
+    await _pendingStorage.resetAttempts(event.queueId);
+    await _emitQueueState(emit);
+    add(const CartSyncPending());
+  }
+
+  /// Remove a queued sale without sending it. Owner-only — enforced at the UI.
+  Future<void> _onDiscardPending(CartDiscardPending event, Emitter<CartState> emit) async {
+    _log.w('Discarding queued sale ${event.queueId} — it will never be sent');
+    await _pendingStorage.removeByQueueId(event.queueId);
+    await _emitQueueState(emit);
+  }
+
+  /// Drop the queued sale so it can be rung again by hand. Owner-only.
+  ///
+  /// The re-rung sale gets a NEW idempotency key, which is exactly why this is not a cashier's
+  /// decision: if the original later reaches the server after all, the shop has two sales for one
+  /// basket — stock deducted twice and revenue overstated. The owner is the one who reads the
+  /// reports that would be wrong.
+  Future<void> _onReenterPending(CartReenterPending event, Emitter<CartState> emit) async {
+    final queue = await _pendingStorage.getQueue();
+    final sale = queue.where((e) => e.queueId == event.queueId).firstOrNull;
+
+    _log.w('Re-entering queued sale ${event.queueId} — removed from the queue for manual re-entry');
+    await _pendingStorage.removeByQueueId(event.queueId);
+    await _emitQueueState(emit);
+
+    emit(state.copyWith(
+      successMessage: sale == null
+          ? 'Removed from the queue. Please ring the sale again.'
+          : 'Removed from the queue. Please ring the sale again '
+              '(GHC ${sale.total.toStringAsFixed(2)}, ${sale.lines.length} item'
+              '${sale.lines.length == 1 ? '' : 's'}).',
+    ));
   }
 
   void _onRemoveItem(CartRemoveItem event, Emitter<CartState> emit) {
