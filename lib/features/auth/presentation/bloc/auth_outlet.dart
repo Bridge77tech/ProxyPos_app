@@ -21,6 +21,26 @@ import 'package:inventory_app_pos/features/home/presentation/presentation/dashbo
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/domain/repo/top_product_repo.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/data/data_source/local/all_product_storage.dart';
 
+/// Refreshes the whole catalogue every 30 minutes.
+///
+/// Built once at file scope and started by [SaveUserInfoUseCase] after login,
+/// not here. [authOutlet] is a getter wired straight into the login route's
+/// builder, so it re-runs on every rebuild of that route — starting the service
+/// inside it built a fresh 30-minute timer each time, none of them ever
+/// disposed, and fired an immediate `pos/products` request from the *login
+/// screen*, where by definition there is no token yet. AuthInterceptor answers a
+/// tokenless call on a protected endpoint by clearing the session and pushing
+/// the user to login, so the login page was knocking itself over.
+final AllProductsSyncService _allProductsSync = AllProductsSyncService(
+  GetAndCacheAllProductsUseCase(
+    _AuthSessionReaderAdapter(AuthSessionStorageImpl.instance),
+    ProductRepoImpl.instance as ProductRepository<ProductModel>,
+    _AllProductsCacheAdapter(),
+  ),
+  interval: const Duration(minutes: 30),
+  onError: (e, st) => debugPrint('[AllProductsSync] error: $e'),
+);
+
 BlocProvider get authOutlet {
   final LoginAPIService apiService = LoginAPIService(
     APIService().dioInstance,
@@ -45,28 +65,11 @@ BlocProvider get authOutlet {
     topCache,
   );
 
-  final allProductsCache = _AllProductsCacheAdapter();
-  final getAllProduct = GetAndCacheAllProductsUseCase(
-    tokenReader,
-    productRepo,
-    allProductsCache,
-  );
-
-  // Create a sync service that refreshes all products every 30 minutes
-  final allProductsSync = AllProductsSyncService(
-    getAllProduct,
-    interval: const Duration(minutes: 30),
-    onError: (e, st) => debugPrint('[AllProductsSync] error: $e'),
-  );
-  if (!allProductsSync.isRunning) {
-    allProductsSync.start(runImmediately: true);
-  }
-
   final SaveUserInfoUseCase saveUserInfo = SaveUserInfoUseCase(
     saveUserToken,
     saveCashierInfo,
     getAndCacheTopProducts,
-    getAllProduct,
+    _allProductsSync,
   );
 
   return BlocProvider<AuthBloc>(

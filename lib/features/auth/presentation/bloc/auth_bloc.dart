@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc/bloc.dart';
 import 'package:fasaha_utils/utils_export/fasaha_haus_state_status.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
@@ -110,7 +112,8 @@ class AuthBloc<T> extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     try {
-      // Prefetch top products and cache to Hive to speed up initial dashboard
+      // Local writes only — the till reaches the dashboard without waiting on
+      // the network. The product caches are warmed afterwards, off this path.
       await _saveUserInfoUseCase(event.userInfo);
       emit(state.copyWith(stateStatus: LoginSuccess()));
       NavigationHelper.popAllAndPushNamed(
@@ -123,21 +126,42 @@ class AuthBloc<T> extends Bloc<AuthEvent, AuthState> {
           ctx.loaderOverlay.hide();
         }
       });
+      // Deliberately not awaited: the clerk is already on the dashboard, which
+      // renders from Hive and fetches on a miss. warmProductCaches swallows its
+      // own failures, so nothing here can strand the login.
+      unawaited(_saveUserInfoUseCase.warmProductCaches());
     } on LocalStorageException catch (e) {
       _log.e('Failed to save user info: ${e.message}');
-      emit(
-        state.copyWith(
-          stateStatus: ErrorStatus(
-            e.message ?? "Unable to login user at this time.",
-          ),
-        ),
-      );
+      _failLogin(emit, e.message);
+    } catch (e, st) {
+      // Anything at all, not just LocalStorageException. The loader is held up
+      // deliberately across LoginSuccess and is only taken down after the
+      // navigation above, so an escaping error used to leave the till spinning
+      // on a login that had in fact succeeded — the token was already written,
+      // which is why a restart went straight in.
+      _log.e('Unexpected failure completing login', error: e, stackTrace: st);
+      _failLogin(emit, null);
     }
+  }
+
+  /// Emits the error status the login form listens for, which is also what
+  /// takes the loader overlay down.
+  void _failLogin(Emitter<AuthState> emit, String? message) {
+    emit(
+      state.copyWith(
+        stateStatus: ErrorStatus(
+          message ?? "Unable to login user at this time.",
+        ),
+      ),
+    );
   }
 
   Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthState> emit) async {
     try {
       _log.i('Clearing session storages on logout (pending sales preserved)...');
+      // Stop the timer before the token goes, so no tick fires against a
+      // session that is being torn down.
+      _saveUserInfoUseCase.stopProductSync();
       await Future.wait([
         AuthSessionStorageImpl.instance.clearStorage(),
         CashierInfoStorageImpl.instance.clearStorage(),
