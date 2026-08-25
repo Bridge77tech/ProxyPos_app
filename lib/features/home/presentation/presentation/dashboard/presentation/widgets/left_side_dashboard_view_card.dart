@@ -177,6 +177,10 @@ class LeftSideDashboardViewCard extends StatelessWidget {
 
                             if (state.error != null) {
                               return APErrorWidget(
+                                title: 'Products unavailable',
+                                subtitle:
+                                    'We could not load your products. Check your '
+                                    'connection, then try again.',
                                 onRetry: () => context
                                     .read<DashboardBloc>()
                                     .add(const LoadTopProducts()),

@@ -6,9 +6,13 @@ import 'package:inventory_app_pos/core/app_constants/ap_colors.dart';
 class APErrorWidget extends StatelessWidget {
   const APErrorWidget({
     super.key,
-    this.title = 'ERROR 404!',
+    // Defaults describe a failed load, not a missing route. This widget is
+    // shown when a request fails, and "ERROR 404! The page you are looking for
+    // does not exist" sent people hunting for a broken link when the real
+    // cause was a product fetch that did not come back.
+    this.title = 'Something went wrong',
     this.subtitle =
-        'The page you are looking for does not exist or may be under construction',
+        'We could not load this just now. Check your connection and try again.',
     this.onRetry,
   });
 
