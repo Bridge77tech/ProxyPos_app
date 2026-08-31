@@ -3,13 +3,22 @@
 ; Non-commercial use only
 
 #define MyAppName "inventory_pos"
-#define MyAppVersion "1.0"
+; Passed in by build_installer.ps1, which reads it from pubspec.yaml. The fallback exists only so
+; the script still compiles when opened by hand in the Inno Setup IDE.
+;
+; It was hardcoded to "1.0", which meant every build ever produced announced the same version — so
+; a till could not be told whether it had the new one, which is the entire point of shipping it.
+#ifndef MyAppVersion
+  #define MyAppVersion "0.0.0-local"
+#endif
 #define MyAppPublisher "Fasaha Haus Ltd."
 #define MyAppURL "https://www.fasahahaus.com/"
 #define MyAppExeName "inventory_app_pos.exe"
 #define MyAppAssocName MyAppName + ""
 #define MyAppAssocExt ".myp"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
+; Where `flutter build windows --release` puts its output, relative to this script.
+#define BuildDir SourcePath + "..\\build\\windows\\x64\\runner\\Release"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -36,9 +45,13 @@ ChangesAssociations=yes
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
-OutputDir=C:\Users\f.dankwah\Documents\inventory_app_pos\installers
-OutputBaseFilename=inventory_pos
-SetupIconFile=C:\Users\f.dankwah\Documents\inventory_app_pos\windows\runner\resources\app_icon.ico
+; Relative to this file. Every path here pointed at C:\Users\f.dankwah\..., so the installer
+; could only be built on one machine with the project at one exact location.
+OutputDir=.
+; Versioned, so two installers sitting in a folder can be told apart — which is the difference
+; between "this till has the fix" and "this till has an installer".
+OutputBaseFilename=inventory_pos-{#MyAppVersion}
+SetupIconFile={#SourcePath}..\windows\runner\resources\app_icon.ico
 SolidCompression=yes
 WizardStyle=modern dynamic
 
@@ -49,13 +62,13 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\connectivity_plus_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\flutter_secure_storage_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\install_firewall_rules.ps1"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\nb_utils_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "C:\Users\f.dankwah\Documents\inventory_app_pos\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
+; One recursive line rather than a hand-kept list of DLLs.
+;
+; The list named five plugin DLLs explicitly, so adding a plugin shipped an installer missing its
+; DLL — an app that installs cleanly and then fails at startup on a machine nobody is watching.
+; Flutter puts everything the app needs in the Release folder, so ship the Release folder.
+Source: "{#BuildDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
