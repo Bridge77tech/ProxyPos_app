@@ -6,11 +6,42 @@ import 'package:inventory_app_pos/features/home/presentation/presentation/dashbo
 
 import '../../../../../../../auth/data/data_source/local/auth_session_storage_impl.dart';
 import '../../../data/data_source/local/top_products_storage.dart';
+import '../../../../../../../../core/exceptions/get_product_expection.dart';
 import '../../../data/model/product_model.dart';
 import '../../../data/model/unit_model.dart';
 import '../../../data/model/variant.dart';
 import 'dashboard_event.dart';
 import 'dashboard_state.dart';
+
+
+/// What to tell somebody standing at the till.
+///
+/// The dashboard used to show "check your connection" for every failure — a 500, an expired
+/// session, a response it could not parse — which sends a shopkeeper to look at their router while
+/// the fault is somewhere they cannot see. The cause is classified in the repository, where the
+/// DioException still exists, so this only has to phrase it.
+String describeProductFailure(Object error) {
+  if (error is! GetProductException) {
+    return 'The product list could not be loaded.';
+  }
+
+  switch (error.kind) {
+    case ProductFetchFailure.offline:
+      return 'The till cannot reach the server right now. Selling still works from the saved list.';
+    case ProductFetchFailure.unauthorized:
+      return 'This session has expired. Sign in again to reload the products.';
+    case ProductFetchFailure.server:
+      return 'The server could not answer just now. This is not a problem with this till.';
+    case ProductFetchFailure.malformed:
+      // Deliberately not phrased as a connection problem: the response arrived.
+      return 'The product list arrived in a form this till could not read. '
+          'Please report this — retrying will not help.';
+    case ProductFetchFailure.unknown:
+      return error.message?.isNotEmpty == true
+          ? error.message!
+          : 'The product list could not be loaded.';
+  }
+}
 
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   final _log = getLogger('DashboardBloc');
@@ -68,7 +99,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         }
       } catch (e, st) {
         _log.e('Network fetch also failed', error: e, stackTrace: st);
-        emit(state.copyWith(loading: false, error: e.toString()));
+        emit(state.copyWith(loading: false, error: describeProductFailure(e)));
         return;
       }
     }

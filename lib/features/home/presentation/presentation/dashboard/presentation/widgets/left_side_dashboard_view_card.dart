@@ -176,11 +176,13 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                             }
 
                             if (state.error != null) {
+                              // The reason the bloc worked out, not a guess made here. The
+                              // previous static line said "check your connection" whatever had
+                              // happened, which is the same misdirection as the ERROR 404 it
+                              // replaced — just better written.
                               return APErrorWidget(
                                 title: 'Products unavailable',
-                                subtitle:
-                                    'We could not load your products. Check your '
-                                    'connection, then try again.',
+                                subtitle: state.error!,
                                 onRetry: () => context
                                     .read<DashboardBloc>()
                                     .add(const LoadTopProducts()),

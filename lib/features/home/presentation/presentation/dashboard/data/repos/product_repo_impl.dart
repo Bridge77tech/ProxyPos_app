@@ -9,6 +9,30 @@ import 'package:logger/logger.dart';
 
 import '../../../../../../../network/exceptions/bad_request_exception.dart';
 
+
+/// Classify a Dio failure while the exception is still in hand.
+///
+/// Done here rather than in the UI because this is the last place the type exists: everything
+/// above sees only a message, and deciding "was this the network?" from a string is a guess.
+ProductFetchFailure _classify(DioException e) {
+  final status = e.response?.statusCode;
+  if (status == 401 || status == 403) return ProductFetchFailure.unauthorized;
+  if (status != null && status >= 500) return ProductFetchFailure.server;
+
+  switch (e.type) {
+    case DioExceptionType.connectionError:
+    case DioExceptionType.connectionTimeout:
+    case DioExceptionType.sendTimeout:
+    case DioExceptionType.receiveTimeout:
+      return ProductFetchFailure.offline;
+    case DioExceptionType.cancel:
+      // What ConnectivityInterceptor and the auth interceptor use to refuse a request outright.
+      return ProductFetchFailure.offline;
+    default:
+      return status != null ? ProductFetchFailure.server : ProductFetchFailure.unknown;
+  }
+}
+
 class ProductRepoImpl implements ProductRepository<ProductModel> {
   final Logger _log;
   final ProductAPIService _topProductAPIService;
@@ -38,10 +62,14 @@ class ProductRepoImpl implements ProductRepository<ProductModel> {
         message = 'Request failed';
       }
       _log.e('Top products failed (status: $status, body: $data) -> $message');
-      throw GetProductException(message);
-    } catch (e) {
-      _log.e('Top products failed (unexpected): $e');
+      throw GetProductException(message, kind: _classify(e));
+    } on GetProductException {
       rethrow;
+    } catch (e) {
+      // A parse failure lands here: the response arrived and could not be read, which is not a
+      // network problem and must not be reported as one.
+      _log.e('Top products failed (unexpected): $e');
+      throw GetProductException(e.toString(), kind: ProductFetchFailure.malformed);
     }
   }
 
@@ -67,10 +95,12 @@ class ProductRepoImpl implements ProductRepository<ProductModel> {
         message = e.message ?? 'Request failed';
       }
       _log.e('All products failed (status: $status, body: $data) -> $message');
-      throw GetProductException(message);
+      throw GetProductException(message, kind: _classify(e));
+    } on GetProductException {
+      rethrow;
     } catch (e) {
       _log.e('All products failed (unexpected): $e');
-      rethrow;
+      throw GetProductException(e.toString(), kind: ProductFetchFailure.malformed);
     }
   }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
+import 'package:inventory_app_pos/network/constants/api_string_const.dart';
 import 'package:logger/logger.dart';
 
 /// Centralized network connectivity service for foreground operations.
@@ -23,9 +24,32 @@ class ConnectivityService {
 
   bool _isOnline = false;
 
+  /// The question this service actually needs answered.
+  ///
+  /// The package's defaults probe one.one.one.one, icanhazip.com, jsonplaceholder.typicode.com and
+  /// pokeapi.co. None of them is this app's backend, so on a network that reaches ProxyPos but not
+  /// those hosts — a filtered shop connection, a captive portal, an ISP blocking them — the till
+  /// declares itself offline and ConnectivityInterceptor refuses every request. The shopkeeper
+  /// sees "check your connection" while the connection is fine.
+  ///
+  /// So the backend's own /health goes in the list, first. Checks are non-strict, meaning any one
+  /// success counts as online: if the API answers, the app is online by the only definition that
+  /// matters to it. The defaults stay as a fallback, which keeps the reverse case honest — when
+  /// the backend is down but the internet is up, the app stays "online" and the request fails with
+  /// the server's real error rather than being refused as offline.
+  static InternetConnection _checker() => InternetConnection.createInstance(
+        customCheckOptions: [
+          InternetCheckOption(
+            uri: Uri.parse('${APIStringConst.apAPIBaseURL.replaceFirst(RegExp(r'/api/v1/?$'), '')}/health'),
+            timeout: const Duration(seconds: 5),
+          ),
+        ],
+        useDefaultOptions: true,
+      );
+
   /// Private constructor for singleton
   ConnectivityService._internal()
-      : _connectionChecker = InternetConnection(),
+      : _connectionChecker = _checker(),
         _log = getLogger('ConnectivityService');
 
   /// Constructor for testing with injectable connectivity
