@@ -57,105 +57,140 @@ class InsideOverlay extends StatelessWidget {
                         return Image.network(
                           imgPath,
                           fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) =>
-                              Image.asset(Assets.imagesItem, fit: BoxFit.contain),
+                          errorBuilder: (_, _, _) => Image.asset(
+                            Assets.imagesItem,
+                            fit: BoxFit.contain,
+                          ),
                         );
                       }
-                      return Image.asset(Assets.imagesItem, fit: BoxFit.contain);
+                      return Image.asset(
+                        Assets.imagesItem,
+                        fit: BoxFit.contain,
+                      );
                     }(),
                   ),
-                  Text("${products.name}", style: Theme.of(context).textTheme.bodySmall,)
+                  Text(
+                    "${products.name}",
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ),
             ),
             Gap(5.h),
             //
-            Text('Select from Item variant, Type with Size', style: Theme.of(context).textTheme.bodySmall!.copyWith(
-              color: InvAPColors.kBlackColor,
-              fontWeight: FontWeight.w500,
-            ),),
-            Container(
-              padding: EdgeInsets.symmetric(
-                vertical: 10.h,
-                horizontal: 10.w,
+            Text(
+              'Select from Item variant, Type with Size',
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                color: InvAPColors.kBlackColor,
+                fontWeight: FontWeight.w500,
               ),
-              decoration: BoxDecoration(
+            ),
+            Container(
+              padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 10.w),
+              // No decoration colour here. A BoxDecoration paints an opaque box ABOVE the
+              // Material, and a ListTile's ink splash paints on the Material below it — so the
+              // splash was drawn and then covered, which is what "background color or ink splashes
+              // may be invisible" is telling you. The white surface is a Material now, so the tiles
+              // have something to splash on.
+              child: Material(
                 color: InvAPColors.kWhiteColor,
                 borderRadius: BorderRadius.circular(5.r),
-              ),
-              child: BlocBuilder<CartBloc, CartState>(
-                builder: (context, cartState) {
-                  final variants = products.variants ?? const <Variants>[];
-                  // Flatten units from all variants
-                  final units = <({Variants variant, UnitModel unit})>[];
-                  for (final v in variants) {
-                    final vUnits = v.units ?? const <UnitModel>[];
-                    for (final u in vUnits) {
-                      units.add((variant: v, unit: u));
+                // The list's own corners have to be cut to match, or a tile paints over them.
+                clipBehavior: Clip.antiAlias,
+                child: BlocBuilder<CartBloc, CartState>(
+                  builder: (context, cartState) {
+                    final variants = products.variants ?? const <Variants>[];
+                    // Flatten units from all variants
+                    final units = <({Variants variant, UnitModel unit})>[];
+                    for (final v in variants) {
+                      final vUnits = v.units ?? const <UnitModel>[];
+                      for (final u in vUnits) {
+                        units.add((variant: v, unit: u));
+                      }
                     }
-                  }
-                  return ListView.separated(
-                    shrinkWrap: true,
-                    primary: false,
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: EdgeInsets.zero,
-                    itemCount: units.length,
-                    separatorBuilder: (_, _) => Divider(
-                      height: 1,
-                      color: InvAPColors.kBorderColor.withValues(alpha: 0.5),
-                    ),
-                    itemBuilder: (context, index) {
-                      final entry = units[index];
-                      final v = entry.variant;
-                      final u = entry.unit;
-                      final selected = cartState.selectedUnit == u;
-                      return ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        title: Row(
-                          spacing: 10.w,
-                          children: [
-                            Text("${v.name},", style: Theme.of(context).textTheme.bodyMedium,),
-                           Text(u.type, style: Theme.of(context).textTheme.bodySmall),
-                          ],
-                        ),
-                        subtitle: Row(
-                          spacing: 10.w,
-                          children: [
-                            Text(
-                              v.size ?? '',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                            Text(
-                              'GHS ${u.sellingPrice}',
-                              style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 16,
+                    return ListView.separated(
+                      shrinkWrap: true,
+                      primary: false,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      itemCount: units.length,
+                      separatorBuilder: (_, _) => Divider(
+                        height: 1,
+                        color: InvAPColors.kBorderColor.withValues(alpha: 0.5),
+                      ),
+                      itemBuilder: (context, index) {
+                        final entry = units[index];
+                        final v = entry.variant;
+                        final u = entry.unit;
+                        final selected = cartState.selectedUnit == u;
+                        return ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: Row(
+                            spacing: 10.w,
+                            children: [
+                              Text(
+                                "${v.name},",
+                                style: Theme.of(context).textTheme.bodyMedium,
                               ),
-                            ),
-                          ],
-                        ),
-                        trailing: Icon(
-                          selected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                          size: 18,
-                          color: selected ? InvAPColors.kPrimaryColor : InvAPColors.kSecondaryTextColor,
-                        ),
-                        onTap: () {
-                          context.read<CartBloc>().add(CartSelectUnit(product: products, variant: v, unit: u));
-                        },
-                      );
-                    },
-                  );
-                },
+                              Text(
+                                u.type,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                          subtitle: Row(
+                            spacing: 10.w,
+                            children: [
+                              Text(
+                                v.size ?? '',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              Text(
+                                'GHS ${u.sellingPrice}',
+                                style: Theme.of(context).textTheme.bodySmall!
+                                    .copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          trailing: Icon(
+                            selected
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_unchecked,
+                            size: 18,
+                            color: selected
+                                ? InvAPColors.kPrimaryColor
+                                : InvAPColors.kSecondaryTextColor,
+                          ),
+                          onTap: () {
+                            context.read<CartBloc>().add(
+                              CartSelectUnit(
+                                product: products,
+                                variant: v,
+                                unit: u,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ),
 
             // Get the purchase Quantity here.
             Gap(5.h),
-            Text('Enter Quantity', style: Theme.of(context).textTheme.bodySmall!.copyWith(
-              color: InvAPColors.kBlackColor,
-              fontWeight: FontWeight.w500,
-            ),),
+            Text(
+              'Enter Quantity',
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                color: InvAPColors.kBlackColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
             BlocBuilder<CartBloc, CartState>(
               builder: (context, cartState) {
                 return Container(

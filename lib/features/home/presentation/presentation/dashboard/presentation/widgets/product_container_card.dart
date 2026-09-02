@@ -51,9 +51,9 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
   /// Uses the shared mirror in core/utils/unit_stock.dart rather than dividing here, so this card,
   /// the quantity clamp below and the portal cannot drift on the rounding.
   int? get _stockInUnits => unitsAvailable(
-        widget.unit?.individualPieces,
-        widget.variants?.currentStock,
-      );
+    widget.unit?.individualPieces,
+    widget.variants?.currentStock,
+  );
 
   /// This unit's own state, falling back to the variant's when the unit cannot be expressed.
   ///
@@ -94,8 +94,12 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
     final v = widget.variants;
     if (v == null) return InvAPColors.kBorderColor;
     if (v.isExpired) return Colors.red;
-    if (_stockState == UnitStockState.outOfStock) return InvAPColors.kBorderColor;
-    if (v.isExpiringSoon || _stockState == UnitStockState.lowStock) return Colors.orange;
+    if (_stockState == UnitStockState.outOfStock) {
+      return InvAPColors.kBorderColor;
+    }
+    if (v.isExpiringSoon || _stockState == UnitStockState.lowStock) {
+      return Colors.orange;
+    }
     return Colors.green;
   }
 
@@ -104,7 +108,9 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
     final v = widget.variants;
     if (v == null) return null;
     if (v.isExpired) return 'Expired';
-    if (_stockState == UnitStockState.outOfStock) return null; // the count already reads 0
+    if (_stockState == UnitStockState.outOfStock) {
+      return null; // the count already reads 0
+    }
     if (v.isExpiringSoon) {
       final days = v.expiringDate!.difference(DateTime.now()).inDays;
       return days <= 0 ? 'Expires today' : 'Expires in \${days}d';
@@ -234,55 +240,78 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'GH₵${price.toStringAsFixed(2)}',
-                style: theme.textTheme.bodySmall!.copyWith(
-                  fontWeight: FontWeight.bold,
-                  // Swapped with the unit/size line above, which now takes the 13
-                  // this had.
-                  fontSize: 10.sp,
+              // Both sides are Flexible, and that is what stops this row crashing.
+              //
+              // A Row hands its non-flex children UNBOUNDED main-axis constraints. The stock
+              // indicator on the right is itself a Row, which defaults to mainAxisSize.max — "take
+              // all the width available" — and all of infinity has no answer. It laid out with no
+              // size, hit testing on a sizeless render box throws, and the failure cascaded into
+              // mouse_tracker: clicks stopped working across the entire till, not just on this
+              // card. It surfaced when the grid relaid out after something was added to the cart,
+              // because the width available to a card changes then.
+              //
+              // Flexible gives each side a bounded maximum, so mainAxisSize.min below can size to
+              // content and the ellipsis on both texts has something to ellipsise within. The
+              // declared `overflow: ellipsis` on the price never did anything before: under
+              // unbounded width there is no overflow to detect.
+              Flexible(
+                child: Text(
+                  'GH₵${price.toStringAsFixed(2)}',
+                  style: theme.textTheme.bodySmall!.copyWith(
+                    fontWeight: FontWeight.bold,
+                    // Swapped with the unit/size line above, which now takes the 13
+                    // this had.
+                    fontSize: 10.sp,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-              Row(
-                children: [
-                  Container(
-                    width: 4.w,
-                    height: 4.w,
-                    decoration: BoxDecoration(
-                      color: _stockDotColour,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  SizedBox(width: 3.w),
-                  Text(
-                    // The count in the SELECTED unit, not the variant's base-unit pool. Having
-                    // tapped "12-pack", the useful number is 20 crates, not 240 bottles. Base
-                    // units belong at the till in exactly one place — the refusal message, which
-                    // still says "need 12, have 11" and stays that way.
-                    //
-                    // A dash when the pack size cannot say: falling back to the pool would put
-                    // 240 back on the pack card, which is the bug.
-                    _stockInUnits?.toString() ?? '—',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: InvAPColors.kPrimaryColor,
-                    ),
-                  ),
-                  // Only rendered when there is something to say. Most stock is neither low nor
-                  // perishable, and a card carrying an empty badge reads as a rendering fault.
-                  if (_stockNote != null) ...[
-                    SizedBox(width: 3.w),
-                    Flexible(
-                      child: Text(
-                        _stockNote!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(color: _stockDotColour),
+              Flexible(
+                child: Row(
+                  // Sizes to its contents within the space Flexible allows, so spaceBetween still
+                  // pushes it to the right edge rather than it swallowing the row.
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 4.w,
+                      height: 4.w,
+                      decoration: BoxDecoration(
+                        color: _stockDotColour,
+                        shape: BoxShape.circle,
                       ),
                     ),
+                    SizedBox(width: 3.w),
+                    Text(
+                      // The count in the SELECTED unit, not the variant's base-unit pool. Having
+                      // tapped "12-pack", the useful number is 20 crates, not 240 bottles. Base
+                      // units belong at the till in exactly one place — the refusal message, which
+                      // still says "need 12, have 11" and stays that way.
+                      //
+                      // A dash when the pack size cannot say: falling back to the pool would put
+                      // 240 back on the pack card, which is the bug.
+                      _stockInUnits?.toString() ?? '—',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: InvAPColors.kPrimaryColor,
+                      ),
+                    ),
+                    // Only rendered when there is something to say. Most stock is neither low nor
+                    // perishable, and a card carrying an empty badge reads as a rendering fault.
+                    if (_stockNote != null) ...[
+                      SizedBox(width: 3.w),
+                      Flexible(
+                        child: Text(
+                          _stockNote!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: _stockDotColour,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ],
           ),

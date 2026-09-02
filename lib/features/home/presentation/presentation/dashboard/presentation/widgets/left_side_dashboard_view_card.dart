@@ -237,7 +237,19 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                                 // stepper has half a rem of padding top and bottom. A tile that
                                 // does not grow with them overflows, and Flutter paints the
                                 // overflow stripes.
-                                childAspectRatio: 0.78,
+                                //
+                                // 0.62, measured rather than guessed. At the 800x600 the till
+                                // opens at, 150.w is a 117pt tile and the card's natural height is
+                                // 172.7 — so 0.78 gave it 150 and it overflowed by 23 every time,
+                                // on every tile. The stock indicator did not cause that; it was
+                                // hidden behind the crash in the price row, which stopped layout
+                                // before it got this far.
+                                //
+                                // 117/0.62 is 188, leaving about 16pt of headroom. Erring tall is
+                                // the safe direction: a tile with slack looks the same, and one
+                                // that is short paints stripes and pushes its buttons outside the
+                                // parent's bounds, where taps do not reach them.
+                                childAspectRatio: 0.62,
                               ),
                               itemBuilder: (context, i) {
                                 final entry = items[i];

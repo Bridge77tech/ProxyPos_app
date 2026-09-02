@@ -87,13 +87,25 @@ class ApButton extends StatelessWidget {
               ),
               SizedBox(width: 10.w),
             ],
-            Text(
-              btnText,
-              style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                    color: apTextColor,
-                    fontSize: fontSize.sp,
-                    fontWeight: fontWeight,
-                  ),
+            // Flexible, so the label truncates instead of painting outside the button.
+            //
+            // The button has a fixedSize, so its content box can be narrower than the text wants —
+            // on the product grid at the 800x600 the till opens at, a tile is about 117 wide and
+            // this row was handed 31.2. An overflowing child is still painted, so it looked fine,
+            // but hit testing stops at the parent's bounds: the part sticking out is dead. That is
+            // exactly how the queue badge came to be a button that did nothing.
+            Flexible(
+              child: Text(
+                btnText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                      color: apTextColor,
+                      fontSize: fontSize.sp,
+                      fontWeight: fontWeight,
+                    ),
+              ),
             ),
             if (apSuffixIcon != null && apSuffixIcon!.isNotEmpty) ...[
               SizedBox(width: 10.w),

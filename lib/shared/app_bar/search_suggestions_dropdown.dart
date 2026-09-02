@@ -49,8 +49,10 @@ class SearchSuggestionsDropdown extends StatelessWidget {
             itemBuilder: (context, index) {
               final p = suggestions[index];
               return ListTile(
+                // No tileColor. The overlay already puts a white Material behind this list
+                // (search_overlay_controller.dart), and an opaque tile painted on top of it hides
+                // the ink splash the tile is trying to show.
                 dense: true,
-                tileColor: InvAPColors.kWhiteColor,
                 title: Text(
                   p.name ?? '-',
                   style: Theme.of(context).textTheme.bodySmall!.copyWith(color: InvAPColors.kBlackColor),
