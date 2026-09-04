@@ -8,6 +8,7 @@ import 'package:inventory_app_pos/generated/assets.dart';
 import 'package:toastification/toastification.dart';
 
 import '../../../../../../../core/app_constants/ap_colors.dart';
+import '../../../../../../../core/app_constants/toast_durations.dart';
 import '../bloc/cart/cart_bloc.dart';
 import '../bloc/cart/cart_event.dart';
 import '../bloc/cart/cart_state.dart';
@@ -31,7 +32,7 @@ class APDashboardPage extends StatelessWidget {
             title: const Text('Success'),
             description: Text(state.successMessage!),
             alignment: Alignment.topRight,
-            autoCloseDuration: const Duration(seconds: 4),
+            autoCloseDuration: kSuccessToastDuration,
             showProgressBar: true,
             primaryColor: InvAPColors.kPrimaryColor,
             backgroundColor: Colors.white,
@@ -59,7 +60,7 @@ class APDashboardPage extends StatelessWidget {
             title: const Text('Error'),
             description: Text(state.error!),
             alignment: Alignment.topRight,
-            autoCloseDuration: const Duration(seconds: 5),
+            autoCloseDuration: kErrorToastDuration,
             showProgressBar: true,
             primaryColor: Colors.red,
             backgroundColor: Colors.white,

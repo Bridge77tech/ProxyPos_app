@@ -2,6 +2,7 @@ import 'package:fasaha_utils/utils_export/fasaha_haus_state_status.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:inventory_app_pos/core/app_constants/toast_durations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:inventory_app_pos/core/app_constants/inv_app_constants.dart';
@@ -98,7 +99,10 @@ class LoginForm extends StatelessWidget {
                           left: 0.55.sw,
                           right: 0.05.sw,
                         ),
-                        duration: const Duration(seconds: 4),
+                        // A sign-in failure names a reason to act on — a wrong password,
+                        // a suspended shop, an expired session. Same budget as every
+                        // other refusal; see toast_durations.dart.
+                        duration: kErrorToastDuration,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),

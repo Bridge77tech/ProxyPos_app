@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:inventory_app_pos/core/app_constants/toast_durations.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 import 'package:inventory_app_pos/features/home/presentation/presentation/dashboard/presentation/widgets/product_container_card.dart';
@@ -104,6 +105,9 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                 content: Text(state.searchError!),
                 backgroundColor: Colors.red.shade700,
                 behavior: SnackBarBehavior.floating,
+                // Was Flutter's 4s default. A failed lookup is a refusal the cashier has to
+                // act on, not a confirmation they can ignore — see toast_durations.dart.
+                duration: kErrorToastDuration,
               ),
             );
           },
@@ -119,6 +123,7 @@ class LeftSideDashboardViewCard extends StatelessWidget {
                 content: Text(state.barcodeError!),
                 backgroundColor: Colors.red.shade700,
                 behavior: SnackBarBehavior.floating,
+                duration: kErrorToastDuration,
               ),
             );
             context.read<CartBloc>().add(const CartClearBarcodeError());

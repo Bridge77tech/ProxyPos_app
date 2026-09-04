@@ -9,8 +9,6 @@ class InvAppConstants {
   static final String kPoweredBy = "powered by Bridge77 Technologies";
   static final String kCart = 'Cart';
   static final String kGHC = "GHC";
-  static final String kVAT = "VAT";
-  static final String kDiscount = "Discount";
   static final String kSubTotal = "Subtotal";
   static final String kTotal = "Total";
 

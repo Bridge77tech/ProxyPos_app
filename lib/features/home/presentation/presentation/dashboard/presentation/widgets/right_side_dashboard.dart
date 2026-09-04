@@ -47,18 +47,14 @@ class RightSideDashboard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 spacing: Platform.isWindows ? 4.5.h : 10.h,
                 children: [
-                rowText(
-                  context,
-                  label: InvAppConstants.kVAT,
-                  value:
-                      '$ghc ${cartState.vat.toStringAsFixed(2)}',
-                ),
-                rowText(
-                  context,
-                  label: InvAppConstants.kDiscount,
-                  value:
-                      '$ghc ${cartState.discount.toStringAsFixed(2)}',
-                ),
+                // VAT and Discount used to sit here, both reading 0.00 on every sale ever
+                // rung up. They were hardcoded getters on CartState with no column on Sale
+                // or SaleItem behind them, no way to enter either at the till, and no
+                // arithmetic anywhere that could move them off zero. A tax line that always
+                // reads zero is not a neutral placeholder — on a receipt it is a claim.
+                //
+                // If shops turn out to be VAT-registered that is a compliance feature with
+                // its own schema, its own rates and its own design, not two display rows.
                 rowText(
                   context,
                   label: InvAppConstants.kSubTotal,

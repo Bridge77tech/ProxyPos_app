@@ -78,9 +78,15 @@ class CartState extends Equatable {
   });
 
   double get subTotal => items.fold(0.0, (sum, it) => sum + (it.unit.sellingPrice * it.quantity));
-  double get vat => 0.0;
-  double get discount => 0.0;
-  double get total => subTotal + vat - discount;
+  /// The total IS the subtotal.
+  ///
+  /// This used to read `subTotal + vat - discount` against two getters hardcoded to 0.0,
+  /// which made it look like an arithmetic pipeline that happened to be inert. It was not
+  /// inert-but-working; there was nothing behind it at any layer — see the removed rows in
+  /// right_side_dashboard.dart. Stating the identity plainly is honest about that, and the
+  /// day a real tax or discount arrives it will arrive with a schema and change this line
+  /// deliberately rather than silently starting to work.
+  double get total => subTotal;
 
   double get remaining => (total - amountReceived).clamp(0.0, double.infinity);
   double get change => (amountReceived - total).clamp(0.0, double.infinity);

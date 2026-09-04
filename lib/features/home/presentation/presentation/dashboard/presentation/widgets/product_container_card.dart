@@ -113,7 +113,9 @@ class _ProductContainerCardState extends State<ProductContainerCard> {
     }
     if (v.isExpiringSoon) {
       final days = v.expiringDate!.difference(DateTime.now()).inDays;
-      return days <= 0 ? 'Expires today' : 'Expires in \${days}d';
+      // The $ was escaped, so this rendered the literal text "Expires in ${days}d" on the
+      // card — the interpolation never ran.
+      return days <= 0 ? 'Expires today' : 'Expires in ${days}d';
     }
     if (_stockState == UnitStockState.lowStock) return 'Low';
     return null;

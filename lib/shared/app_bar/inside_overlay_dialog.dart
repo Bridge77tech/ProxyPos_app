@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+// FilteringTextInputFormatter lives here; material does not re-export it.
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
@@ -154,6 +156,23 @@ class InsideOverlay extends StatelessWidget {
                                       fontSize: 16,
                                     ),
                               ),
+                              // The till already refuses an expired batch — but it refuses it
+                              // at the end, after the cashier has picked the item, entered a
+                              // quantity and pressed Add, with a customer waiting. Saying so
+                              // here turns a rejection into a choice.
+                              if (_expiryNote(v) != null)
+                                Flexible(
+                                  child: Text(
+                                    _expiryNote(v)!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context).textTheme.bodySmall!
+                                        .copyWith(
+                                          color: _expiryColour(v),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                  ),
+                                ),
                             ],
                           ),
                           trailing: Icon(
@@ -215,7 +234,15 @@ class InsideOverlay extends StatelessWidget {
                           const CartChangeQuantity(-1),
                         ),
                       ),
-                      Text('${cartState.selectedQuantity}'),
+                      // Typed as well as stepped. This was a bare Text between the two
+                      // buttons, so entering 20 meant twenty taps. CartSetQuantity already
+                      // existed and was already handled by the bloc — nothing was ever
+                      // wired to send it.
+                      Expanded(
+                        child: _QuantityField(
+                          quantity: cartState.selectedQuantity,
+                        ),
+                      ),
                       IconButton(
                         icon: Icon(
                           Icons.add,
@@ -236,6 +263,90 @@ class InsideOverlay extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A short word about this variant's expiry, or null when there is nothing to say.
+///
+/// Most goods are not perishable and carry no date at all; a badge rendered for those would
+/// be noise on every row and would train the eye to skip the ones that matter.
+String? _expiryNote(Variants v) {
+  if (v.isExpired) return 'Expired';
+  if (!v.isExpiringSoon) return null;
+  final days = v.expiringDate!.difference(DateTime.now()).inDays;
+  return days <= 0 ? 'Expires today' : 'Expires in ${days}d';
+}
+
+/// Red once lapsed, amber inside a week — the same convention as the stock dot on the grid
+/// card and the expiry column in the portal's inventory table.
+Color _expiryColour(Variants v) {
+  if (v.isExpired) return Colors.red;
+  return Colors.orange;
+}
+
+/// The quantity box in the sale popup.
+///
+/// Stateful only to own a TextEditingController: the quantity itself lives in CartBloc, and
+/// this mirrors it. Writing the controller on every rebuild would fight the cursor of anyone
+/// mid-way through typing, so the text is only rewritten when it actually disagrees with the
+/// bloc — which is what happens when the +/- buttons move it.
+class _QuantityField extends StatefulWidget {
+  const _QuantityField({required this.quantity});
+
+  final int quantity;
+
+  @override
+  State<_QuantityField> createState() => _QuantityFieldState();
+}
+
+class _QuantityFieldState extends State<_QuantityField> {
+  late final TextEditingController _controller =
+      TextEditingController(text: widget.quantity.toString());
+
+  @override
+  void didUpdateWidget(covariant _QuantityField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final text = widget.quantity.toString();
+    if (_controller.text != text) {
+      _controller.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      textAlign: TextAlign.center,
+      keyboardType: TextInputType.number,
+      // Digits only, so there is no such thing as an unparseable value below.
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      style: Theme.of(context).textTheme.bodyMedium,
+      decoration: const InputDecoration(
+        isDense: true,
+        contentPadding: EdgeInsets.zero,
+        border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+      ),
+      onChanged: (value) {
+        // An empty box is someone part-way through retyping, not a request for zero.
+        // Snapping it back to the previous number here would make the field unusable.
+        if (value.isEmpty) return;
+        final parsed = int.tryParse(value);
+        if (parsed != null) {
+          context.read<CartBloc>().add(CartSetQuantity(parsed));
+        }
+      },
     );
   }
 }
