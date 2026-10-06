@@ -5,6 +5,7 @@ import 'package:fasaha_utils/utils_export/fasaha_haus_state_status.dart';
 import 'package:fasaha_utils/utils_export/fasaha_huas_logger_export.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:loader_overlay/loader_overlay.dart';
+import 'package:inventory_app_pos/core/update/update_coordinator.dart';
 import 'package:inventory_app_pos/core/exceptions/local_storage_exception.dart';
 import 'package:inventory_app_pos/core/exceptions/login_exception.dart';
 import 'package:inventory_app_pos/features/auth/data/model/ap_user_model.dart';
@@ -57,6 +58,19 @@ class AuthBloc<T> extends Bloc<AuthEvent, AuthState> {
       'username': state.username.trim(),
       'password': state.password.trim(),
     };
+
+    // Tell the server which build this till is running.
+    //
+    // Sent on login because that is the one request every till makes, from a machine
+    // nobody can see, on a schedule nobody controls. Without it "has every till taken
+    // the update?" is unanswerable — and that question is step 2 of any safe move of
+    // the update-check address, where guessing wrong strands a shop permanently.
+    //
+    // Best-effort by design. A till whose version cannot be read must still be able to
+    // log in and sell; the field is simply omitted and the server leaves the previous
+    // value alone.
+    final version = await UpdateCoordinator.currentVersion();
+    if (version != null) payload['appVersion'] = version.toString();
 
     emit(state.copyWith(stateStatus: const LoggingInUser()));
 

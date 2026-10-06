@@ -1,4 +1,4 @@
-package com.example.inventory_app_pos
+package com.bridge77tech.proxypos
 
 import io.flutter.embedding.android.FlutterActivity
 

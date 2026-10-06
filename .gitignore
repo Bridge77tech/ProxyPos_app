@@ -47,3 +47,7 @@ app.*.map.json
 # Compiled installer artifacts (distribute via GitHub Releases instead)
 installers.zip
 installers/*.exe
+# Written by build_installer.ps1 from the installer it just built. A build output, and
+# committing it would let a stale copy sit next to the real one — the version tills act
+# on should only ever come from the machine that produced the artefact.
+installers/latest.json

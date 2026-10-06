@@ -2,9 +2,42 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>keychain-access-groups</key>
-	<array>
-		<string>$(AppIdentifierPrefix)com.fasahahaus.inventoryAppPos</string>
-	</array>
+	<!--
+	  keychain-access-groups was here, declaring:
+
+	      $(AppIdentifierPrefix)com.fasahahaus.inventoryAppPos
+
+	  while the bundle identifier in Runner.xcodeproj is
+
+	      com.fasahahaus-co.inventoryAppPos
+
+	  Both were written in the same commit (2f528a5, Feb 2026), so this was a typo at
+	  birth rather than drift — the "-co" is missing.
+
+	  The consequence is not cosmetic. flutter_secure_storage only sets
+	  kSecAttrAccessGroup when a groupId is passed in IOSOptions, and this app passes
+	  none (lib/data/local_storage_service_impl.dart), so every keychain item goes to
+	  the first group listed here. A group that is neither the app's own
+	  application-identifier nor a registered Keychain Sharing group is refused — the
+	  project has no Keychain Sharing capability — and the calls come back
+	  errSecMissingEntitlement.
+
+	  Which would be survivable if it were loud. It is not:
+	  _getOrGenerateEncryptionKey catches PlatformException and returns null, so Hive
+	  opens its boxes unencrypted and the app starts perfectly happily with the session
+	  and the offline sale queue unreadable. The same silent failure being guarded
+	  against on Windows, on a platform where nobody is watching for it yet.
+
+	  Removed rather than corrected to the right string. An app that shares its keychain
+	  with nothing — no extensions, no sibling apps, no groupId anywhere in the code —
+	  does not need this entitlement at all. Without it iOS defaults to the app's own
+	  application-identifier, which means the group follows the bundle identifier
+	  automatically and can never disagree with it again. Writing the identifier out by
+	  hand would just reinstate the thing that broke: two places holding the same string.
+
+	  If keychain sharing is ever genuinely needed (an app extension, a second app
+	  reading the same items), add the capability in Xcode and put the group back here —
+	  the file and its CODE_SIGN_ENTITLEMENTS wiring are left in place for that.
+	-->
 </dict>
 </plist>

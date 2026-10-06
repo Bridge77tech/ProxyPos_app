@@ -11,8 +11,36 @@
 #ifndef MyAppVersion
   #define MyAppVersion "0.0.0-local"
 #endif
-#define MyAppPublisher "Fasaha Haus Ltd."
-#define MyAppURL "https://www.fasahahaus.com/"
+#define MyAppPublisher "Bridge77 Technologies"
+; Feeds AppPublisherURL, AppSupportURL and AppUpdatesURL below — the links a shopkeeper
+; sees on the installer's pages and in Add/Remove Programs. Cosmetic: nothing in the
+; update mechanism reads it. The till finds updates through the pointer in
+; lib/core/update/update_endpoints.dart, which is a GitHub address and entirely separate.
+;
+; Checked live before being written here, because a publisher link that 404s in
+; Add/Remove Programs is worse than no link at all, and this one goes into a signed
+; binary that then sits on a till for years.
+;
+; Two things about it are easy to get wrong, and both were got wrong once already:
+;
+;   www.bridge77.vercel.app   Fails TLS. Vercel's certificate covers *.vercel.app, a
+;                             single label, so it does not match a name two deep. The
+;                             connection is refused before any page is requested — a
+;                             security warning rather than a 404. Do not re-add the www.
+;   /products/proxypos        404. The path is case-sensitive; it is ProxyPos.
+;
+; The site is also moving under this: /products answered 200 and /products/ProxyPos 404
+; earlier the same day, and they have since swapped. Verified 200 at the moment of
+; writing, which is all anyone can do — if this link is reported dead later, that is why,
+; and the root (https://bridge77.vercel.app/) is the steadier choice.
+;
+; Previously https://www.fasahahaus.com/, the former company.
+;
+; Worth knowing when this is next touched: a vercel.app address is a host's subdomain,
+; not a domain under this company's control, so it goes away when the hosting does.
+; Harmless here in a way it would not be for the update pointer — a dead link in
+; Add/Remove Programs is untidy, a dead update address strands a till.
+#define MyAppURL "https://bridge77.vercel.app/products/ProxyPos"
 #define MyAppExeName "inventory_app_pos.exe"
 #define MyAppAssocName MyAppName + ""
 #define MyAppAssocExt ".myp"
@@ -82,5 +110,14 @@ Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+; `skipifsilent` was here and has been removed deliberately.
+;
+; An auto-update runs this installer with /SILENT. With skipifsilent the till would
+; install the new version and then sit there switched off, on a counter, with a queue
+; in front of it — waiting for somebody to notice and double-click the icon. The whole
+; point of the update is that the shopkeeper agrees to it once and the till comes back.
+;
+; The cost is that a scripted /VERYSILENT deployment also launches the app. For a
+; point-of-sale terminal that is the behaviour you want anyway.
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall
 
