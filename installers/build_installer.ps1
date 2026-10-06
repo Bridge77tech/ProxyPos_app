@@ -1,6 +1,7 @@
 <#
 .SYNOPSIS
-  Builds the POS and packages it into installers\inventory_pos-<version>.exe
+  Builds the POS, packages it into installers\inventory_pos-<version>.exe, and writes the
+  update manifest that tells installed tills the new version exists.
 
 .DESCRIPTION
   Must run on Windows. Flutter refuses a Windows build from any other host
@@ -11,12 +12,28 @@
 
 .EXAMPLE
   powershell -ExecutionPolicy Bypass -File installers\build_installer.ps1
+
+.EXAMPLE
+  # Package only, when a Release build is already present.
+  powershell -ExecutionPolicy Bypass -File installers\build_installer.ps1 -SkipFlutterBuild
 #>
 
 [CmdletBinding()]
 param(
   # Skips straight to packaging when a Release build is already present.
-  [switch]$SkipFlutterBuild
+  [switch]$SkipFlutterBuild,
+
+  # Where the installer will be published. The manifest's download URL is built from
+  # this plus the installer's filename.
+  #
+  # A parameter rather than a constant because moving the builds somewhere else must
+  # stay a one-flag change. Installed tills do not know this address: they read it out
+  # of the manifest at run time, which is the whole reason the build host can move
+  # without shipping a release. See lib/core/update/update_endpoints.dart.
+  [string]$ReleaseBaseUrl,
+
+  # Release tag the assets are attached to. Defaults to v<version>.
+  [string]$Tag
 )
 
 $ErrorActionPreference = 'Stop'
@@ -81,6 +98,73 @@ if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)." }
 $output = Join-Path $installerDir "inventory_pos-$version.exe"
 if (-not (Test-Path $output)) { throw "ISCC reported success but $output is not there." }
 
+# ── Update manifest ─────────────────────────────────────────────────────────
+# Written here, from the installer that was just produced, rather than by hand later.
+#
+# The hash and the size are measured off the actual file. A manifest typed out
+# separately drifts the first time someone rebuilds and forgets, and the symptom is
+# every till in the field refusing its download as corrupt — with no error anywhere
+# near the person who caused it.
+if (-not $Tag) { $Tag = "v$version" }
+if (-not $ReleaseBaseUrl) {
+  $ReleaseBaseUrl = "https://github.com/Bridge77tech/POS-Release/releases/download/$Tag"
+}
+
+$installerFile = Get-Item $output
+$sha256 = (Get-FileHash -Algorithm SHA256 -Path $output).Hash.ToLowerInvariant()
+
+# Ordered so the file reads the way the app parses it. Depth matters: ConvertTo-Json
+# silently truncates nested objects below its default of 2.
+$manifest = [ordered]@{
+  schema  = 1
+  version = $version
+  url     = "$($ReleaseBaseUrl.TrimEnd('/'))/$($installerFile.Name)"
+  sha256  = $sha256
+  size    = [int64]$installerFile.Length
+  notes   = ""
+}
+
+# UTF-8 without a BOM. PowerShell 5's Out-File writes one by default, and a BOM ahead
+# of the opening brace makes jsonDecode throw on the till — which the updater treats
+# as "no update", so it fails silently and forever rather than loudly once.
+$manifestPath = Join-Path $installerDir 'latest.json'
+$json = ($manifest | ConvertTo-Json -Depth 4)
+[System.IO.File]::WriteAllText($manifestPath, $json, (New-Object System.Text.UTF8Encoding $false))
+
 Write-Host ""
 Write-Host "Installer: $output"
-Write-Host "Size: $([math]::Round((Get-Item $output).Length / 1MB, 1)) MB"
+Write-Host "Size: $([math]::Round($installerFile.Length / 1MB, 1)) MB"
+Write-Host "SHA-256: $sha256"
+Write-Host "Manifest: $manifestPath"
+Write-Host ""
+Write-Host "To publish this build:"
+Write-Host "  1. gh release create $Tag `"$output`" --repo Bridge77tech/POS-Release --title `"$version`""
+Write-Host "  2. Copy $manifestPath over v1/pos/windows/latest.json in POS-Release and commit."
+Write-Host ""
+Write-Host "Step 2 is what makes tills see it. Do it after step 1, never before:"
+Write-Host "publishing the manifest first points every till at a file that is not there yet."
+
+# ── Signing (waiting on a certificate) ──────────────────────────────────────
+# Nothing below runs yet. When the code-signing certificate arrives, this is the whole
+# change — two commands, no updater code touched.
+#
+#   1. Sign the application, before ISCC packages it. Insert above the "Package" block:
+#
+#        & signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 `
+#            /f $env:PROXYPOS_CERT_PFX /p $env:PROXYPOS_CERT_PASSWORD $exe
+#
+#   2. Sign the installer ISCC produces, by adding to [Setup] in inventory_pos.iss:
+#
+#        SignTool=proxypos
+#
+#      and registering that tool once per build machine (Inno Setup IDE →
+#      Tools → Configure Sign Tools), or by signing $output here with the same
+#      signtool call.
+#
+# Timestamping (/tr) is not optional: without it every installer ever shipped stops
+# validating the day the certificate expires, including ones already installed.
+#
+# The updater needs no change at all. It verifies the download against the SHA-256 in
+# the manifest, which is about the file arriving intact and is unrelated to who signed
+# it. What signing changes is the UAC prompt: "Unknown publisher" becomes the company
+# name. Until then the owner sees that warning on every update, which is expected.

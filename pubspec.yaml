@@ -2,7 +2,7 @@ name: inventory_app_pos
 description: "ProxyPos — point of sale app"
 publish_to: "none"
 
-version: 1.0.0+1
+version: 1.1.0+1
 
 environment:
   sdk: ^3.10.4
@@ -38,6 +38,12 @@ dependencies:
   dio_smart_retry: ^7.0.1
   meta: ^1.12.0
   connectivity_plus: ^7.0.0
+  # Reads the running executable's ProductVersion resource on Windows, which
+  # Flutter stamps from the `version:` above. Keeps pubspec the single place a
+  # release number is written: app, installer and update check all read this one.
+  package_info_plus: ^10.2.2
+  # SHA-256 over the downloaded installer before it is allowed to run.
+  crypto: ^3.0.6
 #    git:
 #      url: https://github.com/fasaha-tech/fasaha_utils.git
 #      ref: main
