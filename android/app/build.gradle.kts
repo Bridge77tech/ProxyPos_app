@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.inventory_app_pos"
+    namespace = "com.bridge77tech.proxypos"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,8 +20,11 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.inventory_app_pos"
+        // Permanent once an app is published: Play identifies an app by this, so changing
+        // it later ships a second app rather than an update. Safe to set now because
+        // nothing has ever been published — release still signs with the debug keys
+        // below and there is no keystore in the project.
+        applicationId = "com.bridge77tech.proxypos"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
