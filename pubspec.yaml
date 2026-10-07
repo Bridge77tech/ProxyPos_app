@@ -1,8 +1,8 @@
 name: inventory_app_pos
-description: "ProxyPos — point of sale app"
+description: "ProxyPOS — point of sale app"
 publish_to: "none"
 
-version: 1.1.0+1
+version: 1.2.0+1
 
 environment:
   sdk: ^3.10.4

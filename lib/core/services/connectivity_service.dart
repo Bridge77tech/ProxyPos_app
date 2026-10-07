@@ -27,7 +27,7 @@ class ConnectivityService {
   /// The question this service actually needs answered.
   ///
   /// The package's defaults probe one.one.one.one, icanhazip.com, jsonplaceholder.typicode.com and
-  /// pokeapi.co. None of them is this app's backend, so on a network that reaches ProxyPos but not
+  /// pokeapi.co. None of them is this app's backend, so on a network that reaches ProxyPOS but not
   /// those hosts — a filtered shop connection, a captive portal, an ISP blocking them — the till
   /// declares itself offline and ConnectivityInterceptor refuses every request. The shopkeeper
   /// sees "check your connection" while the connection is fine.

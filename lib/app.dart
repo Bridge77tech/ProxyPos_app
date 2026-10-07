@@ -77,7 +77,7 @@ class _InventoryAppState extends State<InventoryApp> {
             ],
             child: MaterialApp.router(
               debugShowCheckedModeBanner: false,
-              title: "ProxyPos",
+              title: "ProxyPOS",
               theme: themeData(),
               routerConfig: InvRouters.apRouter,
             ),
