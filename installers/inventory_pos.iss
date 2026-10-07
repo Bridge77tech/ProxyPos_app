@@ -2,7 +2,9 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 ; Non-commercial use only
 
-#define MyAppName "inventory_pos"
+; The name the shopkeeper sees: the Start menu entry, the desktop icon, the Add/Remove
+; Programs row, and (on a fresh install) the folder under Program Files.
+#define MyAppName "ProxyPOS"
 ; Passed in by build_installer.ps1, which reads it from pubspec.yaml. The fallback exists only so
 ; the script still compiles when opened by hand in the Inno Setup IDE.
 ;
@@ -41,7 +43,10 @@
 ; Harmless here in a way it would not be for the update pointer — a dead link in
 ; Add/Remove Programs is untidy, a dead update address strands a till.
 #define MyAppURL "https://bridge77.vercel.app/products/ProxyPos"
-#define MyAppExeName "inventory_app_pos.exe"
+; Must match BINARY_NAME in windows/CMakeLists.txt, which is what names the file
+; `flutter build windows` produces. These two disagreeing means an installer that packages
+; the build and then creates shortcuts to a file that is not there.
+#define MyAppExeName "ProxyPOS.exe"
 #define MyAppAssocName MyAppName + ""
 #define MyAppAssocExt ".myp"
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
@@ -78,7 +83,7 @@ DisableProgramGroupPage=yes
 OutputDir=.
 ; Versioned, so two installers sitting in a folder can be told apart — which is the difference
 ; between "this till has the fix" and "this till has an installer".
-OutputBaseFilename=inventory_pos-{#MyAppVersion}
+OutputBaseFilename=ProxyPOS-{#MyAppVersion}
 SetupIconFile={#SourcePath}..\windows\runner\resources\app_icon.ico
 SolidCompression=yes
 WizardStyle=modern dynamic
@@ -88,6 +93,22 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+
+; ── Leftovers from the pre-rename name ──────────────────────────────────────
+; Runs before anything is copied.
+;
+; Until 1.1.0 the binary was inventory_app_pos.exe and the shortcuts were "inventory_pos".
+; Inno only removes files it is told about, and only on uninstall — so without this, a
+; till upgrading from a pre-rename build keeps the old executable sitting in the install
+; folder forever, plus a Start menu entry and a desktop icon still pointing at it. The
+; shopkeeper gets two ProxyPOS icons, one of which silently launches the old version, and
+; the obvious next report is "the update did not work".
+;
+; Harmless on a machine that never had those names: Inno skips what is not there.
+[InstallDelete]
+Type: files; Name: "{app}\inventory_app_pos.exe"
+Type: files; Name: "{autoprograms}\inventory_pos.lnk"
+Type: files; Name: "{autodesktop}\inventory_pos.lnk"
 
 [Files]
 ; One recursive line rather than a hand-kept list of DLLs.

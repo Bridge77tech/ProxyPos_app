@@ -1,6 +1,6 @@
 # install_firewall_rules.ps1
 # Run this script once on the end-user machine (as Administrator) after
-# copying the release folder, to pre-allow inventory_app_pos.exe through
+# copying the release folder, to pre-allow ProxyPOS.exe through
 # the Windows Firewall without triggering a popup on first launch.
 #
 # Usage (from the release folder):
@@ -21,7 +21,7 @@ if (-not ([Security.Principal.WindowsPrincipal]
 
 # ── Resolve exe path relative to this script ─────────────────────────────────
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$exeName   = "inventory_app_pos.exe"
+$exeName   = "ProxyPOS.exe"
 $exePath   = Join-Path $scriptDir $exeName
 
 if (-not (Test-Path $exePath)) {

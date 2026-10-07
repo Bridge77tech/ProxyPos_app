@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Builds the POS, packages it into installers\inventory_pos-<version>.exe, and writes the
+  Builds the POS, packages it into installers\ProxyPOS-<version>.exe, and writes the
   update manifest that tells installed tills the new version exists.
 
 .DESCRIPTION
@@ -64,7 +64,7 @@ if (-not $SkipFlutterBuild) {
   }
 }
 
-$exe = Join-Path $releaseDir 'inventory_app_pos.exe'
+$exe = Join-Path $releaseDir 'ProxyPOS.exe'
 if (-not (Test-Path $exe)) {
   throw "No build output at $releaseDir. Run without -SkipFlutterBuild."
 }
@@ -95,7 +95,7 @@ Write-Host "Packaging..."
 & $iscc "/DMyAppVersion=$version" $script
 if ($LASTEXITCODE -ne 0) { throw "ISCC failed ($LASTEXITCODE)." }
 
-$output = Join-Path $installerDir "inventory_pos-$version.exe"
+$output = Join-Path $installerDir "ProxyPOS-$version.exe"
 if (-not (Test-Path $output)) { throw "ISCC reported success but $output is not there." }
 
 # ── Update manifest ─────────────────────────────────────────────────────────

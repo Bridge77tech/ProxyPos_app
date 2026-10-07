@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "Bridge77 Technologies" "\0"
-            VALUE "FileDescription", "ProxyPos" "\0"
+            VALUE "FileDescription", "ProxyPOS" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "inventory_app_pos" "\0"
+            VALUE "InternalName", "ProxyPOS" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 Bridge77 Technologies. All rights reserved." "\0"
-            VALUE "OriginalFilename", "inventory_app_pos.exe" "\0"
-            VALUE "ProductName", "ProxyPos" "\0"
+            VALUE "OriginalFilename", "ProxyPOS.exe" "\0"
+            VALUE "ProductName", "ProxyPOS" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

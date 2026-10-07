@@ -78,7 +78,7 @@ class UpdateService {
   /// Three reasons, each of which has teeth:
   ///
   ///   * The app's client carries an `Authorization` header. This client talks to
-  ///     GitHub, not to the ProxyPos backend. Reusing it would hand a third party the
+  ///     GitHub, not to the ProxyPOS backend. Reusing it would hand a third party the
   ///     shop's session token on every launch.
   ///   * The app's client is wrapped in [ConnectivityInterceptor], which refuses
   ///     requests when the *backend's* health probe fails. A shop whose connection

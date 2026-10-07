@@ -39,7 +39,7 @@ powershell -ExecutionPolicy Bypass -File installers\build_installer.ps1
 Expect, at the end:
 
 ```
-Installer: ...\installers\inventory_pos-1.1.0.exe
+Installer: ...\installers\ProxyPOS-1.1.0.exe
 SHA-256:   <64 hex characters>
 Manifest:  ...\installers\latest.json
 ```
@@ -128,7 +128,7 @@ powershell -ExecutionPolicy Bypass -File installers\build_installer.ps1
 Publish it, **in this order**:
 
 ```powershell
-gh release create v1.2.0 installers\inventory_pos-1.2.0.exe `
+gh release create v1.2.0 installers\ProxyPOS-1.2.0.exe `
   --repo Bridge77tech/POS-Release --title "1.2.0"
 
 # only once the upload has finished:
