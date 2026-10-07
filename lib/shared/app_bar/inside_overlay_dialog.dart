@@ -23,245 +23,269 @@ class InsideOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 20.w),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 10.h,
-          children: [
-            Gap(20.h),
-            Text(
-              'Item Name',
-              style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                color: InvAPColors.kBlackColor,
-                fontWeight: FontWeight.w500,
-              ),
+      // Every box in here is a "fill" in the design, not a hug. A Column defaults its
+      // children to their own width, which is why the Item Name and Quantity boxes only
+      // looked full — their Rows happen to span — while the variant list shrank to its
+      // longest row. stretch gives all of them the dialog's width, less the padding above.
+      //
+      // Utils.showOverlayDialog already wraps this child in a SingleChildScrollView, so
+      // the one that used to be here was a second scrollable inside the first.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        spacing: 10.h,
+        children: [
+          Gap(20.h),
+          Text(
+            'Item Name',
+            style: Theme.of(context).textTheme.bodySmall!.copyWith(
+              color: InvAPColors.kBlackColor,
+              fontWeight: FontWeight.w500,
             ),
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 10.w),
-              decoration: BoxDecoration(
-                color: InvAPColors.kWhiteColor,
-                borderRadius: BorderRadius.circular(5.r),
-              ),
-              child: Row(
-                spacing: 10.w,
-                children: [
-                  SizedBox(
-                    height: 24.h,
-                    width: 24.w,
-                    child: () {
-                      final imgPath = products.variants
-                          ?.map((v) => v.imagePath)
-                          .firstWhere(
-                            (p) => p != null && p.isNotEmpty,
-                            orElse: () => null,
-                          );
-                      if (imgPath != null) {
-                        return Image.network(
-                          imgPath,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) => Image.asset(
-                            Assets.imagesItem,
-                            fit: BoxFit.contain,
-                          ),
+          ),
+          Container(
+            key: const Key('item-name-card'),
+            padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 10.w),
+            decoration: BoxDecoration(
+              color: InvAPColors.kWhiteColor,
+              borderRadius: BorderRadius.circular(5.r),
+            ),
+            child: Row(
+              spacing: 10.w,
+              children: [
+                SizedBox(
+                  height: 24.h,
+                  width: 24.w,
+                  child: () {
+                    final imgPath = products.variants
+                        ?.map((v) => v.imagePath)
+                        .firstWhere(
+                          (p) => p != null && p.isNotEmpty,
+                          orElse: () => null,
                         );
-                      }
-                      return Image.asset(
-                        Assets.imagesItem,
+                    if (imgPath != null) {
+                      return Image.network(
+                        imgPath,
                         fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) =>
+                            Image.asset(Assets.imagesItem, fit: BoxFit.contain),
                       );
-                    }(),
-                  ),
-                  Text(
-                    "${products.name}",
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-            Gap(5.h),
-            //
-            Text(
-              'Select from Item variant, Type with Size',
-              style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                color: InvAPColors.kBlackColor,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 10.w),
-              // No decoration colour here. A BoxDecoration paints an opaque box ABOVE the
-              // Material, and a ListTile's ink splash paints on the Material below it — so the
-              // splash was drawn and then covered, which is what "background color or ink splashes
-              // may be invisible" is telling you. The white surface is a Material now, so the tiles
-              // have something to splash on.
-              child: Material(
-                color: InvAPColors.kWhiteColor,
-                borderRadius: BorderRadius.circular(5.r),
-                // The list's own corners have to be cut to match, or a tile paints over them.
-                clipBehavior: Clip.antiAlias,
-                child: BlocBuilder<CartBloc, CartState>(
-                  builder: (context, cartState) {
-                    final variants = products.variants ?? const <Variants>[];
-                    // Flatten units from all variants
-                    final units = <({Variants variant, UnitModel unit})>[];
-                    for (final v in variants) {
-                      final vUnits = v.units ?? const <UnitModel>[];
-                      for (final u in vUnits) {
-                        units.add((variant: v, unit: u));
-                      }
                     }
-                    return ListView.separated(
-                      shrinkWrap: true,
-                      primary: false,
-                      physics: const NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.zero,
-                      itemCount: units.length,
-                      separatorBuilder: (_, _) => Divider(
-                        height: 1,
-                        color: InvAPColors.kBorderColor.withValues(alpha: 0.5),
-                      ),
-                      itemBuilder: (context, index) {
-                        final entry = units[index];
-                        final v = entry.variant;
-                        final u = entry.unit;
-                        final selected = cartState.selectedUnit == u;
-                        return ListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          title: Row(
-                            spacing: 10.w,
-                            children: [
-                              Text(
-                                "${v.name},",
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              Text(
-                                u.type,
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                          subtitle: Row(
-                            spacing: 10.w,
-                            children: [
-                              Text(
-                                v.size ?? '',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                              Text(
-                                'GHS ${u.sellingPrice}',
-                                style: Theme.of(context).textTheme.bodySmall!
-                                    .copyWith(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 16,
-                                    ),
-                              ),
-                              // The till already refuses an expired batch — but it refuses it
-                              // at the end, after the cashier has picked the item, entered a
-                              // quantity and pressed Add, with a customer waiting. Saying so
-                              // here turns a rejection into a choice.
-                              if (_expiryNote(v) != null)
-                                Flexible(
-                                  child: Text(
-                                    _expiryNote(v)!,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context).textTheme.bodySmall!
-                                        .copyWith(
-                                          color: _expiryColour(v),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                          trailing: Icon(
-                            selected
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_unchecked,
-                            size: 18,
-                            color: selected
-                                ? InvAPColors.kPrimaryColor
-                                : InvAPColors.kSecondaryTextColor,
-                          ),
-                          onTap: () {
-                            context.read<CartBloc>().add(
-                              CartSelectUnit(
-                                product: products,
-                                variant: v,
-                                unit: u,
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
+                    return Image.asset(Assets.imagesItem, fit: BoxFit.contain);
+                  }(),
                 ),
-              ),
+                Text(
+                  "${products.name}",
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ),
-
-            // Get the purchase Quantity here.
-            Gap(5.h),
-            Text(
-              'Enter Quantity',
-              style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                color: InvAPColors.kBlackColor,
-                fontWeight: FontWeight.w500,
-              ),
+          ),
+          Gap(5.h),
+          //
+          Text(
+            'Select from Item variant, Type with Size',
+            style: Theme.of(context).textTheme.bodySmall!.copyWith(
+              color: InvAPColors.kBlackColor,
+              fontWeight: FontWeight.w500,
             ),
-            BlocBuilder<CartBloc, CartState>(
+          ),
+          // No Container wrapping this. The other two boxes paint their white on the padded
+          // Container itself, so the white spans the full width; this one painted it on the
+          // Material *inside* a padded Container, which left this card 10.w narrower on each
+          // side than the ones above and below it. The padding belongs to the list now, so
+          // all three cards share one edge and the rows keep the same inner inset.
+          //
+          // The white surface has to stay a Material: a BoxDecoration paints an opaque box
+          // ABOVE the Material, and a ListTile's ink splash paints on the Material below it,
+          // so the splash would be drawn and then covered.
+          Material(
+            key: const Key('variant-card'),
+            color: InvAPColors.kWhiteColor,
+            borderRadius: BorderRadius.circular(5.r),
+            // The list's own corners have to be cut to match, or a tile paints over them.
+            clipBehavior: Clip.antiAlias,
+            child: BlocBuilder<CartBloc, CartState>(
               builder: (context, cartState) {
-                return Container(
+                final variants = products.variants ?? const <Variants>[];
+                // Flatten units from all variants
+                final units = <({Variants variant, UnitModel unit})>[];
+                for (final v in variants) {
+                  final vUnits = v.units ?? const <UnitModel>[];
+                  for (final u in vUnits) {
+                    units.add((variant: v, unit: u));
+                  }
+                }
+                return ListView.separated(
+                  shrinkWrap: true,
+                  primary: false,
+                  physics: const NeverScrollableScrollPhysics(),
                   padding: EdgeInsets.symmetric(
                     vertical: 10.h,
                     horizontal: 10.w,
                   ),
-                  decoration: BoxDecoration(
-                    color: InvAPColors.kWhiteColor,
-                    borderRadius: BorderRadius.circular(5.r),
+                  itemCount: units.length,
+                  separatorBuilder: (_, _) => Divider(
+                    height: 1,
+                    color: InvAPColors.kBorderColor.withValues(alpha: 0.5),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          Icons.remove,
-                          size: 18.sp,
-                          color: InvAPColors.kBlack100,
-                        ),
-                        onPressed: () => context.read<CartBloc>().add(
-                          const CartChangeQuantity(-1),
-                        ),
+                  itemBuilder: (context, index) {
+                    final entry = units[index];
+                    final v = entry.variant;
+                    final u = entry.unit;
+                    final selected = cartState.selectedUnit == u;
+                    return ListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      // Flexible, not plain Text. The popup is 0.3.sw wide and a row here
+                      // carries a shop-entered variant name, so a long one ran off the end;
+                      // the Material's clip meant it was silently cut rather than striped.
+                      // An ellipsis says there is more, which a hard cut does not.
+                      title: Row(
+                        spacing: 10.w,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              "${v.name},",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ),
+                          Flexible(
+                            child: Text(
+                              u.type,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                        ],
                       ),
-                      // Typed as well as stepped. This was a bare Text between the two
-                      // buttons, so entering 20 meant twenty taps. CartSetQuantity already
-                      // existed and was already handled by the bloc — nothing was ever
-                      // wired to send it.
-                      Expanded(
-                        child: _QuantityField(
-                          quantity: cartState.selectedQuantity,
-                        ),
+                      subtitle: Row(
+                        spacing: 10.w,
+                        children: [
+                          // The size gives way first. The price is what the cashier is
+                          // reading off this row, so it is the one thing here that is never
+                          // allowed to shrink or truncate.
+                          Flexible(
+                            child: Text(
+                              v.size ?? '',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                          Text(
+                            'GHS ${u.sellingPrice}',
+                            style: Theme.of(context).textTheme.bodySmall!
+                                .copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 16,
+                                ),
+                          ),
+                          // The till already refuses an expired batch — but it refuses it
+                          // at the end, after the cashier has picked the item, entered a
+                          // quantity and pressed Add, with a customer waiting. Saying so
+                          // here turns a rejection into a choice.
+                          if (_expiryNote(v) != null)
+                            Flexible(
+                              child: Text(
+                                _expiryNote(v)!,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall!
+                                    .copyWith(
+                                      color: _expiryColour(v),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                              ),
+                            ),
+                        ],
                       ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.add,
-                          size: 18.sp,
-                          color: InvAPColors.kBlack100,
-                        ),
-                        onPressed: () => context.read<CartBloc>().add(
-                          const CartChangeQuantity(1),
-                        ),
+                      trailing: Icon(
+                        selected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_unchecked,
+                        size: 18,
+                        color: selected
+                            ? InvAPColors.kPrimaryColor
+                            : InvAPColors.kSecondaryTextColor,
                       ),
-                    ],
-                  ),
+                      onTap: () {
+                        context.read<CartBloc>().add(
+                          CartSelectUnit(
+                            product: products,
+                            variant: v,
+                            unit: u,
+                          ),
+                        );
+                      },
+                    );
+                  },
                 );
               },
             ),
-            // Add to Cart button
-            Gap(10.h),
-          ],
-        ),
+          ),
+
+          // Get the purchase Quantity here.
+          Gap(5.h),
+          Text(
+            'Enter Quantity',
+            style: Theme.of(context).textTheme.bodySmall!.copyWith(
+              color: InvAPColors.kBlackColor,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          BlocBuilder<CartBloc, CartState>(
+            builder: (context, cartState) {
+              return Container(
+                key: const Key('quantity-card'),
+                padding: EdgeInsets.symmetric(vertical: 10.h, horizontal: 10.w),
+                decoration: BoxDecoration(
+                  color: InvAPColors.kWhiteColor,
+                  borderRadius: BorderRadius.circular(5.r),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.remove,
+                        size: 18.sp,
+                        color: InvAPColors.kBlack100,
+                      ),
+                      onPressed: () => context.read<CartBloc>().add(
+                        const CartChangeQuantity(-1),
+                      ),
+                    ),
+                    // Typed as well as stepped. This was a bare Text between the two
+                    // buttons, so entering 20 meant twenty taps. CartSetQuantity already
+                    // existed and was already handled by the bloc — nothing was ever
+                    // wired to send it.
+                    Expanded(
+                      child: _QuantityField(
+                        quantity: cartState.selectedQuantity,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.add,
+                        size: 18.sp,
+                        color: InvAPColors.kBlack100,
+                      ),
+                      onPressed: () => context.read<CartBloc>().add(
+                        const CartChangeQuantity(1),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // Add to Cart button
+          Gap(10.h),
+        ],
       ),
     );
   }
@@ -301,8 +325,9 @@ class _QuantityField extends StatefulWidget {
 }
 
 class _QuantityFieldState extends State<_QuantityField> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.quantity.toString());
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.quantity.toString(),
+  );
 
   @override
   void didUpdateWidget(covariant _QuantityField oldWidget) {
