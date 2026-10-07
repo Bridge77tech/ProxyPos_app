@@ -206,6 +206,32 @@ case-sensitive. It is cosmetic — the update check does not read it.
 
 ---
 
+## When the prompt does not appear
+
+Since 1.2.1 there is a log. A Windows release build is a GUI process with no console,
+so nothing the app prints is visible anywhere — which is how a check that never ran once
+looked exactly like a check that found no update.
+
+    %LOCALAPPDATA%\ProxyPOS\update.log
+
+Open it after a launch. One line per step, newest at the bottom:
+
+| Line | Meaning |
+|---|---|
+| `launch: waiting for the navigator` | the check started |
+| `installed version 1.2.0` | what the app thinks it is — compare with the manifest |
+| `pointer ... unreachable: ...` | could not reach the manifest; the reason follows |
+| `pointer ... was not a usable manifest` | reached it, could not parse it |
+| `up to date at X (offered Y)` | it answered, and Y was not newer than X |
+| `nothing to offer` | no update, for one of the two reasons above |
+| `X available, but already declined` | somebody clicked Later. Delete the `app_update_v1` Hive box, or publish a higher version |
+| `offering X` | the prompt was shown |
+| `no navigator after 100 attempts` | the window never finished building — a routing fault, not an update one |
+| `check threw: ...` | a bug, with the stack trace on the next line |
+
+An empty or absent file means the app never got as far as starting the check, which
+points at startup rather than at the updater.
+
 ## What to tell me if something fails
 
 The exact step number, what you saw instead, and — for anything at step 1 — the last

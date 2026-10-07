@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -31,19 +29,21 @@ class _InventoryAppState extends State<InventoryApp> {
 
     // The only place the updater is ever triggered.
     //
-    // Once, after the first frame, and never again for the life of the process.
-    // There is no timer and no listener behind this call, which is what guarantees
-    // the prompt cannot appear in the middle of a sale.
+    // Once per process, and never again — scheduleAtLaunch cancels itself the moment
+    // the check starts, so the prompt still cannot appear in the middle of a sale.
     //
-    // Not awaited, and it cannot be: the app must finish starting whether the check
-    // succeeds, fails, or hangs until it times out. A till with no connection — the
-    // ordinary case in the shops this is sold into — reaches the login screen at
-    // exactly the speed it did before this existed.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final context = APNavigatorKeys.rootNavigatorKey.currentContext;
-      if (context == null || !context.mounted) return;
-      unawaited(UpdateCoordinator.maybePrompt(context));
-    });
+    // This used to read rootNavigatorKey.currentContext inside a single post-frame
+    // callback and return if it was null. It was null every time: the route guard
+    // redirects through an async token read, so go_router has nothing to build on the
+    // first frame and the Navigator does not exist yet. The check never ran on any
+    // till, and said nothing about it. scheduleAtLaunch waits for the Navigator
+    // instead, and writes to UpdateLog either way.
+    //
+    // Nothing here is awaited and nothing here can be: the app must finish starting
+    // whether the check succeeds, fails, or hangs to its timeout. A till with no
+    // connection reaches the login screen exactly as fast as it did before any of
+    // this existed.
+    UpdateCoordinator.scheduleAtLaunch(APNavigatorKeys.rootNavigatorKey);
   }
 
   @override
